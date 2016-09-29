@@ -13,7 +13,7 @@ import javax.ws.rs.core.Response;
 import org.json.JSONObject;
 
 @Path("/lizard")
-public class LizardServlet {
+public class Lizard {
 
 	/**
 	 * 
