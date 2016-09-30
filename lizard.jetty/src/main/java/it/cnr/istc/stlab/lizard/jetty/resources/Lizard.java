@@ -46,9 +46,9 @@ public class Lizard {
 		System.out.println("KB type " + KBType);
 
 		// TODO generate API
-		String pathToJarFile = "/Users/lgu/Dropbox/spider-resources/fn2wn/fn2w3instances/st2wn/st2wn30-core.ttl";
+		String pathToJarFileToReturn = "";
 
-		return Response.ok(new FileInputStream(pathToJarFile))
+		return Response.ok(new FileInputStream(pathToJarFileToReturn))
 				.type("application/x-java-applet").build();
 	}
 }

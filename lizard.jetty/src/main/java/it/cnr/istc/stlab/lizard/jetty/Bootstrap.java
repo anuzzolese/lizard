@@ -34,12 +34,8 @@ public class Bootstrap extends HttpServlet {
 				.setLicenseUrl("http://www.apache.org/licenses/LICENSE-2.0.html");
 
 		// Resource package
-		beanConfig
-				.setResourcePackage(FileUtils
-						.getNamePackage(Lizard.class));
+		beanConfig.setResourcePackage(FileUtils.getNamePackage(Lizard.class));
 		beanConfig.setScan(true);
-
-		System.out.println("ok");
 
 	}
 }
