@@ -1,4 +1,7 @@
-package it.cnr.istc.stlab.lizard.jetty;
+package it.cnr.istc.stlab.lizard.jetty.resources;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -13,6 +16,7 @@ import javax.ws.rs.core.Response;
 import org.json.JSONObject;
 
 @Path("/lizard")
+@Api(value = "/lizard")
 public class Lizard {
 
 	/**
@@ -25,11 +29,11 @@ public class Lizard {
 	 * @return The binary file containing the API
 	 * @throws FileNotFoundException
 	 */
-
 	@POST
 	@Path("generateOntologyAPI")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces("application/x-java-applet")
+	@ApiOperation(value = "Generate ontology API", notes = "Generates the API for managing the ontology.")
 	public javax.ws.rs.core.Response generateOntologyApi(String request)
 			throws FileNotFoundException {
 
