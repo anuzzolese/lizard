@@ -5,7 +5,6 @@ import java.util.Collection;
 import org.apache.jena.ontology.OntResource;
 
 import com.sun.codemodel.JCodeModel;
-import com.sun.codemodel.JGenerifiable;
 import com.sun.codemodel.JMethod;
 
 import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeMethodType;
@@ -37,11 +36,6 @@ public abstract class AbstractOntologyCodeMethod extends AbstractOntologyCodeEnt
         this.methodType = methodType;
         
         
-    }
-
-    @Override
-    public JGenerifiable getJCodeEntity() {
-        return jMethod;
     }
     
     public OntologyCodeMethodType getMethodType() {

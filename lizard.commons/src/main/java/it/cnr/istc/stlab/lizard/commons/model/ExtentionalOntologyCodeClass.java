@@ -20,7 +20,7 @@ public abstract class ExtentionalOntologyCodeClass extends AbstractOntologyCodeC
     
     public abstract AbstractOntologyCodeMethod createMethod(OntologyCodeMethodType methodType, OntResource methodResource, AbstractOntologyCodeClass range);
     
-    void extendsClasses(AbstractOntologyCodeClass oClass){
+    protected void extendsClasses(AbstractOntologyCodeClass oClass){
         if(oClass != null && oClass instanceof ExtentionalOntologyCodeClass)
             this.extendedClass = oClass;
     }

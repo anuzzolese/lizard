@@ -53,6 +53,19 @@
 			<version>2.2</version>
 		</dependency>
 		
+		<!-- Virtuoso2Jena provider -->
+		<dependency>
+			<groupId>virtuoso</groupId>
+			<artifactId>virt-jena</artifactId>
+			<version>3.0.0</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>virtuoso</groupId>
+			<artifactId>virtjdbc</artifactId>
+			<version>4.0.0</version>
+		</dependency>
+		
 		
 
 		<dependency>
@@ -67,4 +80,11 @@
 		</dependency>
 
 	</dependencies>
+	
+	<repositories>
+    	<repository>
+      		<id>my-local-repo</id>
+      		<url>file://${basedir}/../repo</url>
+    	</repository>
+  	</repositories>
 </project>

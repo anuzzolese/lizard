@@ -1,9 +1,16 @@
 package it.cnr.istc.stlab.lizard.commons;
 
+import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.jena.datatypes.TypeMapper;
+import org.apache.jena.datatypes.xsd.XSDDatatype;
+import org.apache.jena.datatypes.xsd.XSDDateTime;
+import org.apache.jena.datatypes.xsd.XSDDuration;
 import org.apache.jena.ontology.OntResource;
+import org.apache.jena.rdf.model.Literal;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 
 public class LizardClass implements LizardInterface {
@@ -62,6 +69,6 @@ public class LizardClass implements LizardInterface {
     public void setPropertyValue(OntResource ontResource, Object object){
     	propertyMap.put(ontResource, object);
     }
-    
+     
     
 }

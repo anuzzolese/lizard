@@ -1,6 +1,4 @@
-package it.cnr.istc.stlab.lizard.commons;
-
-import javax.lang.model.SourceVersion;
+package it.cnr.istc.stlab.lizard.core;
 
 import org.apache.jena.vocabulary.OWL2;
 
@@ -14,13 +12,9 @@ public class Constants {
     
     public static final String INTERFACE_SUFFIX = "I";
     
-    public static final String JENA_POSTFIX = "Jena";
+    public static final String IMPLEMENTATION_POSTFIX = "Impl";
     
-    public static final String JENA_PACKAGE = "jena";
-    
-    public static final String BEAN_POSTFIX = "Bean";
-    
-    public static final String BEAN_PACKAGE = "bean";
+    public static final String IMPLEMENTATION_PACKAGE = "impl";
     
     public static final String EXTENTIONAL_CLASS_POSTFIX = "Extentional";
     
@@ -37,12 +31,5 @@ public class Constants {
     public static final String ANON_PACKAGE = "anon";
     
     public static final String SPARQL_ARTIFACT = "sparql";
-    
-    public static String getJavaName(String name){
-    	name = name.replace("-", "_");
-    	if(!SourceVersion.isName(name)) name = "_" + name;
-    	
-    	return name;
-    }
     
 }

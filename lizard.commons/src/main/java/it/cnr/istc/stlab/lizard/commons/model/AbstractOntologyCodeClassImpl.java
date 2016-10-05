@@ -7,6 +7,7 @@ import org.apache.jena.ontology.OntResource;
 
 import com.sun.codemodel.JAnnotationUse;
 import com.sun.codemodel.JCodeModel;
+import com.sun.codemodel.JDefinedClass;
 
 import it.cnr.istc.stlab.lizard.commons.annotations.BelongsTo;
 
@@ -57,8 +58,10 @@ public abstract class AbstractOntologyCodeClassImpl extends AbstractOntologyCode
     
     
     public void addExtentionalOntologyCodeClasses(ExtentionalOntologyCodeClass extentionalOntologyCodeClass) {
-    	JAnnotationUse annotation = jClass.annotate(jCodeModel.ref(BelongsTo.class));
-    	annotation.paramArray("extentionalClasses").param(extentionalOntologyCodeClass.asJDefinedClass());
+    	if(jClass instanceof JDefinedClass){
+	    	JAnnotationUse annotation = ((JDefinedClass)jClass).annotate(jCodeModel.ref(BelongsTo.class));
+	    	annotation.paramArray("extentionalClasses").param(extentionalOntologyCodeClass.asJDefinedClass());
+    	}
 	}    
 
 }

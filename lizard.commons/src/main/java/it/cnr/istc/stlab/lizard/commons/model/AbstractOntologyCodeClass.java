@@ -9,10 +9,10 @@ import java.util.Set;
 
 import org.apache.jena.ontology.OntResource;
 
+import com.sun.codemodel.JClass;
 import com.sun.codemodel.JCodeModel;
 import com.sun.codemodel.JDefinedClass;
 import com.sun.codemodel.JGenerifiable;
-import com.sun.codemodel.JVar;
 
 import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeClassType;
 
@@ -21,14 +21,14 @@ public abstract class AbstractOntologyCodeClass extends AbstractOntologyCodeEnti
     protected OntologyCodeClassType ontologyClassType;
     protected Map<OntResource, Set<AbstractOntologyCodeMethod>> methodMap;
     protected AbstractOntologyCodeClass extendedClass;
-    protected JDefinedClass jClass;
+    protected JClass jClass;
 
-    AbstractOntologyCodeClass() {
+    protected AbstractOntologyCodeClass() {
     	super();
     	methodMap = new HashMap<OntResource,Set<AbstractOntologyCodeMethod>>();
 	}
     
-    AbstractOntologyCodeClass(OntResource ontResource, OntologyCodeModel ontologyModel, JCodeModel jCodeModel) {
+    protected AbstractOntologyCodeClass(OntResource ontResource, OntologyCodeModel ontologyModel, JCodeModel jCodeModel) {
         super(ontResource, ontologyModel, jCodeModel);
         methodMap = new HashMap<OntResource,Set<AbstractOntologyCodeMethod>>();
     }
@@ -37,7 +37,7 @@ public abstract class AbstractOntologyCodeClass extends AbstractOntologyCodeEnti
         return methodMap.get(property);
     }
     
-    abstract void extendsClasses(AbstractOntologyCodeClass oClass);
+    protected abstract void extendsClasses(AbstractOntologyCodeClass oClass);
     
     public AbstractOntologyCodeClass getExtendedClass() {
         return extendedClass;
@@ -72,12 +72,7 @@ public abstract class AbstractOntologyCodeClass extends AbstractOntologyCodeEnti
         return ontologyClassType;
     }
     
-    public JDefinedClass asJDefinedClass(){
-        return jClass;
-    }
-    
-    @Override
-    public JGenerifiable getJCodeEntity() {
+    public JClass asJDefinedClass(){
         return jClass;
     }
     

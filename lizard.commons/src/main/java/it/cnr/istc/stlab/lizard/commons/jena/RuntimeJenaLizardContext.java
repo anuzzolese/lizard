@@ -1,5 +1,8 @@
 package it.cnr.istc.stlab.lizard.commons.jena;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -11,10 +14,11 @@ public class RuntimeJenaLizardContext {
 	private static JenaLizardContext context;
 	
 	public static JenaLizardContext getContext(){
-		if(context != null){
+		if(context == null){
 			Properties props = new Properties();
 			
 			InputStream is = RuntimeJenaLizardContext.class.getClassLoader().getResourceAsStream(CONF_FILE);
+			
 			try {
 				props.load(is);
 			} catch (IOException e) {
@@ -26,6 +30,10 @@ public class RuntimeJenaLizardContext {
 		}
 		
 		return context;
+	}
+	
+	public static void main(String[] args) {
+		RuntimeJenaLizardContext.getContext();
 	}
 
 }

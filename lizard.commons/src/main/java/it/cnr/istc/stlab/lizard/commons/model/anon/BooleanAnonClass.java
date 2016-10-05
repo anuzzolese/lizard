@@ -4,7 +4,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.jena.ontology.OntResource;
-import org.apache.jena.ontology.impl.UnionClassImpl;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 
@@ -13,6 +12,7 @@ import com.sun.codemodel.JBlock;
 import com.sun.codemodel.JClassAlreadyExistsException;
 import com.sun.codemodel.JCodeModel;
 import com.sun.codemodel.JConditional;
+import com.sun.codemodel.JDefinedClass;
 import com.sun.codemodel.JExpr;
 import com.sun.codemodel.JExpression;
 import com.sun.codemodel.JForLoop;
@@ -23,7 +23,6 @@ import com.sun.codemodel.JVar;
 
 import it.cnr.istc.stlab.lizard.commons.Constants;
 import it.cnr.istc.stlab.lizard.commons.LizardInterface;
-import it.cnr.istc.stlab.lizard.commons.PropertyMap;
 import it.cnr.istc.stlab.lizard.commons.annotations.UnionOf;
 import it.cnr.istc.stlab.lizard.commons.exception.NotAMemberException;
 import it.cnr.istc.stlab.lizard.commons.inmemory.InMemoryLizardAnonClass;
@@ -61,15 +60,15 @@ public abstract class BooleanAnonClass extends OntologyCodeClass {
             String classCanonicalName = Constants.ANON_PACKAGE + "." + classNameSuffix + id;
             
             super.jClass = codeModel._class(classCanonicalName);
-            super.jClass._extends(InMemoryLizardAnonClass.class);
+            ((JDefinedClass)super.jClass)._extends(InMemoryLizardAnonClass.class);
             
-            JMethod unionConstructor = super.jClass.constructor(JMod.PUBLIC);
+            JMethod unionConstructor = ((JDefinedClass)super.jClass).constructor(JMod.PUBLIC);
             JVar ind = unionConstructor.param(RDFNode.class, "individual");
             
             JExpression expression = codeModel.ref(ModelFactory.class).staticInvoke("createOntologyModel").invoke("createOntResource").arg(ontClass.getId().getLabelString());
             unionConstructor.body().invoke("super").arg(ind).arg(expression);
             
-            JMethod asUnionMethod = super.jClass.method(JMod.PUBLIC, super.jClass, "asIndividualOf");
+            JMethod asUnionMethod = ((JDefinedClass)super.jClass).method(JMod.PUBLIC, super.jClass, "asIndividualOf");
             
             asUnionMethod = asUnionMethod._throws(NotAMemberException.class);
             

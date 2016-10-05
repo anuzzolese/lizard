@@ -29,6 +29,13 @@
 			<version>1.7.21</version>
 		</dependency>
 
+		<!-- Lizard Commons -->
+		<dependency>
+			<groupId>it.cnr.istc.stlab</groupId>
+			<artifactId>lizard.commons</artifactId>
+    		<version>0.9-SNAPSHOT</version>
+    	</dependency>
+	
 
 		<!-- SWAGGER -->
 		<dependency>

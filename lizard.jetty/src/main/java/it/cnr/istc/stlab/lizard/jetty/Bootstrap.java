@@ -26,7 +26,7 @@ public class Bootstrap extends HttpServlet {
 				.setDescription("Lizard automatically generates API Rest for managing ontologies");
 		beanConfig.setSchemes(new String[] { "http" });
 		beanConfig.setHost("localhost:8080"); // TODO
-		beanConfig.setBasePath("/api");
+		beanConfig.setBasePath("/");
 		beanConfig.setVersion("0.99");
 		beanConfig.setContact("stlab@cnr.it");
 		beanConfig.setLicense("Apache 2.0");

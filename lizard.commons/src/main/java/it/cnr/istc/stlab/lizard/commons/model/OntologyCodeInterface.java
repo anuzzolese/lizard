@@ -5,29 +5,25 @@ import java.util.Set;
 
 import javax.lang.model.SourceVersion;
 
-import org.apache.jena.ontology.OntClass;
-import org.apache.jena.ontology.OntModelSpec;
-import org.apache.jena.ontology.OntProperty;
 import org.apache.jena.ontology.OntResource;
-import org.apache.jena.ontology.Restriction;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.util.iterator.ExtendedIterator;
-import org.apache.jena.vocabulary.OWL2;
 
 import com.sun.codemodel.ClassType;
 import com.sun.codemodel.JClassAlreadyExistsException;
 import com.sun.codemodel.JCodeModel;
+import com.sun.codemodel.JDefinedClass;
 
+import it.cnr.istc.stlab.lizard.commons.Constants;
 import it.cnr.istc.stlab.lizard.commons.LizardInterface;
 import it.cnr.istc.stlab.lizard.commons.exception.ClassAlreadyExistsException;
-import it.cnr.istc.stlab.lizard.commons.exception.NotAvailableOntologyCodeEntityException;
 import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeClassType;
-import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeMethodType;
 
 public abstract class OntologyCodeInterface extends AbstractOntologyCodeClass {
     
     protected OntologyCodeClassType ontologyClassType;
+    
+    protected OntologyCodeInterface(){
+    	super.ontologyClassType = OntologyCodeClassType.Interface;
+    }
     
     protected OntologyCodeInterface(OntResource resource, OntologyCodeModel ontologyModel, JCodeModel codeModel) throws ClassAlreadyExistsException {
         super(resource, ontologyModel, codeModel);
@@ -37,14 +33,13 @@ public abstract class OntologyCodeInterface extends AbstractOntologyCodeClass {
         if(resource.isURIResource()){
             String artifactId = packageName + ".";
             
-            String localName = resource.getLocalName();
-            
-            if(!SourceVersion.isName(localName)) localName = "_" + localName;
+            String localName = Constants.getJavaName(resource.getLocalName());
             
             super.entityName = artifactId + localName;
             try {
                 super.jClass = jCodeModel._class(entityName, ClassType.INTERFACE);
-                super.jClass._extends(LizardInterface.class);
+                if(super.jClass instanceof JDefinedClass)
+                	((JDefinedClass)super.jClass)._extends(LizardInterface.class);
             } catch (JClassAlreadyExistsException e) {
                 throw new ClassAlreadyExistsException(ontResource);
             }
@@ -52,11 +47,7 @@ public abstract class OntologyCodeInterface extends AbstractOntologyCodeClass {
     
     }
     
-    public abstract AbstractOntologyCodeMethod createMethod(OntologyCodeMethodType methodType, OntResource methodResource, AbstractOntologyCodeClass range);
-    
-    public abstract void createMethods();
-    
-    void extendsClasses(AbstractOntologyCodeClass oClass){
+    protected void extendsClasses(AbstractOntologyCodeClass oClass){
         if(oClass != null && oClass instanceof OntologyCodeInterface)
             this.extendedClass = oClass;
     }

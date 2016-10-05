@@ -68,6 +68,13 @@
     		<scope>provided</scope>
 		</dependency>
 		
+		<!-- Swagger -->
+		<dependency>
+		  	<groupId>io.swagger</groupId>
+		  	<artifactId>swagger-jersey2-jaxrs</artifactId>
+		  	<version>1.5.0</version>
+		</dependency>
+		
 
 		<dependency>
 			<groupId>org.slf4j</groupId>
