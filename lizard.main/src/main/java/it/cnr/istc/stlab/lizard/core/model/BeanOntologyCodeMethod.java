@@ -73,7 +73,10 @@ public class BeanOntologyCodeMethod extends OntologyCodeMethod {
                 String methodName = entityName.substring(0,1).toUpperCase() + entityName.substring(1);
                 jMethod = domainJClass.method(1, void.class, "set" + methodName);
                 if(domain != null){
+                	
 	                for(AbstractOntologyCodeClass domainClass : domain){
+	                	if(methodResource.getURI().equals("http://www.ontologydesignpatterns.org/schemas/cpannotationschema.owl#hasComponent"))
+	                		System.out.println(getClass() + "::: " + domainClass.asJDefinedClass().fullName());
 	                	String name = domainClass.getEntityName();
 	                	name = name.substring(name.lastIndexOf(".")+1);
 	                	name = name.substring(0, 1).toLowerCase() + name.substring(1);

@@ -32,9 +32,7 @@ public abstract class AbstractOntologyCodeClassImpl extends AbstractOntologyCode
     public void implementsInterfaces(OntologyCodeInterface...ontologyInterfaces){
         if(ontologyInterfaces != null){
             for(OntologyCodeInterface ontologyInterface : ontologyInterfaces){
-            	System.out.println("Interface " + ontologyInterface);
-            	System.out.println("Implemented classes " + implementedClasses);
-                implementedClasses.add(ontologyInterface);
+            	implementedClasses.add(ontologyInterface);
             }
         }
     }

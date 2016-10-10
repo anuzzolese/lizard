@@ -17,6 +17,7 @@
   <modules>
     <module>lizard.commons</module>
     <module>lizard.main</module>
+    <module>lizard.jetty</module>
   </modules>
 
 </project>

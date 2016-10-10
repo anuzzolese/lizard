@@ -1,6 +1,5 @@
 package it.cnr.istc.stlab.lizard.core.model;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -14,16 +13,8 @@ import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 
 import org.apache.jena.ontology.OntResource;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.Property;
-import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.rdf.model.StmtIterator;
 
 import com.sun.codemodel.JBlock;
-import com.sun.codemodel.JCatchBlock;
 import com.sun.codemodel.JClass;
 import com.sun.codemodel.JCodeModel;
 import com.sun.codemodel.JConditional;
@@ -33,20 +24,14 @@ import com.sun.codemodel.JExpression;
 import com.sun.codemodel.JForEach;
 import com.sun.codemodel.JMethod;
 import com.sun.codemodel.JMod;
-import com.sun.codemodel.JTryBlock;
 import com.sun.codemodel.JType;
 import com.sun.codemodel.JVar;
-import com.sun.codemodel.JWhileLoop;
 
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import it.cnr.istc.stlab.lizard.commons.Constants;
 import it.cnr.istc.stlab.lizard.commons.PrefixRegistry;
-import it.cnr.istc.stlab.lizard.commons.annotations.ObjectPropertyAnnotation;
-import it.cnr.istc.stlab.lizard.commons.exception.NotAvailableOntologyCodeEntityException;
-import it.cnr.istc.stlab.lizard.commons.jena.RuntimeJenaLizardContext;
 import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClass;
-import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClassImpl;
 import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeClass;
 import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeInterface;
 import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeMethod;
@@ -169,14 +154,46 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 							AbstractOntologyCodeClass o = ontologyModel.getOntologyClass(owner.getOntResource(), BeanOntologyCodeInterface.class);
 							
 							
-							JType entitySetType = codeModel.ref(Set.class).narrow(rangeJClass);
-							JType entityHashSetType = codeModel.ref(HashSet.class).narrow(rangeJClass);
+							OntologyCodeClass beanClass = ontologyModel.getOntologyClass(r.getOntResource(), BeanOntologyCodeClass.class);
 							
+							
+							JType entityBeanSetType = null;
+							JType entityBeanHashSetType = null;
+							
+							JDefinedClass jdc = (JDefinedClass)ontologyModel.getOntologyClass(owner.getOntResource(), BeanOntologyCodeInterface.class).asJDefinedClass();
+							JMethod meth = jdc.getMethod(entityName, new JType[]{});
+							
+							JType methRetType = meth.type();
+							
+							JType methRetNarrowedType = methRetType.boxify().getTypeParameters().get(0);
+							
+							JType entitySetType = methRetType;
+							
+							entityBeanSetType = methRetType;
+							entityBeanHashSetType = codeModel.ref(HashSet.class).narrow(methRetNarrowedType);
+							
+
+							/*
+							if(beanClass != null && methodResource.isObjectProperty()){
+								if(methodResource.isDatatypeProperty()){
+									entityBeanSetType = codeModel.ref(Set.class).narrow(beanClass.asJDefinedClass());
+									entityBeanHashSetType = codeModel.ref(HashSet.class).narrow(beanClass.asJDefinedClass());
+								}
+								else{
+									entityBeanSetType = codeModel.ref(Set.class).narrow(beanClass.asJDefinedClass());
+									entityBeanHashSetType = codeModel.ref(HashSet.class).narrow(beanClass.asJDefinedClass());
+								}
+							}
+							else{
+								entityBeanSetType = codeModel.ref(Set.class).narrow(rangeJClass);
+								entityBeanHashSetType = codeModel.ref(HashSet.class).narrow(rangeJClass);
+							}
+							*/
 							
 							JVar entityVar = entityMethodBody.decl(o.asJDefinedClass(), "_entity", o.asJDefinedClass().staticInvoke("get").arg(idVar));
 							
 							JVar entitykbSetVar = entityMethodBody.decl(entitySetType, "_kbSet", entityVar.invoke(entityName));
-							JVar entityRetSetVar = entityMethodBody.decl(entitySetType, "_retSet", JExpr._new(entityHashSetType));
+							JVar entityRetSetVar = entityMethodBody.decl(entityBeanSetType, "_retSet", JExpr._new(entityBeanHashSetType));
 							
 							JConditional entityIfBlock = entityMethodBody._if(kbSetVar.ne(JExpr._null()));
 							
@@ -184,14 +201,14 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 							 * Then
 							 */
 							JBlock entityIfThenBlock = entityIfBlock._then();
-							JForEach entityForEach = entityIfThenBlock.forEach(rangeJClass, "_obj", entitykbSetVar);
+							JForEach entityForEach = entityIfThenBlock.forEach(methRetNarrowedType, "_obj", entitykbSetVar);
 							
 							JBlock entityForEachBlock = entityForEach.body();
 							if(methodResource.isDatatypeProperty()){
 								entityForEachBlock.add(entityRetSetVar.invoke("add").arg(forEach.var()));
 							}
 							else {
-								castExpression = JExpr.cast(ontologyModel.getOntologyClass(owner.getOntResource(), JenaOntologyCodeClass.class).asJDefinedClass(), forEach.var());
+								castExpression = JExpr.cast(ontologyModel.getOntologyClass(beanClass.getOntResource(), JenaOntologyCodeClass.class).asJDefinedClass(), forEach.var());
 								entityForEachBlock.add(entityRetSetVar.invoke("add").arg(castExpression.invoke("asBean")));
 							}
 							
@@ -240,160 +257,5 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
     	return methodType.hashCode() + super.hashCode();
     }
     
-    private void addMethodBodyNew(){
-    	JType modelType = jCodeModel.ref(Model.class);
-    	if(ontResource == null){
-	    	switch (methodType) {
-			case Get:
-				jMethod = ((JDefinedClass)owner.asJDefinedClass()).method(1, modelType, entityName);
-				
-				break;
-	
-			default:
-				break;
-			}
-    	}
-    }
-    
-    private void addMethodBody(){
-    	/*
-         * Add the body to the method.
-         */
-        if(owner instanceof OntologyCodeClass){
-            JClass setClass = jCodeModel.ref(Set.class).narrow(range.asJDefinedClass());
-            JClass hashSetClass = jCodeModel.ref(HashSet.class).narrow(range.asJDefinedClass());
-            
-            String entityName = getEntityName();
-            if(methodType == OntologyCodeMethodType.Get) {
-                if(owner instanceof OntologyCodeClass){
-                	
-                	JBlock methodBody = jMethod.body();
-                	
-                	JVar returnVar = methodBody.decl(setClass, "retValue", JExpr._new(hashSetClass));
-                	
-                	JTryBlock methodTry = methodBody._try();
-                	JCatchBlock catchBlock = methodTry._catch(jCodeModel.ref(SecurityException.class));
-                	JVar exceptionVar = catchBlock.param("e");
-                	catchBlock.body().add(exceptionVar.invoke("printStackTrace"));
-                	
-                	
-                	JBlock methodTryBody = methodTry.body();
-                	JDefinedClass objectAnonymous = jCodeModel.anonymousClass(Object.class);
-                	
-                	/*
-                	 * Add the code to get information about the current method
-                	 */
-                	//JExpression methodExpression = JExpr._new(objectAnonymous).invoke("getClass").invoke("getEnclosingMethod");
-                	//JVar methodVar = methodTryBody.decl(jCodeModel._ref(Method.class), "method", methodExpression);
-                	
-                	/*
-                	 * Add the code to use the annotation ObjectPropertyAnnotation
-                	 */
-                	//JExpression getAnnotation = methodVar.invoke("getAnnotation").arg(JExpr.dotclass(jCodeModel.ref(ObjectPropertyAnnotation.class)));
-                	//JVar objectPropertyAnnotationVar = methodTryBody.decl(jCodeModel._ref(ObjectPropertyAnnotation.class), "objectPropertyAnnotation", getAnnotation);
-                	
-                	
-                	/*
-                	 * Add the code to set a variable for the URI representing the property and the type of the method.
-                	 */
-                	//JExpression uriExpression = objectPropertyAnnotationVar.invoke("uri");
-                	//JVar uriVar = methodTryBody.decl(jCodeModel._ref(String.class), "propertyUri", uriExpression);
-                	//JVar ontPropertyVar = methodTryBody.decl(jCodeModel._ref(Property.class), "predicate", jCodeModel.ref(ModelFactory.class).staticInvoke("createDefaultModel").invoke("createProperty").arg(uriVar));
-                	
-                	StringBuilder sb = new StringBuilder();
-                	
-                	Character previous = null;
-                	for(char fieldNameChar : entityName.toCharArray()){
-                		if(previous != null){
-                			if(Character.isLowerCase(previous) && Character.isUpperCase(fieldNameChar))
-                				sb.append("_");
-                		}
-                		sb.append(Character.toUpperCase(fieldNameChar));
-                		previous = fieldNameChar;
-                	}
-                	
-                	JVar ontPropertyVar = methodTryBody.decl(jCodeModel._ref(Property.class), "predicate", jCodeModel.ref(ModelFactory.class).staticInvoke("createDefaultModel").invoke("createProperty").arg(ontResource.toString()));
-                	
-                	JVar jenaModelVar = methodTryBody.decl(jCodeModel._ref(Model.class), "model", jCodeModel.ref(RuntimeJenaLizardContext.class).staticInvoke("getContext").invoke("getModel"));
-                	JVar stmtIteratorVar = methodTryBody.decl(jCodeModel._ref(StmtIterator.class), "stmtIt", 
-                			jenaModelVar.invoke("listStatements")
-                				.arg(JExpr.cast(jCodeModel._ref(Resource.class), JExpr._super().ref("individual")))
-                				.arg(ontPropertyVar)
-                				.arg(JExpr.cast(jCodeModel._ref(RDFNode.class), JExpr._null())));
-                	
-                	JWhileLoop stmtItHasNextWhile = methodTryBody._while(stmtIteratorVar.invoke("hasNext"));
-                	JBlock stmtItHasNextWhileBlock = stmtItHasNextWhile.body();
-                	JVar stmtVar = stmtItHasNextWhileBlock.decl(jCodeModel._ref(Statement.class), "stmt", stmtIteratorVar.invoke("next"));
-                	JVar stmtObjectVar = stmtItHasNextWhileBlock.decl(jCodeModel._ref(RDFNode.class), "object", stmtVar.invoke("getObject"));
-                	
-                	JDefinedClass rangeClass = (JDefinedClass)range.asJDefinedClass();
-                	
-                	if(range.getOntResource() != null){
-                		AbstractOntologyCodeClass rangeConcreteClass = ontologyModel.getOntologyClass(range.getOntResource(), RestOntologyCodeClass.class);
-	                	
-	                	if(rangeConcreteClass == null){
-	                		try {
-								rangeConcreteClass = ontologyModel.createOntologyClass(range.getOntResource(), RestOntologyCodeClass.class);
-							} catch (NotAvailableOntologyCodeEntityException e) {
-								e.printStackTrace();
-							}
-	                		OntologyCodeInterface rangeInterface = ontologyModel.getOntologyClass(range.getOntResource(), BeanOntologyCodeInterface.class);
-	                		ontologyModel.createClassImplements((AbstractOntologyCodeClassImpl)rangeConcreteClass, rangeInterface);
-	                		//ontologyModel.getClassMap().put(range.getOntResource(), (OntologyCodeClass)rangeConcreteClass);
-	                	}
-	                	
-	                	JVar retObj = stmtItHasNextWhileBlock.decl(rangeClass, "obj", JExpr._new(rangeConcreteClass.asJDefinedClass()).arg(stmtObjectVar));
-	                	stmtItHasNextWhileBlock.add(returnVar.invoke("add").arg(retObj));
-	                	
-	                	methodBody._return(returnVar);
-                	}
-                }
-            }
-            else {
-            	if(owner instanceof OntologyCodeClass){
-
-                	JBlock methodBody = jMethod.body();
-                	
-                	JTryBlock methodTry = methodBody._try();
-                	JCatchBlock catchBlock = methodTry._catch(jCodeModel.ref(SecurityException.class));
-                	JVar exceptionVar = catchBlock.param("e");
-                	catchBlock.body().add(exceptionVar.invoke("printStackTrace"));
-                	
-                	
-                	JBlock methodTryBody = methodTry.body();
-                	JDefinedClass objectAnonymous = jCodeModel.anonymousClass(Object.class);
-                	
-                	/*
-                	 * Add the code to get information about the current method
-                	 */
-                	JExpression methodExpression = JExpr._new(objectAnonymous).invoke("getClass").invoke("getEnclosingMethod");
-                	JVar methodVar = methodTryBody.decl(jCodeModel._ref(Method.class), "method", methodExpression);
-                	
-                	/*
-                	 * Add the code to use the annotation ObjectPropertyAnnotation
-                	 */
-                	JExpression getAnnotation = methodVar.invoke("getAnnotation").arg(JExpr.dotclass(jCodeModel.ref(ObjectPropertyAnnotation.class)));
-                	JVar objectPropertyAnnotationVar = methodTryBody.decl(jCodeModel._ref(ObjectPropertyAnnotation.class), "objectPropertyAnnotation", getAnnotation);
-                	
-                	
-                	/*
-                	 * Add the code to set a variable for the URI representing the property and the type of the method.
-                	 */
-                	JExpression uriExpression = objectPropertyAnnotationVar.invoke("uri");
-                	JVar uriVar = methodTryBody.decl(jCodeModel._ref(String.class), "propertyUri", uriExpression);
-                	JVar ontPropertyVar = methodTryBody.decl(jCodeModel._ref(Property.class), "predicate", jCodeModel.ref(ModelFactory.class).staticInvoke("createDefaultModel").invoke("createProperty").arg(uriVar));
-                	JVar jenaModelVar = methodTryBody.decl(jCodeModel._ref(Model.class), "model", jCodeModel.ref(RuntimeJenaLizardContext.class).staticInvoke("getContext").invoke("getModel"));
-                	
-                	JForEach forEach = methodTryBody.forEach(range.asJDefinedClass(), "object", jMethod.params().get(0));
-                	JBlock forEachBlock = forEach.body();
-                	
-                	forEachBlock.add(jenaModelVar.invoke("add")
-	                	.arg(JExpr.cast(jCodeModel._ref(Resource.class), JExpr._super().ref("individual")))
-        				.arg(ontPropertyVar)
-        				.arg(forEach.var().invoke("getIndividual")));
-                }
-            }
-        }
-    }
 
 }

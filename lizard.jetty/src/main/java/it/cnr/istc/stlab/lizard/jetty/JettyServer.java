@@ -4,14 +4,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.ServiceLoader;
 
-import org.babelnet.model.babelnet.web.Sense;
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Logger;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
-import org.w3._2001.XMLSchema.string;
-import org.w3.ns.lemon.ontolex.web.LexicalEntry;
 
 import it.cnr.istc.stlab.lizard.commons.inmemory.RestInterface;
+import it.cnr.istc.stlab.lizard.commons.jersey.SetBodyWriter;
 import it.cnr.istc.stlab.lizard.jetty.utils.FileUtils;
 
 
@@ -19,8 +19,28 @@ import it.cnr.istc.stlab.lizard.jetty.utils.FileUtils;
 public class JettyServer {
 
 	public static void main(String[] args) {
+		
+		Logger log = Logger.getLogger(JettyServer.class);
+		//BasicConfigurator.configure();
+		
+		log.info("Starting Jetty.");
 
-		Server jettyServer = new Server(8080);
+		int port;
+		if(args.length > 0){
+			String portString = args[0];
+			
+			if(portString == null) port = 8080;
+			else{
+				try{
+					port = Integer.valueOf(portString);
+				} catch(NumberFormatException e){
+					port = 8080;
+				}
+			}
+		}
+		else port = 8080;
+		
+		Server jettyServer = new Server(port);
 
 		ServletContextHandler servletContextHandler = new ServletContextHandler(
 				ServletContextHandler.SESSIONS);
@@ -37,10 +57,10 @@ public class JettyServer {
 		
 		Collection<String> packages = new ArrayList<String>();
 		restInterfaceLoader.forEach(restInterface -> {
-			String packageName = FileUtils.getNamePackage(restInterface.getClass());
-			if(!packages.contains(packageName) 
-					&& !packageName.equals("org.w3._2001.XMLSchema.web")) packages.add(packageName);
 			System.out.println(restInterface.getClass());
+			String packageName = FileUtils.getNamePackage(restInterface.getClass());
+			if(!packages.contains(packageName) && !packageName.equals("org.w3._2001.XMLSchema.web")) 
+				packages.add(packageName);
 		});
 		
 		StringBuilder sb = new StringBuilder();
@@ -50,7 +70,8 @@ public class JettyServer {
 				
 		});
 		
-		System.out.println(sb.toString());
+		System.out.println("SB: " + sb.toString());
+		
 		/*
 		servletHolder.setInitParameter(
 				"jersey.config.server.provider.packages",
@@ -60,7 +81,8 @@ public class JettyServer {
 		*/
 		servletHolder.setInitParameter(
 				"jersey.config.server.provider.packages",
-				"io.swagger.jaxrs.listing,"
+				"io.swagger.jaxrs.listing," 
+						+ FileUtils.getNamePackage(SetBodyWriter.class) + "," 
 						+ sb.toString());
 		
 		ServletHolder servletHolderBootrstrap = servletContextHandler

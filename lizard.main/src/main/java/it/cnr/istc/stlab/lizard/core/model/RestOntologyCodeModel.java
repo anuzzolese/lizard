@@ -73,13 +73,13 @@ public class RestOntologyCodeModel implements OntologyCodeModel {
         	}
         	
         	Map<OntResource, AbstractOntologyCodeClass> beanClasses = entityMap.get(BeanOntologyCodeClass.class);
-        	System.out.println(getClass() + " Map is " + beanClasses);
+        	
         	if(beanClasses == null){
         		beanClasses = new HashMap<OntResource, AbstractOntologyCodeClass>();
         		entityMap.put(BeanOntologyCodeClass.class, beanClasses);
         	}
         	beanClasses.put(resource, ontologyClass);
-        	System.out.println(getClass() + " -=? added class " + resource + " (" + entityMap.get(BeanOntologyCodeClass.class).size());
+        	
             
         } catch (ClassAlreadyExistsException e) {
         	Map<OntResource, AbstractOntologyCodeClass> beanClasses = entityMap.get(BeanOntologyCodeClass.class);

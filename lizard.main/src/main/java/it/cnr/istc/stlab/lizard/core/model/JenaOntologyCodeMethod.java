@@ -80,9 +80,8 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
                 String name = owner.asJDefinedClass().name();
             	name = name.substring(0, 1).toLowerCase() + name.substring(1);
                 if(asBeanMethod == null){
-                	JClass beanInteface = ontologyModel.getOntologyClass(owner.getOntResource(), BeanOntologyCodeInterface.class).asJDefinedClass();
                 	JClass beanClass = ontologyModel.getOntologyClass(owner.getOntResource(), BeanOntologyCodeClass.class).asJDefinedClass();
-                	asBeanMethod = jOwner.method(JMod.PUBLIC, beanInteface, "asBean");
+                	asBeanMethod = jOwner.method(JMod.PUBLIC, beanClass, "asBean");
                 	JBlock asBeanMethodBody = asBeanMethod.body();
                 	 
                 	beanVar = asBeanMethodBody.decl(beanClass, name, JExpr._new(beanClass));
