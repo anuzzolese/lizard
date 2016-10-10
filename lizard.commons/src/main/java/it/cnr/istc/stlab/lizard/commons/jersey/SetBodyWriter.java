@@ -41,8 +41,6 @@ public class SetBodyWriter implements MessageBodyWriter<HashSet<?>> {
 		
 		JSONArray setArray = new JSONArray();
 		
-		System.out.println(getClass() + " ho il pisellino lungo " + t.size());
-		
 		t.forEach(bean -> {
 			try {
 				ByteArrayOutputStream stream = new ByteArrayOutputStream();
