@@ -38,6 +38,8 @@ import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeClass;
 import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeInterface;
 import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeMethod;
 import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeModel;
+import it.cnr.istc.stlab.lizard.commons.model.anon.BooleanAnonClass;
+import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeClassType;
 import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeMethodType;
 
 public class BeanOntologyCodeMethod extends OntologyCodeMethod {
@@ -75,8 +77,6 @@ public class BeanOntologyCodeMethod extends OntologyCodeMethod {
                 if(domain != null){
                 	
 	                for(AbstractOntologyCodeClass domainClass : domain){
-	                	if(methodResource.getURI().equals("http://www.ontologydesignpatterns.org/schemas/cpannotationschema.owl#hasComponent"))
-	                		System.out.println(getClass() + "::: " + domainClass.asJDefinedClass().fullName());
 	                	String name = domainClass.getEntityName();
 	                	name = name.substring(name.lastIndexOf(".")+1);
 	                	name = name.substring(0, 1).toLowerCase() + name.substring(1);
@@ -172,6 +172,7 @@ public class BeanOntologyCodeMethod extends OntologyCodeMethod {
             		
             		JVar ownerClassField = ownerJClass.fields().get(entityName);
             		if(ownerClassField == null){
+            			//System.out.println(getClass() + " OWNER " + ontResource);
             			AbstractOntologyCodeClass fieldType = ((ArrayList<AbstractOntologyCodeClass>)domain).get(0);
             			JType setClass = jCodeModel.ref(Set.class).narrow(fieldType.asJDefinedClass());
             			ownerClassField = ownerJClass.field(JMod.PRIVATE, setClass, entityName);

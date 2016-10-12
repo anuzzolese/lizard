@@ -40,6 +40,7 @@ import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeClass;
 import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeInterface;
 import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeMethod;
 import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeModel;
+import it.cnr.istc.stlab.lizard.commons.model.anon.BooleanAnonClass;
 import it.cnr.istc.stlab.lizard.commons.model.datatype.DatatypeCodeInterface;
 import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeMethodType;
 
@@ -190,17 +191,26 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
                 	JClass rangeClass = range.asJDefinedClass();
                 	
                 	if(range.getOntResource() != null){
-	                	AbstractOntologyCodeClass rangeConcreteClass = ontologyModel.getOntologyClass(range.getOntResource(), JenaOntologyCodeClass.class);
-	                	
+                		OntResource rangeRes = range.getOntResource();
+                		AbstractOntologyCodeClass rangeConcreteClass = null;
+                		if(rangeRes.isURIResource())
+                			rangeConcreteClass = ontologyModel.getOntologyClass(range.getOntResource(), JenaOntologyCodeClass.class);
+                		else rangeConcreteClass = ontologyModel.getOntologyClass(range.getOntResource(), BooleanAnonClass.class);
+                		
 	                	if(rangeConcreteClass == null){
 	                		try {
+	                			
 	                			OntologyCodeInterface rangeInterface = ontologyModel.getOntologyClass(range.getOntResource(), BeanOntologyCodeInterface.class);
 	                			if(rangeInterface != null){
-		                			System.out.println(getClass() + " interface: " + range.getOntResource() + " - " + ontResource + " - ");
-									rangeConcreteClass = ontologyModel.createOntologyClass(range.getOntResource(), JenaOntologyCodeClass.class);
-									
+		                			rangeConcreteClass = ontologyModel.createOntologyClass(range.getOntResource(), JenaOntologyCodeClass.class);
 									ontologyModel.createClassImplements((AbstractOntologyCodeClassImpl)rangeConcreteClass, rangeInterface);
 	                			}
+	                			else{
+	                				rangeConcreteClass = ontologyModel.getOntologyClass(range.getOntResource(), BooleanAnonClass.class);
+	                				if(rangeConcreteClass == null)
+	                					rangeConcreteClass = ontologyModel.createAnonClass(range.getOntResource().asClass());
+	                			}
+	                	
 							} catch (NotAvailableOntologyCodeEntityException e) {
 								e.printStackTrace();
 							}

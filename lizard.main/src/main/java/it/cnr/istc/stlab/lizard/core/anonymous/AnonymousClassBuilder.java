@@ -47,6 +47,7 @@ public class AnonymousClassBuilder {
 				anonymousClass = new IntersectionClass(String.valueOf("Intersection") + intersectionCounter, ontClass, codeModel, members);
 				intersectionClasses.put(code, (IntersectionClass) anonymousClass);
 			}
+			break;
 		case Complement:
 			anonymousClass = complementClasses.get(code);
 			if(anonymousClass == null){
@@ -54,7 +55,7 @@ public class AnonymousClassBuilder {
 				anonymousClass = new ComplementClass(String.valueOf("Complement") + complementCounter, ontClass, codeModel, members);
 				complementClasses.put(code, (ComplementClass) anonymousClass);
 			}
-
+			break;
 		default:
 			break;
 		}

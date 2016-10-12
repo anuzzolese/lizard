@@ -57,9 +57,9 @@ public abstract class BooleanAnonClass extends OntologyCodeClass {
             String packageName = codeModel.rootPackage().name();
             codeModel._package(packageName);
             
-            String classCanonicalName = Constants.ANON_PACKAGE + "." + classNameSuffix + id;
+            super.entityName = Constants.ANON_PACKAGE + "." + classNameSuffix + id;
             
-            super.jClass = codeModel._class(classCanonicalName);
+            super.jClass = codeModel._class(super.entityName);
             ((JDefinedClass)super.jClass)._extends(InMemoryLizardAnonClass.class);
             
             JMethod unionConstructor = ((JDefinedClass)super.jClass).constructor(JMod.PUBLIC);

@@ -15,7 +15,6 @@ import javax.ws.rs.core.Response.Status;
 import org.apache.jena.ontology.OntResource;
 
 import com.sun.codemodel.JBlock;
-import com.sun.codemodel.JClass;
 import com.sun.codemodel.JCodeModel;
 import com.sun.codemodel.JConditional;
 import com.sun.codemodel.JDefinedClass;
@@ -36,6 +35,7 @@ import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeClass;
 import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeInterface;
 import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeMethod;
 import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeModel;
+import it.cnr.istc.stlab.lizard.commons.model.anon.BooleanAnonClass;
 import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeMethodType;
 
 public class RestOntologyCodeMethod extends OntologyCodeMethod {
@@ -149,12 +149,22 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 							
 							
 							AbstractOntologyCodeClass r = ((ArrayList<AbstractOntologyCodeClass>)domain).get(0);
-							JClass rangeJClass = r.asJDefinedClass();
-							
 							AbstractOntologyCodeClass o = ontologyModel.getOntologyClass(owner.getOntResource(), BeanOntologyCodeInterface.class);
 							
+							OntResource rOntRes = r.getOntResource();
+							OntologyCodeClass beanClass = null;
 							
-							OntologyCodeClass beanClass = ontologyModel.getOntologyClass(r.getOntResource(), BeanOntologyCodeClass.class);
+							boolean anon = false;
+							if(rOntRes.isURIResource())
+								beanClass = ontologyModel.getOntologyClass(rOntRes, BeanOntologyCodeClass.class);
+							else {
+								
+								anon = true;
+								beanClass = ontologyModel.getOntologyClass(rOntRes, BooleanAnonClass.class);
+								if(beanClass == null){
+									beanClass = ontologyModel.createAnonClass(rOntRes.asClass());
+								}
+							}
 							
 							
 							JType entityBeanSetType = null;
@@ -207,9 +217,13 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 							if(methodResource.isDatatypeProperty()){
 								entityForEachBlock.add(entityRetSetVar.invoke("add").arg(forEach.var()));
 							}
-							else {
+							else if(!anon){
 								castExpression = JExpr.cast(ontologyModel.getOntologyClass(beanClass.getOntResource(), JenaOntologyCodeClass.class).asJDefinedClass(), forEach.var());
 								entityForEachBlock.add(entityRetSetVar.invoke("add").arg(castExpression.invoke("asBean")));
+							}
+							else {
+								castExpression = JExpr.cast(ontologyModel.getOntologyClass(beanClass.getOntResource(), BooleanAnonClass.class).asJDefinedClass(), forEach.var());
+								entityForEachBlock.add(entityRetSetVar.invoke("add").arg(castExpression));
 							}
 							
 							entityIfThenBlock.assign(entityResponseBuilderVar, codeModel.ref(Response.class).staticInvoke("ok").arg(retSetVar));

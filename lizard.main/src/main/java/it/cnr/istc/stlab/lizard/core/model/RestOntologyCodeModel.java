@@ -213,7 +213,8 @@ public class RestOntologyCodeModel implements OntologyCodeModel {
         return ontologyClass;
     }
     
-    public BooleanAnonClass createAnonClass(OntResource ontResource){
+    @Override
+    public BooleanAnonClass createAnonClass(OntClass ontResource){
     	
     	BooleanAnonClass anonClass = null;
     	if(ontResource.isClass()){
@@ -293,7 +294,7 @@ public class RestOntologyCodeModel implements OntologyCodeModel {
     public <T extends AbstractOntologyCodeClass> T createOntologyClass(OntResource resource, Class<T> ontologyEntityClass) throws NotAvailableOntologyCodeEntityException {
         T ontologyClass = null;
         if(resource.isAnon()) 
-        	ontologyClass = (T) createAnonClass(resource);
+        	ontologyClass = (T) createAnonClass(resource.asClass());
         else{
         	if(DatatypeCodeInterface.class.isAssignableFrom(ontologyEntityClass))
     			try {
@@ -317,7 +318,7 @@ public class RestOntologyCodeModel implements OntologyCodeModel {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends AbstractOntologyCodeClass> T getOntologyClass(OntResource ontResource, Class<T> ontologyClass) {
-    	return (T)entityMap.get(ontologyClass).get(ontResource);
+		return (T)entityMap.get(ontologyClass).get(ontResource);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -326,69 +327,6 @@ public class RestOntologyCodeModel implements OntologyCodeModel {
 		return (Map<OntResource, T>) entityMap.get(ontologyEntityClass);
 	}
 
-	@Override
-	public BooleanAnonClass createAnonClass(OntClass ontClass) {
-    	
-    	BooleanAnonClass anonClass = null;
-    	BooleanClassDescription booleanClassDescription = null;
-    	if(ontClass.isUnionClass()) {
-        	booleanClassDescription = ontClass.asUnionClass();
-        	
-        }
-    	else if(ontClass.isIntersectionClass()) {
-    		booleanClassDescription = ontClass.asIntersectionClass();
-    	}
-        else if(ontClass.isComplementClass()) {
-        	booleanClassDescription = ontClass.asComplementClass();
-        }
-    	
-    	if(booleanClassDescription != null){
-    		
-    		ExtendedIterator<? extends OntClass> members = booleanClassDescription.listOperands();
-    		
-    		Set<AbstractOntologyCodeClass> memberClasses = new HashSet<AbstractOntologyCodeClass>();
-    		while(members.hasNext()){
-    			OntClass member = members.next();
-    			
-    			AbstractOntologyCodeClass memberClass = null;
-    			
-    			if(member.isURIResource()) {
-    				//memberClass = createInterface(member);
-    			}
-                else memberClass = createAnonClass(member);
-    			
-    			if(memberClass != null){
-            		memberClasses.add(memberClass);
-            	}
-    		}
-    		
-    		if(!memberClasses.isEmpty()){
-    			
-    			AbstractOntologyCodeClass[] membs = new AbstractOntologyCodeClass[memberClasses.size()];
-    			memberClasses.toArray(membs);
-    			
-    			if(ontClass.isUnionClass()) {
-    	        	anonClass = createAnonClass(AnonClassType.Union, ontClass, membs);
-    	        	
-    	        }
-    	    	else if(ontClass.isIntersectionClass()) {
-    	    		anonClass = createAnonClass(AnonClassType.Intersection, ontClass, membs);
-    	    		booleanClassDescription = ontClass.asIntersectionClass();
-    	    	}
-    	        else if(ontClass.isComplementClass()) {
-    	        	anonClass = createAnonClass(AnonClassType.Complement, ontClass, membs);
-    	        	booleanClassDescription = ontClass.asComplementClass();
-    	        }
-    			
-    		}
-    		
-    	}
-    	
-    	return anonClass;
-    }
-	
-	
-	
 	public JCodeModel asJCodeModel(){
         return codeModel;
     }
