@@ -27,6 +27,7 @@ public class LizardClass implements LizardInterface {
     
     protected LizardClass(RDFNode individual, OntResource classResource) {
     	this();
+    	System.out.println("LizardClass constructor "+individual);
         this.individual = individual;
         this.classResource = classResource;
     }
