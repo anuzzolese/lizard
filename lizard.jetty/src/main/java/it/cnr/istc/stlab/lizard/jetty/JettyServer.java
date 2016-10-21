@@ -25,7 +25,7 @@ public class JettyServer {
 		log.info("Starting Jetty.");
 
 		int port;
-		if(args.length > 0){
+		if(args.length > 0){	
 			String portString = args[0];
 			
 			if(portString == null) port = 8080;
