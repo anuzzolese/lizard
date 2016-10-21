@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -362,7 +363,7 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
     private void createMethods(AbstractOntologyCodeClass owner, OntologyCodeModel ontologyModel){
 
     	OntClass ontClass = ontologyModel.asOntModel().getOntClass(owner.getOntResource().getURI());
-        
+         
         ExtendedIterator<OntProperty> propIt = ontClass.listDeclaredProperties();
         while(propIt.hasNext()){
             
@@ -484,6 +485,7 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
         OntClass ontClass = ontologyModel.asOntModel().getOntClass(owner.getOntResource().getURI());
         
         ExtendedIterator<OntProperty> propIt = ontClass.listDeclaredProperties();
+        
         while(propIt.hasNext()){
             
             OntProperty ontProperty = propIt.next();
@@ -624,8 +626,8 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
     }
     
     public static void main(String[] args) {
-        System.setProperty("M2_HOME", "/usr/local/apache-maven-3.1.1");
-        System.setProperty("JAVA_HOME", "/Library/Java/JavaVirtualMachines/jdk1.8.0_66.jdk/Contents/Home");
+        System.setProperty("M2_HOME", "/Users/lgu/Programs/apache-maven");
+        System.setProperty("JAVA_HOME", "/Library/Java/JavaVirtualMachines/jdk1.8.0_25.jdk/Contents/Home");
         //codegen.generate();
         URI uri = null;
         try {

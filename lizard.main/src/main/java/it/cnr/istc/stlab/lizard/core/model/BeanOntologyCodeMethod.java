@@ -1,5 +1,18 @@
 package it.cnr.istc.stlab.lizard.core.model;
 
+import it.cnr.istc.stlab.lizard.commons.Constants;
+import it.cnr.istc.stlab.lizard.commons.LizardInterface;
+import it.cnr.istc.stlab.lizard.commons.PrefixRegistry;
+import it.cnr.istc.stlab.lizard.commons.annotations.ObjectPropertyAnnotation;
+import it.cnr.istc.stlab.lizard.commons.jena.RuntimeJenaLizardContext;
+import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClass;
+import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClassImpl;
+import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeClass;
+import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeInterface;
+import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeMethod;
+import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeModel;
+import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeMethodType;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -27,21 +40,6 @@ import com.sun.codemodel.JType;
 import com.sun.codemodel.JVar;
 import com.sun.codemodel.JWhileLoop;
 
-import it.cnr.istc.stlab.lizard.commons.Constants;
-import it.cnr.istc.stlab.lizard.commons.LizardInterface;
-import it.cnr.istc.stlab.lizard.commons.PrefixRegistry;
-import it.cnr.istc.stlab.lizard.commons.annotations.ObjectPropertyAnnotation;
-import it.cnr.istc.stlab.lizard.commons.jena.RuntimeJenaLizardContext;
-import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClass;
-import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClassImpl;
-import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeClass;
-import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeInterface;
-import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeMethod;
-import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeModel;
-import it.cnr.istc.stlab.lizard.commons.model.anon.BooleanAnonClass;
-import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeClassType;
-import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeMethodType;
-
 public class BeanOntologyCodeMethod extends OntologyCodeMethod {
 
 	BeanOntologyCodeMethod(OntologyCodeMethodType methodType, OntResource methodResource, AbstractOntologyCodeClass owner, Collection<AbstractOntologyCodeClass> domain, AbstractOntologyCodeClass range, OntologyCodeModel ontologyModel, JCodeModel codeModel) {
@@ -68,7 +66,9 @@ public class BeanOntologyCodeMethod extends OntologyCodeMethod {
             
             if(methodType == OntologyCodeMethodType.Get) {
             	JType setClass = codeModel.ref(Set.class).narrow(range.asJDefinedClass());
-                jMethod = ((JDefinedClass)owner.asJDefinedClass()).method(1, setClass, entityName);
+//                jMethod = ((JDefinedClass)owner.asJDefinedClass()).method(1, setClass, entityName);
+            	String methodName = entityName.substring(0,1).toUpperCase() + entityName.substring(1);
+            	jMethod = ((JDefinedClass)owner.asJDefinedClass()).method(1, setClass, "get" + methodName);
             }
             else {
             	

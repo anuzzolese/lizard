@@ -71,7 +71,9 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
             if(methodType == OntologyCodeMethodType.Get) {
             	JType setClass = codeModel.ref(Set.class).narrow(range.asJDefinedClass());
             	JDefinedClass jOwner = ((JDefinedClass)owner.asJDefinedClass());
-                jMethod = jOwner.method(1, setClass, entityName);
+            	String methodName = "get"+ entityName.substring(0,1).toUpperCase() + entityName.substring(1);
+                jMethod = jOwner.method(1, setClass, methodName);
+//            	jMethod = jOwner.method(1, setClass, entityName);
                 
                 /*
                  * Code the method for converting a JenaOntologyClass to its corresponding Java bean.
@@ -94,9 +96,10 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
                 JBlock asBeanMethodBody = asBeanMethod.body();
                 
                 String beanSetMethodName = "set" + entityName.substring(0,1).toUpperCase() + entityName.substring(1);
+                String beanGetMethodName = "get" + entityName.substring(0,1).toUpperCase() + entityName.substring(1);
                 
                 //asBeanMethodBody.directStatement(name + "." + beanSetMethodName + "(" + JExpr._this().invoke(jMethod). + ");");
-                asBeanMethodBody.directStatement(name + "." + beanSetMethodName + "(this." + entityName + "());");
+                asBeanMethodBody.directStatement(name + "." + beanSetMethodName + "(this." + beanGetMethodName + "());");
                 
                 
             }

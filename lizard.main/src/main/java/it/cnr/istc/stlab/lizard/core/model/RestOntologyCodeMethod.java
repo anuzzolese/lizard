@@ -170,8 +170,11 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 							JType entityBeanSetType = null;
 							JType entityBeanHashSetType = null;
 							
+							String getMethodName = "get"+entityName.substring(0,1).toUpperCase() + entityName.substring(1);
+							
 							JDefinedClass jdc = (JDefinedClass)ontologyModel.getOntologyClass(owner.getOntResource(), BeanOntologyCodeInterface.class).asJDefinedClass();
-							JMethod meth = jdc.getMethod(entityName, new JType[]{});
+//							JMethod meth = jdc.getMethod(entityName, new JType[]{});
+							JMethod meth = jdc.getMethod(getMethodName, new JType[]{});
 							
 							JType methRetType = meth.type();
 							
@@ -202,7 +205,8 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 							
 							JVar entityVar = entityMethodBody.decl(o.asJDefinedClass(), "_entity", o.asJDefinedClass().staticInvoke("get").arg(idVar));
 							
-							JVar entitykbSetVar = entityMethodBody.decl(entitySetType, "_kbSet", entityVar.invoke(entityName));
+							JVar entitykbSetVar = entityMethodBody.decl(entitySetType, "_kbSet", entityVar.invoke(getMethodName));
+//							JVar entitykbSetVar = entityMethodBody.decl(entitySetType, "_kbSet", entityVar.invoke(entityName));
 							JVar entityRetSetVar = entityMethodBody.decl(entityBeanSetType, "_retSet", JExpr._new(entityBeanHashSetType));
 							
 							JConditional entityIfBlock = entityMethodBody._if(kbSetVar.ne(JExpr._null()));
