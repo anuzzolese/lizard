@@ -16,4 +16,8 @@ public interface LizardInterface {
     Object getPropertyValue(OntResource ontResource, Class<? extends Object> objectClass);
     
     void setPropertyValue(OntResource ontResource, Object object);
+    
+    String getId();
+    
+    void setId(String id);
 }
