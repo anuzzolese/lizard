@@ -21,10 +21,8 @@ public class LizardClass implements LizardInterface {
 
 	protected LizardClass(RDFNode individual, OntResource classResource) {
 		this();
-		System.out.println("LizardClass constructor " + individual);
 		if (individual.isURIResource()) {
 			this.id = individual.asResource().getURI();
-			System.out.println("Setting uri id "+this.id);
 		}
 		this.individual = individual;
 		this.classResource = classResource;
