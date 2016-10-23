@@ -22,6 +22,7 @@ import com.sun.codemodel.JAnnotationUse;
 import com.sun.codemodel.JBlock;
 import com.sun.codemodel.JClass;
 import com.sun.codemodel.JCodeModel;
+import com.sun.codemodel.JConditional;
 import com.sun.codemodel.JDefinedClass;
 import com.sun.codemodel.JExpr;
 import com.sun.codemodel.JFieldVar;
@@ -78,46 +79,59 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
             	JDefinedClass jOwner = ((JDefinedClass)owner.asJDefinedClass());
             	String methodName = "get"+ entityName.substring(0,1).toUpperCase() + entityName.substring(1);
                 jMethod = jOwner.method(1, setClass, methodName);
-//            	jMethod = jOwner.method(1, setClass, entityName);
-                
                 /*
                  * Code the method for converting a JenaOntologyClass to its corresponding Java bean.
                  */
                 JMethod asBeanMethod = jOwner.getMethod("asBean", new JType[]{});
+                JMethod asMicroBeanMethod = jOwner.getMethod("asMicroBean", new JType[]{});
+                
                 JVar beanVar = null;
-                JVar modelVar = null;
+                JVar beanVarMB = null;
+                
                 String name = owner.asJDefinedClass().name();
             	name = name.substring(0, 1).toLowerCase() + name.substring(1);
+            	
                 if(asBeanMethod == null){
                 	
                 	JClass beanClass = ontologyModel.getOntologyClass(owner.getOntResource(), BeanOntologyCodeClass.class).asJDefinedClass();
                 	
                 	asBeanMethod = jOwner.method(JMod.PUBLIC, beanClass, "asBean");
+                	asMicroBeanMethod = jOwner.method(JMod.PUBLIC, beanClass, "asMicroBean");
+                	
                 	JBlock asBeanMethodBody = asBeanMethod.body();
+                	JBlock asMicroBeanMethodBody = asMicroBeanMethod.body();
                 	
                 	JVar jenaModelVar = asBeanMethodBody.decl(jCodeModel._ref(Model.class), "model", jCodeModel.ref(RuntimeJenaLizardContext.class).staticInvoke("getContext").invoke("getModel"));
+                	JVar jenaModelVarMB = asMicroBeanMethodBody.decl(jCodeModel._ref(Model.class), "model", jCodeModel.ref(RuntimeJenaLizardContext.class).staticInvoke("getContext").invoke("getModel"));
                 	
-                	//Query query = QueryFactory.create(queryString) ;
                 	JVar queryVar = asBeanMethodBody.decl(jCodeModel._ref(Query.class), "query", jCodeModel.ref(QueryFactory.class).staticInvoke("create").arg(JExpr.lit("DESCRIBE <").plus(JExpr._super().ref("individual").invoke("asResource").invoke("getURI").plus(JExpr.lit(">")))));
+                	JVar queryVarMB = asMicroBeanMethodBody.decl(jCodeModel._ref(Query.class), "query", jCodeModel.ref(QueryFactory.class).staticInvoke("create").arg(JExpr.lit("DESCRIBE <").plus(JExpr._super().ref("individual").invoke("asResource").invoke("getURI").plus(JExpr.lit(">")))));
                 	
-                	// QueryExecution qexec = QueryExecutionFactory.create(query, model);
                 	JVar qexecVar = asBeanMethodBody.decl(jCodeModel._ref(QueryExecution.class), "qexec", jCodeModel.ref(QueryExecutionFactory.class).staticInvoke("create").arg(queryVar).arg(jenaModelVar));
+                	JVar qexecVarMB = asMicroBeanMethodBody.decl(jCodeModel._ref(QueryExecution.class), "qexec", jCodeModel.ref(QueryExecutionFactory.class).staticInvoke("create").arg(queryVarMB).arg(jenaModelVarMB));
                 	
-                	modelVar = asBeanMethodBody.decl(jCodeModel._ref(Model.class), "m", qexecVar.invoke("execDescribe"));
+                	asBeanMethodBody.decl(jCodeModel._ref(Model.class), "m", qexecVar.invoke("execDescribe"));
+                	asMicroBeanMethodBody.decl(jCodeModel._ref(Model.class), "m", qexecVarMB.invoke("execDescribe"));
                 	
                 	beanVar = asBeanMethodBody.decl(beanClass, name, JExpr._new(beanClass));
+                	beanVarMB = asMicroBeanMethodBody.decl(beanClass, name, JExpr._new(beanClass));
                 	
                 	asBeanMethodBody._return(beanVar);
+                	asMicroBeanMethodBody._return(beanVarMB);
+                	
                 	asBeanMethodBody.pos(asBeanMethodBody.pos()-1);
+                	asMicroBeanMethodBody.pos(asMicroBeanMethodBody.pos()-1);
                 	
                 }
                 JBlock asBeanMethodBody = asBeanMethod.body();
+                JBlock asMicroBeanMethodBody = asMicroBeanMethod.body();
                 
                 String beanSetMethodName = "set" + entityName.substring(0,1).toUpperCase() + entityName.substring(1);
                 String beanGetMethodName = "get" + entityName.substring(0,1).toUpperCase() + entityName.substring(1);
                 
                 //asBeanMethodBody.directStatement(name + "." + beanSetMethodName + "(" + JExpr._this().invoke(jMethod). + ");");
-                asBeanMethodBody.directStatement(name + "." + beanSetMethodName + "(this." + beanGetMethodName + "(m));");
+                asBeanMethodBody.directStatement(name + "." + beanSetMethodName + "(this." + beanGetMethodName + "(m,false));");
+                asMicroBeanMethodBody.directStatement(name + "." + beanSetMethodName + "(this." + beanGetMethodName + "(m,true));");
                 
             }
             else {
@@ -182,27 +196,7 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
     	String methodName = "get"+ entityName.substring(0,1).toUpperCase() + entityName.substring(1);
         JMethod sideGetMethod = jOwner.method(JMod.PRIVATE, setClass, methodName);
         JVar jenaModelVar = sideGetMethod.param(Model.class, "model");
-        
-        
-//        JBlock methodBody = sideGetMethod.body();
-//        JClass hashSetClass = jCodeModel.ref(HashSet.class).narrow(range.asJDefinedClass());
-//        
-//        JVar returnVar = methodBody.decl(setClass, "retValue", JExpr._new(hashSetClass));
-//        
-//        JVar ontPropertyVar = methodBody.decl(jCodeModel._ref(Property.class), "predicate", jCodeModel.ref(ModelFactory.class).staticInvoke("createDefaultModel").invoke("createProperty").arg(ontResource.toString()));
-//        
-//        JVar stmtIteratorVar = methodBody.decl(jCodeModel._ref(StmtIterator.class), "stmtIt", 
-//    			jenaModelVar.invoke("listStatements")
-//    				.arg(JExpr.cast(jCodeModel._ref(Resource.class), JExpr._super().ref("individual")))
-//    				.arg(ontPropertyVar)
-//    				.arg(JExpr.cast(jCodeModel._ref(RDFNode.class), JExpr._null())));
-//        
-//        JWhileLoop stmtItHasNextWhile = methodBody._while(stmtIteratorVar.invoke("hasNext"));
-//    	JBlock stmtItHasNextWhileBlock = stmtItHasNextWhile.body();
-//    	JVar stmtVar = stmtItHasNextWhileBlock.decl(jCodeModel._ref(Statement.class), "stmt", stmtIteratorVar.invoke("next"));
-//    	JVar stmtObjectVar = stmtItHasNextWhileBlock.decl(jCodeModel._ref(RDFNode.class), "object", stmtVar.invoke("getObject"));
-        
-        
+        JVar isForMicroBeanVar = sideGetMethod.param(Boolean.class, "isForMicroBean");
     	
     	/*
          * Add the body to the method.
@@ -234,18 +228,24 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
                 	JClass rangeClass = range.asJDefinedClass();
                 	
                 	if(range.getOntResource() != null){
+                		
                 		OntResource rangeRes = range.getOntResource();
                 		AbstractOntologyCodeClass rangeConcreteClass = null;
-                		if(rangeRes.isURIResource())
+                		AbstractOntologyCodeClass rangeConcreteClassBean = null;
+                		
+                		if(rangeRes.isURIResource()){
                 			rangeConcreteClass = ontologyModel.getOntologyClass(range.getOntResource(), JenaOntologyCodeClass.class);
-                		else rangeConcreteClass = ontologyModel.getOntologyClass(range.getOntResource(), BooleanAnonClass.class);
+                			rangeConcreteClassBean = ontologyModel.getOntologyClass(range.getOntResource(), BeanOntologyCodeClass.class);
+                		} else {
+                			rangeConcreteClass = ontologyModel.getOntologyClass(range.getOntResource(), BooleanAnonClass.class);
+                		}
                 		
 	                	if(rangeConcreteClass == null){
 	                		try {
-	                			
 	                			OntologyCodeInterface rangeInterface = ontologyModel.getOntologyClass(range.getOntResource(), BeanOntologyCodeInterface.class);
 	                			if(rangeInterface != null){
 		                			rangeConcreteClass = ontologyModel.createOntologyClass(range.getOntResource(), JenaOntologyCodeClass.class);
+		                			rangeConcreteClassBean = ontologyModel.createOntologyClass(range.getOntResource(), BeanOntologyCodeClass.class);
 									ontologyModel.createClassImplements((AbstractOntologyCodeClassImpl)rangeConcreteClass, rangeInterface);
 	                			}
 	                			else{
@@ -257,8 +257,6 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 							} catch (NotAvailableOntologyCodeEntityException e) {
 								e.printStackTrace();
 							}
-	                		
-	                		//ontologyModel.getClassMap().put(range.getOntResource(), (OntologyCodeClass)rangeConcreteClass);
 	                	}
 	                	
 	                	JVar retObj = null;
@@ -267,15 +265,25 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 	                		retObj = stmtItHasNextWhileBlock.decl(rangeClass, "obj", JExpr.cast(rangeClass, objectLiteralVar.invoke("getValue")));
 	                	}
 	                	else{
-	                		retObj = stmtItHasNextWhileBlock.decl(rangeClass, "obj", JExpr._new(rangeConcreteClass.asJDefinedClass()).arg(stmtObjectVar));
+	                		if(rangeConcreteClassBean!=null){
+	                			retObj = stmtItHasNextWhileBlock.decl(rangeClass, "obj", JExpr._null());
+	                			JConditional condition = stmtItHasNextWhileBlock._if(isForMicroBeanVar);
+	                			JBlock thenBlock = condition._then();
+	                			thenBlock.assign(retObj, JExpr._new(rangeConcreteClassBean.asJDefinedClass()).arg(stmtObjectVar));
+	                			JBlock elseBlock = condition._else();
+	                			elseBlock.assign(retObj, JExpr._new(rangeConcreteClass.asJDefinedClass()).arg(stmtObjectVar));
+	                		}else{
+	                			//TODO manage problem with AnonClasses
+	                			retObj=stmtItHasNextWhileBlock.decl(rangeClass,"obj",JExpr._new(rangeConcreteClass.asJDefinedClass()).arg(stmtObjectVar));
+	                		}
+	                		
 	                	}
 	                	stmtItHasNextWhileBlock.add(returnVar.invoke("add").arg(retObj));
 	                	
 	                	methodBody._return(returnVar);
                 	}
                 }
-            }
-            else {
+            } else {
             	if(owner instanceof OntologyCodeClass){
 
                 	JBlock methodBody = jMethod.body();
@@ -309,8 +317,6 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 	                	}	
                     	
             			forEachBlock.add(invocation);	
-            				
-            				
                     	
                     	paramCounter += 1;
                 	}

@@ -1,5 +1,24 @@
 package it.cnr.istc.stlab.lizard.core;
 
+import it.cnr.istc.stlab.lizard.commons.MavenUtils;
+import it.cnr.istc.stlab.lizard.commons.OntologyCodeProject;
+import it.cnr.istc.stlab.lizard.commons.exception.NotAvailableOntologyCodeEntityException;
+import it.cnr.istc.stlab.lizard.commons.inmemory.RestInterface;
+import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClass;
+import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClassImpl;
+import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeClass;
+import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeInterface;
+import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeModel;
+import it.cnr.istc.stlab.lizard.commons.model.anon.BooleanAnonClass;
+import it.cnr.istc.stlab.lizard.commons.model.datatype.DatatypeCodeInterface;
+import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeMethodType;
+import it.cnr.istc.stlab.lizard.commons.recipe.OntologyCodeGenerationRecipe;
+import it.cnr.istc.stlab.lizard.core.model.BeanOntologyCodeClass;
+import it.cnr.istc.stlab.lizard.core.model.BeanOntologyCodeInterface;
+import it.cnr.istc.stlab.lizard.core.model.JenaOntologyCodeClass;
+import it.cnr.istc.stlab.lizard.core.model.RestOntologyCodeClass;
+import it.cnr.istc.stlab.lizard.core.model.RestOntologyCodeModel;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -11,7 +30,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,25 +51,6 @@ import org.apache.jena.vocabulary.RDFS;
 
 import com.sun.codemodel.CodeWriter;
 import com.sun.codemodel.writer.FileCodeWriter;
-
-import it.cnr.istc.stlab.lizard.commons.MavenUtils;
-import it.cnr.istc.stlab.lizard.commons.OntologyCodeProject;
-import it.cnr.istc.stlab.lizard.commons.exception.NotAvailableOntologyCodeEntityException;
-import it.cnr.istc.stlab.lizard.commons.inmemory.RestInterface;
-import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClass;
-import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClassImpl;
-import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeClass;
-import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeInterface;
-import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeModel;
-import it.cnr.istc.stlab.lizard.commons.model.anon.BooleanAnonClass;
-import it.cnr.istc.stlab.lizard.commons.model.datatype.DatatypeCodeInterface;
-import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeMethodType;
-import it.cnr.istc.stlab.lizard.commons.recipe.OntologyCodeGenerationRecipe;
-import it.cnr.istc.stlab.lizard.core.model.BeanOntologyCodeClass;
-import it.cnr.istc.stlab.lizard.core.model.BeanOntologyCodeInterface;
-import it.cnr.istc.stlab.lizard.core.model.JenaOntologyCodeClass;
-import it.cnr.istc.stlab.lizard.core.model.RestOntologyCodeClass;
-import it.cnr.istc.stlab.lizard.core.model.RestOntologyCodeModel;
 
 public class LizardCore implements OntologyCodeGenerationRecipe {
 
