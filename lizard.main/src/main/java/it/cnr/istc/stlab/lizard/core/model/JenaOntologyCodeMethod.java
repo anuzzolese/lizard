@@ -73,7 +73,7 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
             
             if(methodType == OntologyCodeMethodType.Get) {
             	
-            	addSideGetMethod(codeModel);
+            	addSideGetMethod(codeModel,methodResource);
             	
             	JType setClass = codeModel.ref(Set.class).narrow(range.asJDefinedClass());
             	JDefinedClass jOwner = ((JDefinedClass)owner.asJDefinedClass());
@@ -123,15 +123,20 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
                 	asMicroBeanMethodBody.pos(asMicroBeanMethodBody.pos()-1);
                 	
                 }
+                
                 JBlock asBeanMethodBody = asBeanMethod.body();
                 JBlock asMicroBeanMethodBody = asMicroBeanMethod.body();
                 
                 String beanSetMethodName = "set" + entityName.substring(0,1).toUpperCase() + entityName.substring(1);
                 String beanGetMethodName = "get" + entityName.substring(0,1).toUpperCase() + entityName.substring(1);
                 
-                //asBeanMethodBody.directStatement(name + "." + beanSetMethodName + "(" + JExpr._this().invoke(jMethod). + ");");
-                asBeanMethodBody.directStatement(name + "." + beanSetMethodName + "(this." + beanGetMethodName + "(m,false));");
-                asMicroBeanMethodBody.directStatement(name + "." + beanSetMethodName + "(this." + beanGetMethodName + "(m,true));");
+                if(methodResource.isDatatypeProperty()){
+                	asBeanMethodBody.directStatement(name + "." + beanSetMethodName + "(this." + beanGetMethodName + "(m));");
+                	asMicroBeanMethodBody.directStatement(name + "." + beanSetMethodName + "(this." + beanGetMethodName + "(m));");
+                }else{
+                	asBeanMethodBody.directStatement(name + "." + beanSetMethodName + "(this." + beanGetMethodName + "(m,false));");
+                	asMicroBeanMethodBody.directStatement(name + "." + beanSetMethodName + "(this." + beanGetMethodName + "(m,true));");
+                }
                 
             }
             else {
@@ -188,7 +193,7 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
     	return methodType.hashCode() + super.hashCode();
     }
     
-    private void addSideGetMethod(JCodeModel codeModel){
+    private void addSideGetMethod(JCodeModel codeModel, OntResource methodResource){
     	
     	//TODO
     	JType setClass = codeModel.ref(Set.class).narrow(range.asJDefinedClass());
@@ -196,7 +201,11 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
     	String methodName = "get"+ entityName.substring(0,1).toUpperCase() + entityName.substring(1);
         JMethod sideGetMethod = jOwner.method(JMod.PRIVATE, setClass, methodName);
         JVar jenaModelVar = sideGetMethod.param(Model.class, "model");
-        JVar isForMicroBeanVar = sideGetMethod.param(Boolean.class, "isForMicroBean");
+        JVar isForMicroBeanVar = null;
+        if(!methodResource.isDatatypeProperty()){
+        	isForMicroBeanVar = sideGetMethod.param(Boolean.class, "isForMicroBean");
+        }
+        
     	
     	/*
          * Add the body to the method.
@@ -265,7 +274,7 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 	                		retObj = stmtItHasNextWhileBlock.decl(rangeClass, "obj", JExpr.cast(rangeClass, objectLiteralVar.invoke("getValue")));
 	                	}
 	                	else{
-	                		if(rangeConcreteClassBean!=null){
+	                		if(rangeConcreteClassBean!=null && !methodResource.isDatatypeProperty()){
 	                			retObj = stmtItHasNextWhileBlock.decl(rangeClass, "obj", JExpr._null());
 	                			JConditional condition = stmtItHasNextWhileBlock._if(isForMicroBeanVar);
 	                			JBlock thenBlock = condition._then();

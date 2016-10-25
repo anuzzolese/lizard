@@ -319,8 +319,6 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 				e.printStackTrace();
 			}
 	        
-	        
-	        
 	        ExtendedIterator<OntClass> subClasses = ontClass.listSubClasses();
 	        while(subClasses.hasNext()){
 	            OntClass subClass = subClasses.next();

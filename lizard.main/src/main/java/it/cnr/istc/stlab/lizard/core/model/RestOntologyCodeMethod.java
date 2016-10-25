@@ -106,7 +106,7 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 							
 							JBlock forEachBlock = forEach.body();
 							JExpression castExpression = JExpr.cast(ontologyModel.getOntologyClass(owner.getOntResource(), JenaOntologyCodeClass.class).asJDefinedClass(), forEach.var());
-							forEachBlock.add(retSetVar.invoke("add").arg(castExpression.invoke("asBean")));
+							forEachBlock.add(retSetVar.invoke("add").arg(castExpression.invoke("asMicroBean")));
 							
 							ifThenBlock.assign(responseBuilderVar, codeModel.ref(Response.class).staticInvoke("ok").arg(retSetVar));
 							
@@ -223,7 +223,7 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 							}
 							else if(!anon){
 								castExpression = JExpr.cast(ontologyModel.getOntologyClass(beanClass.getOntResource(), JenaOntologyCodeClass.class).asJDefinedClass(), forEach.var());
-								entityForEachBlock.add(entityRetSetVar.invoke("add").arg(castExpression.invoke("asBean")));
+								entityForEachBlock.add(entityRetSetVar.invoke("add").arg(castExpression.invoke("asMicroBean")));
 							}
 							else {
 								castExpression = JExpr.cast(ontologyModel.getOntologyClass(beanClass.getOntResource(), BooleanAnonClass.class).asJDefinedClass(), forEach.var());
