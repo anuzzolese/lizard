@@ -1,9 +1,12 @@
 package it.cnr.istc.stlab.lizard.commons.model;
 
+import it.cnr.istc.stlab.lizard.commons.Constants;
+import it.cnr.istc.stlab.lizard.commons.LizardInterface;
+import it.cnr.istc.stlab.lizard.commons.exception.ClassAlreadyExistsException;
+import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeClassType;
+
 import java.util.HashSet;
 import java.util.Set;
-
-import javax.lang.model.SourceVersion;
 
 import org.apache.jena.ontology.OntResource;
 
@@ -11,11 +14,6 @@ import com.sun.codemodel.ClassType;
 import com.sun.codemodel.JClassAlreadyExistsException;
 import com.sun.codemodel.JCodeModel;
 import com.sun.codemodel.JDefinedClass;
-
-import it.cnr.istc.stlab.lizard.commons.Constants;
-import it.cnr.istc.stlab.lizard.commons.LizardInterface;
-import it.cnr.istc.stlab.lizard.commons.exception.ClassAlreadyExistsException;
-import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeClassType;
 
 public abstract class OntologyCodeInterface extends AbstractOntologyCodeClass {
     

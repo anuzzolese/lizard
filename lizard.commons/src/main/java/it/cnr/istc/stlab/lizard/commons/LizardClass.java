@@ -6,9 +6,12 @@ import java.util.Set;
 import org.apache.jena.ontology.OntResource;
 import org.apache.jena.rdf.model.RDFNode;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties({ "individual", "classResource","propertyMap","extentionalClasses" })
 public class LizardClass implements LizardInterface {
 
-	protected String id;
+//	protected String id;
 	protected RDFNode individual;
 	protected OntResource classResource;
 	protected PropertyMap propertyMap;
@@ -22,7 +25,7 @@ public class LizardClass implements LizardInterface {
 	protected LizardClass(RDFNode individual, OntResource classResource) {
 		this();
 		if (individual.isURIResource()) {
-			this.id = individual.asResource().getURI();
+//			this.id = individual.asResource().getURI();
 		}
 		this.individual = individual;
 		this.classResource = classResource;
@@ -69,12 +72,12 @@ public class LizardClass implements LizardInterface {
 		propertyMap.put(ontResource, object);
 	}
 
-	public String getId() {
-		return id;
-	}
+//	public String getId() {
+//		return id;
+//	}
 
-	public void setId(String id) {
-		this.id = id;
-	}
+//	public void setId(String id) {
+//		this.id = id;
+//	}
 
 }

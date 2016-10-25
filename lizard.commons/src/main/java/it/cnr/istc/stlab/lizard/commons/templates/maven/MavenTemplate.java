@@ -1,7 +1,5 @@
 package it.cnr.istc.stlab.lizard.commons.templates.maven;
 
-import freemarker.cache.ClassTemplateLoader;
-import freemarker.cache.URLTemplateLoader;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import it.cnr.istc.stlab.lizard.commons.templates.AbstractTemplate;

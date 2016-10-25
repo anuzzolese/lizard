@@ -1,13 +1,12 @@
 package it.cnr.istc.stlab.lizard.commons.model.anon;
 
+import it.cnr.istc.stlab.lizard.commons.inmemory.InMemoryLizardClass;
+import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClass;
+
 import java.util.HashSet;
 import java.util.Set;
 
 import com.sun.codemodel.JAnnotationArrayMember;
-
-import it.cnr.istc.stlab.lizard.commons.inmemory.InMemoryLizardClass;
-import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClass;
-import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeClass;
 
 public abstract class BooleanAnonClassEvolution extends InMemoryLizardClass {
 	

@@ -1,7 +1,6 @@
 package it.cnr.istc.stlab.lizard.commons.templates;
 
 
-import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;

@@ -1,5 +1,7 @@
 package it.cnr.istc.stlab.lizard.commons.model;
 
+import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeClassType;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -11,10 +13,6 @@ import org.apache.jena.ontology.OntResource;
 
 import com.sun.codemodel.JClass;
 import com.sun.codemodel.JCodeModel;
-import com.sun.codemodel.JDefinedClass;
-import com.sun.codemodel.JGenerifiable;
-
-import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeClassType;
 
 public abstract class AbstractOntologyCodeClass extends AbstractOntologyCodeEntity {
     
