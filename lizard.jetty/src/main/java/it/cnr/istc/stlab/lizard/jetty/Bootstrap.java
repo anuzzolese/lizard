@@ -32,9 +32,11 @@ public class Bootstrap extends HttpServlet {
 		beanConfig.setLicense("Apache 2.0");
 		beanConfig
 				.setLicenseUrl("http://www.apache.org/licenses/LICENSE-2.0.html");
+		beanConfig.setPrettyPrint(true);
 
 		// Resource package
-		beanConfig.setResourcePackage(FileUtils.getNamePackage(Lizard.class));
+		beanConfig.setResourcePackage(FileUtils.getNamePackage(Lizard.class)
+				+ "," + JettyServer.getRestinterfaces());
 		beanConfig.setScan(true);
 
 	}

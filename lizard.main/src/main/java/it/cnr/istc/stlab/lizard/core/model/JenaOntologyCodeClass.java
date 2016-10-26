@@ -72,6 +72,9 @@ public class JenaOntologyCodeClass extends OntologyCodeClass {
         ifThenBlock.add(invocation);
         
         
+        
+        
+        
         //constructorBody.add(invocation);
         
         
@@ -97,8 +100,23 @@ public class JenaOntologyCodeClass extends OntologyCodeClass {
                 
                 ((JDefinedClass)super.jClass)._extends(LizardClass.class);
                 
+                
                 JAnnotationUse annotation = ((JDefinedClass)super.jClass).annotate(OntologyClass.class);
                 annotation.param("uri", ontResource.getURI());
+                
+                JMethod setIdMethod = ((JDefinedClass)super.jClass).method(JMod.PUBLIC, jCodeModel.VOID , "setId");
+                setIdMethod.param(String.class, "id");
+                setIdMethod.body().directStatement("throw new UnsupportedOperationException(\"Unsupported Operation!\");");
+                
+                JMethod getIdMethod = ((JDefinedClass)super.jClass).method(JMod.PUBLIC, String.class, "getId");
+                getIdMethod.body().directStatement("return super.individual.asResource().getURI();");
+                
+                JMethod setIsCompletedMethod =  ((JDefinedClass)super.jClass).method(JMod.PUBLIC, jCodeModel.VOID, "setIsCompleted");
+                setIsCompletedMethod.param(Boolean.class, "isCompletedMethod");
+                setIsCompletedMethod.body().directStatement("throw new UnsupportedOperationException(\"Unsupported Operation!\");");
+                
+                JMethod getIsCompletedMethod = ((JDefinedClass)super.jClass).method(JMod.PUBLIC, Boolean.class, "getIsCompleted");
+                getIsCompletedMethod.body().directStatement("return true;");
                 
             } catch (JClassAlreadyExistsException e) {
                 throw new ClassAlreadyExistsException(ontResource);

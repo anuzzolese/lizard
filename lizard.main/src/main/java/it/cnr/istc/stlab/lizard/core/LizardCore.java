@@ -50,6 +50,8 @@ import org.apache.jena.vocabulary.OWL2;
 import org.apache.jena.vocabulary.RDFS;
 
 import com.sun.codemodel.CodeWriter;
+import com.sun.codemodel.JDefinedClass;
+import com.sun.codemodel.JMod;
 import com.sun.codemodel.writer.FileCodeWriter;
 
 public class LizardCore implements OntologyCodeGenerationRecipe {
@@ -113,6 +115,12 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
          */
         OntologyCodeInterface ontologyThingInterface = ontologyCodeModel.createOntologyClass(owlThing, BeanOntologyCodeInterface.class);
         createBeanMethods(ontologyThingInterface, ontologyCodeModel);
+        
+        ((JDefinedClass)ontologyThingInterface.asJDefinedClass()).method(JMod.PUBLIC, ontologyCodeModel.asJCodeModel().VOID , "setId").param(String.class, "id");
+        ((JDefinedClass)ontologyThingInterface.asJDefinedClass()).method(JMod.PUBLIC, String.class, "getId");
+        ((JDefinedClass)ontologyThingInterface.asJDefinedClass()).method(JMod.PUBLIC, ontologyCodeModel.asJCodeModel().VOID, "setIsCompleted").param(Boolean.class, "isCompleted");
+        ((JDefinedClass)ontologyThingInterface.asJDefinedClass()).method(JMod.PUBLIC, Boolean.class, "getIsCompleted");
+        
         
         /*
          * Create bean for owl:Thing
@@ -237,17 +245,11 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 			ontologyBaseURI = ontologyURI;
 		}
         
-        
         List<OntClass> roots = OntTools.namedHierarchyRoots(ontModel);
-        
         
         for(OntClass root : roots){
         	visitHierarchyTreeForRest(root, restOntologyModel);
         }
-        
-        
-        
-         
                 
         /*
         CodeWriter writer = new SingleStreamCodeWriter(System.out);
@@ -270,8 +272,7 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
     }
     
     private void visitHierarchyTreeForRest(OntClass ontClass, OntologyCodeModel ontologyModel){
-        
-    	
+
     	OntologyCodeClass ontologyClass;
 		try {
 			OntologyCodeClass bean = ontologyModel.getOntologyClass(ontClass, BeanOntologyCodeClass.class);
@@ -308,7 +309,11 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 	    	//ontologyInterface.createMethods();
 	    	createBeanMethods(ontologyInterface, ontologyModel);
 	    	
-	    	
+	    	((JDefinedClass)ontologyInterface.asJDefinedClass()).method(JMod.PUBLIC, ontologyInterface.getJCodeModel().VOID , "setId").param(String.class, "id");
+	        ((JDefinedClass)ontologyInterface.asJDefinedClass()).method(JMod.PUBLIC, String.class, "getId");
+	        ((JDefinedClass)ontologyInterface.asJDefinedClass()).method(JMod.PUBLIC, ontologyInterface.getJCodeModel().VOID, "setIsCompleted").param(Boolean.class, "isCompleted");
+	        ((JDefinedClass)ontologyInterface.asJDefinedClass()).method(JMod.PUBLIC, Boolean.class, "getIsCompleted");
+	        
 	        
 	        //OntologyCodeClass ontologyClass = addClass(ontClass, ontologyModel);
 	        try {
@@ -599,8 +604,6 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
         		}
         		*/
         		if(onClass != null){
-        			
-        			
         			try {
         				AbstractOntologyCodeClass rangeClass = ontologyModel.createOntologyClass(ontologyModel.asOntModel().getOntResource(onClass), BeanOntologyCodeInterface.class);
 						

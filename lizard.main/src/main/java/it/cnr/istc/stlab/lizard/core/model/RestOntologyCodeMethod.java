@@ -85,8 +85,6 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 							param.annotate(ApiParam.class).param("value", entityName).param("required", false);
 							param.annotate(QueryParam.class).param("value", entityName);
 							
-							
-							
 							JBlock methodBody = jMethod.body();
 							
 							JVar responseBuilderVar = methodBody.decl(codeModel._ref(ResponseBuilder.class), "_responseBuilder", JExpr._null());
@@ -124,8 +122,6 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 							/*
 							 * Entity-centric method
 							 */
-							
-							
 							methodName = "_entityGetBy" + entityName.substring(0,1).toUpperCase() + entityName.substring(1);
 							
 							JMethod jMethod = ((JDefinedClass)owner.asJDefinedClass()).method(JMod.PUBLIC, responseType, methodName);

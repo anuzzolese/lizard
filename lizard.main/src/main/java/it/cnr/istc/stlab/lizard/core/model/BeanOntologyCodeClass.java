@@ -1,5 +1,14 @@
 package it.cnr.istc.stlab.lizard.core.model;
 
+import it.cnr.istc.stlab.lizard.commons.Constants;
+import it.cnr.istc.stlab.lizard.commons.LizardClass;
+import it.cnr.istc.stlab.lizard.commons.annotations.OntologyClass;
+import it.cnr.istc.stlab.lizard.commons.exception.ClassAlreadyExistsException;
+import it.cnr.istc.stlab.lizard.commons.inmemory.InMemoryLizardClass;
+import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeClass;
+import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeModel;
+import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeClassType;
+
 import java.util.Set;
 
 import org.apache.jena.ontology.OntClass;
@@ -18,15 +27,6 @@ import com.sun.codemodel.JMethod;
 import com.sun.codemodel.JMod;
 import com.sun.codemodel.JType;
 import com.sun.codemodel.JVar;
-
-import it.cnr.istc.stlab.lizard.commons.Constants;
-import it.cnr.istc.stlab.lizard.commons.LizardClass;
-import it.cnr.istc.stlab.lizard.commons.annotations.OntologyClass;
-import it.cnr.istc.stlab.lizard.commons.exception.ClassAlreadyExistsException;
-import it.cnr.istc.stlab.lizard.commons.inmemory.InMemoryLizardClass;
-import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeClass;
-import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeModel;
-import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeClassType;
 
 public class BeanOntologyCodeClass extends OntologyCodeClass {
     
@@ -62,8 +62,6 @@ public class BeanOntologyCodeClass extends OntologyCodeClass {
             super.entityName = artifactId + localName + Constants.BEAN_POSTFIX;
             try {
             	super.jClass = jCodeModel._class(entityName, ClassType.CLASS);
-                
-            	
             	/*
             	 * Create empty constructor
             	 */
@@ -79,6 +77,27 @@ public class BeanOntologyCodeClass extends OntologyCodeClass {
                 
                 JAnnotationUse annotation = ((JDefinedClass)super.jClass).annotate(OntologyClass.class);
                 annotation.param("uri", ontResource.getURI());
+                
+                /*
+                 * Create fields: "id", "isCompleted"
+                 */
+                ((JDefinedClass)super.jClass).field(JMod.PRIVATE, String.class, "id");
+                ((JDefinedClass)super.jClass).field(JMod.PRIVATE, Boolean.class, "isCompleted");
+                /*
+                 * Create get and set method for "id" and "isCompleted"
+                 */
+                JMethod setIdMethod = ((JDefinedClass)super.jClass).method(JMod.PUBLIC, jCodeModel.VOID , "setId");
+                JVar idParam = setIdMethod.param(String.class, "id");
+                setIdMethod.body().assign(JExpr._this().ref("id"), idParam);
+                
+                JMethod getIdMethod = ((JDefinedClass)super.jClass).method(JMod.PUBLIC, String.class, "getId");
+                getIdMethod.body()._return(JExpr._this().ref("id"));
+                
+                JMethod setIsCompletedMethod =  ((JDefinedClass)super.jClass).method(JMod.PUBLIC, jCodeModel.VOID, "setIsCompleted");
+                setIsCompletedMethod.body().assign(JExpr._this().ref("isCompleted"), setIsCompletedMethod.param(Boolean.class, "isCompleted"));
+                
+                JMethod getIsCompletedMethod = ((JDefinedClass)super.jClass).method(JMod.PUBLIC, Boolean.class, "getIsCompleted");
+                getIsCompletedMethod.body()._return(JExpr._this().ref("isCompleted"));
                 
             } catch (JClassAlreadyExistsException e) {
                 throw new ClassAlreadyExistsException(ontResource);

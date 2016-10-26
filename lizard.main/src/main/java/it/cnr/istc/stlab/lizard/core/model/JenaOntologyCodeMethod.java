@@ -1,5 +1,20 @@
 package it.cnr.istc.stlab.lizard.core.model;
 
+import it.cnr.istc.stlab.lizard.commons.Constants;
+import it.cnr.istc.stlab.lizard.commons.PrefixRegistry;
+import it.cnr.istc.stlab.lizard.commons.annotations.ObjectPropertyAnnotation;
+import it.cnr.istc.stlab.lizard.commons.exception.NotAvailableOntologyCodeEntityException;
+import it.cnr.istc.stlab.lizard.commons.jena.RuntimeJenaLizardContext;
+import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClass;
+import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClassImpl;
+import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeClass;
+import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeInterface;
+import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeMethod;
+import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeModel;
+import it.cnr.istc.stlab.lizard.commons.model.anon.BooleanAnonClass;
+import it.cnr.istc.stlab.lizard.commons.model.datatype.DatatypeCodeInterface;
+import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeMethodType;
+
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -7,7 +22,6 @@ import java.util.Set;
 import org.apache.jena.ontology.OntResource;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
-import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
@@ -17,6 +31,8 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
+
+import virtuoso.jena.driver.VirtuosoQueryExecutionFactory;
 
 import com.sun.codemodel.JAnnotationUse;
 import com.sun.codemodel.JBlock;
@@ -33,21 +49,6 @@ import com.sun.codemodel.JMod;
 import com.sun.codemodel.JType;
 import com.sun.codemodel.JVar;
 import com.sun.codemodel.JWhileLoop;
-
-import it.cnr.istc.stlab.lizard.commons.Constants;
-import it.cnr.istc.stlab.lizard.commons.PrefixRegistry;
-import it.cnr.istc.stlab.lizard.commons.annotations.ObjectPropertyAnnotation;
-import it.cnr.istc.stlab.lizard.commons.exception.NotAvailableOntologyCodeEntityException;
-import it.cnr.istc.stlab.lizard.commons.jena.RuntimeJenaLizardContext;
-import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClass;
-import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClassImpl;
-import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeClass;
-import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeInterface;
-import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeMethod;
-import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeModel;
-import it.cnr.istc.stlab.lizard.commons.model.anon.BooleanAnonClass;
-import it.cnr.istc.stlab.lizard.commons.model.datatype.DatatypeCodeInterface;
-import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeMethodType;
 
 public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 
@@ -107,14 +108,19 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
                 	JVar queryVar = asBeanMethodBody.decl(jCodeModel._ref(Query.class), "query", jCodeModel.ref(QueryFactory.class).staticInvoke("create").arg(JExpr.lit("DESCRIBE <").plus(JExpr._super().ref("individual").invoke("asResource").invoke("getURI").plus(JExpr.lit(">")))));
                 	JVar queryVarMB = asMicroBeanMethodBody.decl(jCodeModel._ref(Query.class), "query", jCodeModel.ref(QueryFactory.class).staticInvoke("create").arg(JExpr.lit("DESCRIBE <").plus(JExpr._super().ref("individual").invoke("asResource").invoke("getURI").plus(JExpr.lit(">")))));
                 	
-                	JVar qexecVar = asBeanMethodBody.decl(jCodeModel._ref(QueryExecution.class), "qexec", jCodeModel.ref(QueryExecutionFactory.class).staticInvoke("create").arg(queryVar).arg(jenaModelVar));
-                	JVar qexecVarMB = asMicroBeanMethodBody.decl(jCodeModel._ref(QueryExecution.class), "qexec", jCodeModel.ref(QueryExecutionFactory.class).staticInvoke("create").arg(queryVarMB).arg(jenaModelVarMB));
+                	JVar qexecVar = asBeanMethodBody.decl(jCodeModel._ref(QueryExecution.class), "qexec", jCodeModel.ref(VirtuosoQueryExecutionFactory.class).staticInvoke("create").arg(queryVar).arg(jenaModelVar));
+                	JVar qexecVarMB = asMicroBeanMethodBody.decl(jCodeModel._ref(QueryExecution.class), "qexec", jCodeModel.ref(VirtuosoQueryExecutionFactory.class).staticInvoke("create").arg(queryVarMB).arg(jenaModelVarMB));
                 	
                 	asBeanMethodBody.decl(jCodeModel._ref(Model.class), "m", qexecVar.invoke("execDescribe"));
                 	asMicroBeanMethodBody.decl(jCodeModel._ref(Model.class), "m", qexecVarMB.invoke("execDescribe"));
                 	
                 	beanVar = asBeanMethodBody.decl(beanClass, name, JExpr._new(beanClass));
+                	asBeanMethodBody.directStatement(name+".setId(super.individual.asResource().getURI());");
+                	asBeanMethodBody.directStatement(name+".setIsCompleted(true);");
+                	
                 	beanVarMB = asMicroBeanMethodBody.decl(beanClass, name, JExpr._new(beanClass));
+                	asMicroBeanMethodBody.directStatement(name+".setId(super.individual.asResource().getURI());");
+                	asMicroBeanMethodBody.directStatement(name+".setIsCompleted(true);");
                 	
                 	asBeanMethodBody._return(beanVar);
                 	asMicroBeanMethodBody._return(beanVarMB);
@@ -279,6 +285,8 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 	                			JConditional condition = stmtItHasNextWhileBlock._if(isForMicroBeanVar);
 	                			JBlock thenBlock = condition._then();
 	                			thenBlock.assign(retObj, JExpr._new(rangeConcreteClassBean.asJDefinedClass()).arg(stmtObjectVar));
+	                			thenBlock.directStatement("obj.setId(object.asResource().getURI());");
+	                			thenBlock.directStatement("obj.setIsCompleted(false);");
 	                			JBlock elseBlock = condition._else();
 	                			elseBlock.assign(retObj, JExpr._new(rangeConcreteClass.asJDefinedClass()).arg(stmtObjectVar));
 	                		}else{

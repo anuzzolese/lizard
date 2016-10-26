@@ -14,6 +14,7 @@ import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 
 import org.codehaus.jettison.json.JSONArray;
+import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -58,7 +59,12 @@ public class SetBodyWriter implements MessageBodyWriter<HashSet<?>> {
 				e.printStackTrace();
 			}
 		});
-		entityStream.write(setArray.toString().getBytes());
+		
+		try {
+			entityStream.write(setArray.toString(4).getBytes());
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
 		
 	}
 
