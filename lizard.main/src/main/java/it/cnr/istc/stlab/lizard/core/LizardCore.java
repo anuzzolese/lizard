@@ -219,7 +219,6 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
         
         //addImplementations(ontologyModel, ontologyClasses);
         
-        
         return new OntologyCodeProject(ontologyBaseURI, ontologyCodeModel);
 	}
 	
@@ -313,7 +312,6 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 	        ((JDefinedClass)ontologyInterface.asJDefinedClass()).method(JMod.PUBLIC, String.class, "getId");
 	        ((JDefinedClass)ontologyInterface.asJDefinedClass()).method(JMod.PUBLIC, ontologyInterface.getJCodeModel().VOID, "setIsCompleted").param(Boolean.class, "isCompleted");
 	        ((JDefinedClass)ontologyInterface.asJDefinedClass()).method(JMod.PUBLIC, Boolean.class, "getIsCompleted");
-	        
 	        
 	        //OntologyCodeClass ontologyClass = addClass(ontClass, ontologyModel);
 	        try {
@@ -635,7 +633,7 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
             //uri = new URI("http://stlab.istc.cnr.it/documents/mibact/cultural-ON_xml.owl");
         	//uri = new URI("http://www.ontologydesignpatterns.org/ont/mario/tagging.owl");
         	//uri = new URI("http://www.ontologydesignpatterns.org/ont/framester/framester.owl");
-        	uri = new URI("http://www.ontologydesignpatterns.org/ont/mario/music.owl");
+        	uri = new URI("http://www.ontologydesignpatterns.org/ont/mario/person.owl");
         	//uri = new URI("vocabs/foaf.rdf");
             
             OntologyCodeGenerationRecipe codegen = new LizardCore(uri);

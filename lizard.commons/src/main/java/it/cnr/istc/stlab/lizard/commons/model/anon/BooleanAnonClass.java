@@ -9,6 +9,7 @@ import org.apache.jena.rdf.model.RDFNode;
 
 import com.sun.codemodel.JAnnotationArrayMember;
 import com.sun.codemodel.JBlock;
+import com.sun.codemodel.JClass;
 import com.sun.codemodel.JClassAlreadyExistsException;
 import com.sun.codemodel.JCodeModel;
 import com.sun.codemodel.JConditional;
@@ -65,8 +66,11 @@ public abstract class BooleanAnonClass extends OntologyCodeClass {
             JMethod unionConstructor = ((JDefinedClass)super.jClass).constructor(JMod.PUBLIC);
             JVar ind = unionConstructor.param(RDFNode.class, "individual");
             
+            JVar idVar = ((JDefinedClass)super.jClass).field(JMod.PRIVATE, String.class, "id");
+            
             JExpression expression = codeModel.ref(ModelFactory.class).staticInvoke("createOntologyModel").invoke("createOntResource").arg(ontClass.getId().getLabelString());
             unionConstructor.body().invoke("super").arg(ind).arg(expression);
+            unionConstructor.body().assign(JExpr._this().ref(idVar), ind.invoke("asResource").invoke("getURI"));
             
             JMethod asUnionMethod = ((JDefinedClass)super.jClass).method(JMod.PUBLIC, super.jClass, "asIndividualOf");
             
@@ -107,12 +111,55 @@ public abstract class BooleanAnonClass extends OntologyCodeClass {
             ifValid._then()._return(JExpr._new(super.jClass).arg(unionMethodParam.invoke("getIndividual")));
             ifValid._else()._throw(JExpr._new(codeModel.ref(NotAMemberException.class)).arg("Individual of cannot be part of this union class"));
             
-            if(members != null)
-	            for(AbstractOntologyCodeClass member : members) 
+            if(members != null){
+	            for(AbstractOntologyCodeClass member : members){ 
 	    			addMember(member);
+	    			
+	    			/*
+	    			 * Adding methods to transform the individual object to member objects
+	    			 */
+	    			
+	    			JMethod asBeanOfClassMethod = ((JDefinedClass)super.jClass).method(JMod.PUBLIC, member.asJDefinedClass(), "as"+member.asJDefinedClass().name());
+	    			JBlock asBeanOfClassBody = asBeanOfClassMethod.body();
+	    			
+	    			//TODO fix the quick and dirty solution
+	    			JClass importedClass= codeModel.ref(member.getPackageName()+".jena."+member.asJDefinedClass().name()+"Jena");
+	    			asBeanOfClassBody._return(JExpr._new(importedClass).arg(JExpr._super().ref("individual")).invoke("asMicroBean"));
+	            }
+	            
+	            JClass thingInterfaceClass = codeModel.ref("org.w3._2002._07.owl.Thing");
+	            JMethod asBeanOfClassMethod = ((JDefinedClass)super.jClass).method(JMod.PUBLIC, thingInterfaceClass, "asThing");
+    			JBlock asBeanOfClassBody = asBeanOfClassMethod.body();
+    			
+    			//TODO fix the quick and dirty solution
+    			JClass importedClass= codeModel.ref("org.w3._2002._07.owl.jena.ThingJena");
+    			asBeanOfClassBody._return(JExpr._new(importedClass).arg(JExpr._super().ref("individual")).invoke("asMicroBean"));
+            }
+            
+            /* Create fields: "id", "isCompleted"
+            */
+           
+           ((JDefinedClass)super.jClass).field(JMod.PRIVATE, Boolean.class, "isCompleted");
+           /*
+            * Create get and set method for "id" and "isCompleted"
+            */
+           JMethod setIdMethod = ((JDefinedClass)super.jClass).method(JMod.PUBLIC, jCodeModel.VOID , "setId");
+           setIdMethod.body().assign(JExpr._this().ref("id"), setIdMethod.param(String.class, "id"));
+           
+           JMethod getIdMethod = ((JDefinedClass)super.jClass).method(JMod.PUBLIC, String.class, "getId");
+           getIdMethod.body()._return(JExpr._this().ref("id"));
+           
+           JMethod setIsCompletedMethod =  ((JDefinedClass)super.jClass).method(JMod.PUBLIC, jCodeModel.VOID, "setIsCompleted");
+           setIsCompletedMethod.body().assign(JExpr._this().ref("isCompleted"), setIsCompletedMethod.param(Boolean.class, "isCompleted"));
+           
+           JMethod getIsCompletedMethod = ((JDefinedClass)super.jClass).method(JMod.PUBLIC, Boolean.class, "getIsCompleted");
+           getIsCompletedMethod.body()._return(JExpr._this().ref("isCompleted"));
+           
+            
+            
+            
             
         } catch (JClassAlreadyExistsException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     

@@ -292,6 +292,7 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 	                		}else{
 	                			//TODO manage problem with AnonClasses
 	                			retObj=stmtItHasNextWhileBlock.decl(rangeClass,"obj",JExpr._new(rangeConcreteClass.asJDefinedClass()).arg(stmtObjectVar));
+	                			stmtItHasNextWhileBlock.directStatement("obj.setIsCompleted(false);");
 	                		}
 	                		
 	                	}

@@ -130,8 +130,6 @@ public class BeanOntologyCodeMethod extends OntologyCodeMethod {
         addMethodBody();
     }
     
-    
-    
     @Override
     public int hashCode() {
     	return methodType.hashCode() + super.hashCode();
@@ -169,10 +167,10 @@ public class BeanOntologyCodeMethod extends OntologyCodeMethod {
             else {
             	if(owner instanceof OntologyCodeClass){
             		JBlock methodBody = jMethod.body();
-            		
+//            		System.out.println(entityName);
             		JVar ownerClassField = ownerJClass.fields().get(entityName);
             		if(ownerClassField == null){
-            			//System.out.println(getClass() + " OWNER " + ontResource);
+//            			System.out.println(getClass() + " OWNER " + ontResource);
             			AbstractOntologyCodeClass fieldType = ((ArrayList<AbstractOntologyCodeClass>)domain).get(0);
             			JType setClass = jCodeModel.ref(Set.class).narrow(fieldType.asJDefinedClass());
             			ownerClassField = ownerJClass.field(JMod.PRIVATE, setClass, entityName);

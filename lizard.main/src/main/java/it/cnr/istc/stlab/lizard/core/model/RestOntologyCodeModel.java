@@ -222,7 +222,6 @@ public class RestOntologyCodeModel implements OntologyCodeModel {
 	    	BooleanClassDescription booleanClassDescription = null;
 	    	if(ontClass.isUnionClass()) {
 	        	booleanClassDescription = ontClass.asUnionClass();
-	        	
 	        }
 	    	else if(ontClass.isIntersectionClass()) {
 	    		booleanClassDescription = ontClass.asIntersectionClass();
@@ -318,6 +317,7 @@ public class RestOntologyCodeModel implements OntologyCodeModel {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends AbstractOntologyCodeClass> T getOntologyClass(OntResource ontResource, Class<T> ontologyClass) {
+//		System.out.println(ontResource.getURI());
 		return (T)entityMap.get(ontologyClass).get(ontResource);
 	}
 
