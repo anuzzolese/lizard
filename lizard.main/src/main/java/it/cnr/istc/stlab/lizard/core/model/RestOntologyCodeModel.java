@@ -63,6 +63,7 @@ public class RestOntologyCodeModel implements OntologyCodeModel {
     @SuppressWarnings({"unchecked" })
 	private <T extends AbstractOntologyCodeClass> T createBeanClass(OntResource resource) {
     	
+//    	System.out.println("RestOntologyCodeModel.createBeanClass() "+resource);
     	OntologyCodeClass ontologyClass = null;
         try {
         	if(resource.isURIResource()){
@@ -317,7 +318,7 @@ public class RestOntologyCodeModel implements OntologyCodeModel {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends AbstractOntologyCodeClass> T getOntologyClass(OntResource ontResource, Class<T> ontologyClass) {
-//		System.out.println(ontResource.getURI());
+//		System.out.println("RestOntologyCodeModel.getOntologyClass() "+ontResource);
 		return (T)entityMap.get(ontologyClass).get(ontResource);
 	}
 
