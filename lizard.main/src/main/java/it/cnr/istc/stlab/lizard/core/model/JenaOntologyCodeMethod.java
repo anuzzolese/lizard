@@ -437,7 +437,6 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 					JVar ontPropertyVar = methodBody.decl(jCodeModel._ref(Property.class), "predicate", jCodeModel.ref(ModelFactory.class).staticInvoke("createDefaultModel").invoke("createProperty").arg(ontResource.toString()));
 					JVar jenaModelVar = methodBody.decl(jCodeModel._ref(Model.class), "model", jCodeModel.ref(RuntimeJenaLizardContext.class).staticInvoke("getContext").invoke("getModel"));
 
-					System.out.println("JenaOntologyCodeMethod.addMethodBody() "+owner.getEntityName()+" "+ontResource+" "+(this.domain==null));
 					
 					int paramCounter = 0;
 					for (AbstractOntologyCodeClass domain : this.domain) {

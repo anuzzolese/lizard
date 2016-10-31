@@ -54,7 +54,7 @@ public abstract class AbstractOntologyCodeClass extends AbstractOntologyCodeEnti
         methodSet.add(method);
     }
     
-    public Collection<AbstractOntologyCodeMethod> getMethods() {
+	public Collection<AbstractOntologyCodeMethod> getMethods() {
         Collection<Set<AbstractOntologyCodeMethod>> methodSets = methodMap.values();
         
         Collection<AbstractOntologyCodeMethod> ontologyMethods = new ArrayList<AbstractOntologyCodeMethod>();

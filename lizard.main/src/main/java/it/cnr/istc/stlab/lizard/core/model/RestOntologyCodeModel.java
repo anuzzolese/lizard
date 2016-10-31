@@ -181,7 +181,7 @@ public class RestOntologyCodeModel implements OntologyCodeModel {
 	        else if(JenaOntologyCodeClass.class.isAssignableFrom(owner.getClass())) 
 	        	ontologyMethod = new JenaOntologyCodeMethod(methodType, methodResource, owner, domain, range, this, codeModel);
 	        else if(RestOntologyCodeClass.class.isAssignableFrom(owner.getClass())) 
-	        	ontologyMethod = new RestOntologyCodeMethod(methodType, methodResource, owner, domain, range, this, codeModel);
+				ontologyMethod = new RestOntologyCodeMethod(methodType, methodResource, owner, domain, range, this, codeModel);
 	        
         	Set<AbstractOntologyCodeMethod> ontologyMethods = methodMap.get(methodResource);
             if(ontologyMethods == null){
