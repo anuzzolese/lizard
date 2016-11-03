@@ -22,21 +22,18 @@ public class Bootstrap extends HttpServlet {
 
 		// info
 		beanConfig.setTitle("Lizard");
-		beanConfig
-				.setDescription("Lizard automatically generates API Rest for managing ontologies");
+		beanConfig.setDescription("Lizard automatically generates API Rest for managing ontologies");
 		beanConfig.setSchemes(new String[] { "http" });
 		beanConfig.setHost("localhost:8080"); // TODO
 		beanConfig.setBasePath("/");
 		beanConfig.setVersion("0.99");
 		beanConfig.setContact("stlab@cnr.it");
 		beanConfig.setLicense("Apache 2.0");
-		beanConfig
-				.setLicenseUrl("http://www.apache.org/licenses/LICENSE-2.0.html");
+		beanConfig.setLicenseUrl("http://www.apache.org/licenses/LICENSE-2.0.html");
 		beanConfig.setPrettyPrint(true);
 
 		// Resource package
-		beanConfig.setResourcePackage(FileUtils.getNamePackage(Lizard.class)
-				+ "," + JettyServer.getRestinterfaces());
+		beanConfig.setResourcePackage(FileUtils.getNamePackage(Lizard.class) + "," + JettyServer.getRestinterfaces());
 		beanConfig.setScan(true);
 
 	}

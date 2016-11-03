@@ -48,6 +48,7 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 			String namespace = methodResource.getNameSpace();
 
 			String prefix = ontologyModel.asOntModel().getNsURIPrefix(namespace);
+
 			// look-up on prefix.cc
 			if (prefix == null)
 				prefix = PrefixRegistry.getInstance().getNsPrefix(namespace);
@@ -81,7 +82,8 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 
 						jMethod.annotate(GET.class);
 						jMethod.annotate(Path.class).param("value", "/" + entityName);
-						jMethod.annotate(ApiOperation.class).param("value", "Get by " + entityName);
+						String operationId = ((RestOntologyCodeClass) owner).getPath().substring(1) + "_" + entityName;
+						jMethod.annotate(ApiOperation.class).param("value", "Get by " + entityName).param("nickname", operationId);
 						JVar param = jMethod.param(String.class, "constraint");
 						param.annotate(ApiParam.class).param("value", entityName).param("required", false);
 						param.annotate(QueryParam.class).param("value", entityName);
@@ -96,7 +98,6 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 						JVar retSetVar = methodBody.decl(setType, "_retSet", JExpr._new(hashSetType));
 
 						JConditional ifBlock = methodBody._if(kbSetVar.ne(JExpr._null()));
-
 						/*
 						 * Then
 						 */
@@ -126,7 +127,8 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 
 						jMethod.annotate(GET.class);
 						jMethod.annotate(Path.class).param("value", "/entity/" + entityName);
-						jMethod.annotate(ApiOperation.class).param("value", "Get " + entityName + " values of this entity");
+						jMethod.annotate(ApiOperation.class).param("value", "Get " + entityName + " values of this entity").param("nickname", "entity_" + operationId);
+
 						JVar idVar = jMethod.param(String.class, "id");
 						idVar.annotate(ApiParam.class).param("value", "id").param("required", true);
 						idVar.annotate(QueryParam.class).param("value", "id");
@@ -138,7 +140,7 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 						JBlock entityMethodBody = jMethod.body();
 
 						JVar entityResponseBuilderVar = entityMethodBody.decl(codeModel._ref(ResponseBuilder.class), "_responseBuilder", JExpr._null());
-						
+
 						AbstractOntologyCodeClass r = ((ArrayList<AbstractOntologyCodeClass>) domain).get(0);
 						AbstractOntologyCodeClass o = ontologyModel.getOntologyClass(owner.getOntResource(), BeanOntologyCodeInterface.class);
 
@@ -146,10 +148,9 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 						OntologyCodeClass beanClass = null;
 
 						boolean anon = false;
-						if (rOntRes.isURIResource())
+						if (rOntRes.isURIResource()) {
 							beanClass = ontologyModel.getOntologyClass(rOntRes, BeanOntologyCodeClass.class);
-						else {
-
+						} else {
 							anon = true;
 							beanClass = ontologyModel.getOntologyClass(rOntRes, BooleanAnonClass.class);
 							if (beanClass == null) {

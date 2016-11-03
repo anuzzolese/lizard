@@ -53,6 +53,7 @@ import org.apache.jena.vocabulary.RDFS;
 
 import com.sun.codemodel.CodeWriter;
 import com.sun.codemodel.JDefinedClass;
+import com.sun.codemodel.JMethod;
 import com.sun.codemodel.JMod;
 import com.sun.codemodel.writer.FileCodeWriter;
 
@@ -291,6 +292,18 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 		}
 	}
 
+	private static boolean hasMethod(JDefinedClass jdefClass, String methodName) {
+
+		for (JMethod m : jdefClass.methods()) {
+			if (m.name().equals(methodName)) {
+				return true;
+			}
+		}
+
+		return false;
+
+	}
+
 	private void visitHierarchyTreeForBeans(OntClass ontClass, OntologyCodeModel ontologyModel) {
 
 		OntologyCodeInterface ontologyInterface = null;
@@ -303,10 +316,13 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 			// ontologyInterface.createMethods();
 			createBeanMethods(ontologyInterface, ontologyModel);
 
-			((JDefinedClass) ontologyInterface.asJDefinedClass()).method(JMod.PUBLIC, ontologyInterface.getJCodeModel().VOID, "setId").param(String.class, "id");
-			((JDefinedClass) ontologyInterface.asJDefinedClass()).method(JMod.PUBLIC, String.class, "getId");
-			((JDefinedClass) ontologyInterface.asJDefinedClass()).method(JMod.PUBLIC, ontologyInterface.getJCodeModel().VOID, "setIsCompleted").param(Boolean.class, "isCompleted");
-			((JDefinedClass) ontologyInterface.asJDefinedClass()).method(JMod.PUBLIC, Boolean.class, "getIsCompleted");
+			// TODO
+			if (!hasMethod(((JDefinedClass) ontologyInterface.asJDefinedClass()), "setId")) {
+				((JDefinedClass) ontologyInterface.asJDefinedClass()).method(JMod.PUBLIC, ontologyInterface.getJCodeModel().VOID, "setId").param(String.class, "id");
+				((JDefinedClass) ontologyInterface.asJDefinedClass()).method(JMod.PUBLIC, String.class, "getId");
+				((JDefinedClass) ontologyInterface.asJDefinedClass()).method(JMod.PUBLIC, ontologyInterface.getJCodeModel().VOID, "setIsCompleted").param(Boolean.class, "isCompleted");
+				((JDefinedClass) ontologyInterface.asJDefinedClass()).method(JMod.PUBLIC, Boolean.class, "getIsCompleted");
+			}
 
 			// OntologyCodeClass ontologyClass = addClass(ontClass,
 			// ontologyModel);
@@ -615,11 +631,10 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 			// URI("http://stlab.istc.cnr.it/documents/mibact/cultural-ON_xml.owl");
 			// uri = new
 			// URI("http://www.ontologydesignpatterns.org/ont/mario/tagging.owl");
-			// uri = new
-			// URI("http://www.ontologydesignpatterns.org/ont/framester/framester.owl");
+			uri = new URI("http://www.ontologydesignpatterns.org/ont/framester/framester.owl");
 			// uri = new
 			// URI("http://www.ontologydesignpatterns.org/ont/mario/music.owl");
-			uri = new URI("/Users/lgu/Desktop/music.owl");
+			// uri = new URI("/Users/lgu/Desktop/music.owl");
 			// uri = new URI("vocabs/foaf.rdf");
 
 			OntologyCodeGenerationRecipe codegen = new LizardCore(uri);

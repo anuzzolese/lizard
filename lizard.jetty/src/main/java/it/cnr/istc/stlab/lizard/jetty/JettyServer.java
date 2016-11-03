@@ -25,9 +25,9 @@ public class JettyServer {
 		if (args.length > 0) {
 			String portString = args[0];
 
-			if (portString == null)
+			if (portString == null) {
 				port = 8080;
-			else {
+			} else {
 				try {
 					port = Integer.valueOf(portString);
 				} catch (NumberFormatException e) {
@@ -39,35 +39,24 @@ public class JettyServer {
 
 		Server jettyServer = new Server(port);
 
-		ServletContextHandler servletContextHandler = new ServletContextHandler(
-				ServletContextHandler.SESSIONS);
+		ServletContextHandler servletContextHandler = new ServletContextHandler(ServletContextHandler.SESSIONS);
 		servletContextHandler.setContextPath("/");
 		jettyServer.setHandler(servletContextHandler);
 
-		ServletHolder servletHolder = servletContextHandler.addServlet(
-				org.glassfish.jersey.servlet.ServletContainer.class, "/*");
+		ServletHolder servletHolder = servletContextHandler.addServlet(org.glassfish.jersey.servlet.ServletContainer.class, "/*");
 		servletHolder.setInitOrder(1);
 
 		// Tells the Jersey Servlet which REST service/class to load.
-		servletHolder.setInitParameter(
-				"jersey.config.server.provider.packages",
-				"io.swagger.jaxrs.listing,"
-						+ FileUtils.getNamePackage(SetBodyWriter.class) + ","
-						+ getRestinterfaces());
+		servletHolder.setInitParameter("jersey.config.server.provider.packages", "io.swagger.jaxrs.listing," + FileUtils.getNamePackage(SetBodyWriter.class) + "," + getRestinterfaces());
 
-		ServletHolder servletHolderBootrstrap = servletContextHandler
-				.addServlet(
-						org.glassfish.jersey.servlet.ServletContainer.class, "");
+		ServletHolder servletHolderBootrstrap = servletContextHandler.addServlet(org.glassfish.jersey.servlet.ServletContainer.class, "");
 
-		servletHolderBootrstrap.setInitParameter(
-				"jersey.config.server.provider.classnames",
-				Bootstrap.class.getCanonicalName());
+		servletHolderBootrstrap.setInitParameter("jersey.config.server.provider.classnames", Bootstrap.class.getCanonicalName());
 		servletHolderBootrstrap.setInitOrder(2);
 
 		try {
 			jettyServer.start();
-			new Bootstrap().init(servletHolderBootrstrap.getServlet()
-					.getServletConfig());
+			new Bootstrap().init(servletHolderBootrstrap.getServlet().getServletConfig());
 			jettyServer.join();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -77,15 +66,12 @@ public class JettyServer {
 	}
 
 	static String getRestinterfaces() {
-		ServiceLoader<RestInterface> restInterfaceLoader = ServiceLoader
-				.load(RestInterface.class);
+		ServiceLoader<RestInterface> restInterfaceLoader = ServiceLoader.load(RestInterface.class);
 
 		Collection<String> packages = new ArrayList<String>();
 		restInterfaceLoader.forEach(restInterface -> {
-			String packageName = FileUtils.getNamePackage(restInterface
-					.getClass());
-			if (!packages.contains(packageName)
-					&& !packageName.equals("org.w3._2001.XMLSchema.web"))
+			String packageName = FileUtils.getNamePackage(restInterface.getClass());
+			if (!packages.contains(packageName) && !packageName.equals("org.w3._2001.XMLSchema.web"))
 				packages.add(packageName);
 		});
 
@@ -94,6 +80,7 @@ public class JettyServer {
 			if (sb.length() > 0)
 				sb.append(",");
 			sb.append(pkg);
+			System.out.println(pkg);
 		});
 
 		return sb.toString();

@@ -266,7 +266,6 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 								} else {
 									// System.out.println(owner.getOntResource().getURI()+" "+super.entityName+" "+range.getOntResource());
 									if (ontResource.isDatatypeProperty()) {
-										System.out.println("datatype " + ontResource);
 										rangeConcreteClass = ontologyModel.createOntologyClass(rangeRes, BeanOntologyCodeInterface.class);
 									} else {
 										rangeConcreteClass = ontologyModel.getOntologyClass(range.getOntResource(), BooleanAnonClass.class);
