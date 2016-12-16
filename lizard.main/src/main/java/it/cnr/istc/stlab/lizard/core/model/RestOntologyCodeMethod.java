@@ -1,11 +1,24 @@
 package it.cnr.istc.stlab.lizard.core.model;
 
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import it.cnr.istc.stlab.lizard.commons.Constants;
+import it.cnr.istc.stlab.lizard.commons.PrefixRegistry;
+import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClass;
+import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeClass;
+import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeInterface;
+import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeMethod;
+import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeModel;
+import it.cnr.istc.stlab.lizard.commons.model.anon.BooleanAnonClass;
+import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeMethodType;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
@@ -13,6 +26,8 @@ import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 
 import org.apache.jena.ontology.OntResource;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.vocabulary.OWL;
 
 import com.sun.codemodel.JBlock;
 import com.sun.codemodel.JCodeModel;
@@ -25,18 +40,6 @@ import com.sun.codemodel.JMethod;
 import com.sun.codemodel.JMod;
 import com.sun.codemodel.JType;
 import com.sun.codemodel.JVar;
-
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import it.cnr.istc.stlab.lizard.commons.Constants;
-import it.cnr.istc.stlab.lizard.commons.PrefixRegistry;
-import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClass;
-import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeClass;
-import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeInterface;
-import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeMethod;
-import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeModel;
-import it.cnr.istc.stlab.lizard.commons.model.anon.BooleanAnonClass;
-import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeMethodType;
 
 public class RestOntologyCodeMethod extends OntologyCodeMethod {
 
@@ -80,10 +83,13 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 
 					if (owner instanceof OntologyCodeClass) {
 
+						// Create annotation GET method
 						jMethod.annotate(GET.class);
 						jMethod.annotate(Path.class).param("value", "/" + entityName);
 						String operationId = ((RestOntologyCodeClass) owner).getPath().substring(1) + "_" + entityName;
 						jMethod.annotate(ApiOperation.class).param("value", "Get by " + entityName).param("nickname", operationId);
+
+						// GET Parameter
 						JVar param = jMethod.param(String.class, "constraint");
 						param.annotate(ApiParam.class).param("value", entityName).param("required", false);
 						param.annotate(QueryParam.class).param("value", entityName);
@@ -178,24 +184,9 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 						entityBeanHashSetType = codeModel.ref(HashSet.class).narrow(methRetNarrowedType);
 
 						/*
-						 * if(beanClass != null &&
-						 * methodResource.isObjectProperty()){
-						 * if(methodResource.isDatatypeProperty()){
-						 * entityBeanSetType =
-						 * codeModel.ref(Set.class).narrow(beanClass
-						 * .asJDefinedClass()); entityBeanHashSetType =
-						 * codeModel
-						 * .ref(HashSet.class).narrow(beanClass.asJDefinedClass
-						 * ()); } else{ entityBeanSetType =
-						 * codeModel.ref(Set.class
-						 * ).narrow(beanClass.asJDefinedClass());
-						 * entityBeanHashSetType =
-						 * codeModel.ref(HashSet.class).narrow
-						 * (beanClass.asJDefinedClass()); } } else{
-						 * entityBeanSetType =
-						 * codeModel.ref(Set.class).narrow(rangeJClass);
-						 * entityBeanHashSetType =
-						 * codeModel.ref(HashSet.class).narrow(rangeJClass); }
+						 * if(beanClass != null && methodResource.isObjectProperty()){ if(methodResource.isDatatypeProperty()){ entityBeanSetType = codeModel.ref(Set.class).narrow(beanClass .asJDefinedClass()); entityBeanHashSetType = codeModel .ref(HashSet.class).narrow(beanClass.asJDefinedClass
+						 * ()); } else{ entityBeanSetType = codeModel.ref(Set.class ).narrow(beanClass.asJDefinedClass()); entityBeanHashSetType = codeModel.ref(HashSet.class).narrow (beanClass.asJDefinedClass()); } } else{ entityBeanSetType = codeModel.ref(Set.class).narrow(rangeJClass);
+						 * entityBeanHashSetType = codeModel.ref(HashSet.class).narrow(rangeJClass); }
 						 */
 
 						JVar entityVar = entityMethodBody.decl(o.asJDefinedClass(), "_entity", o.asJDefinedClass().staticInvoke("get").arg(idVar));
@@ -239,34 +230,87 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 				break;
 
 			case Set:
-				/*
-				 * methodName = "setBy" +
-				 * entityName.substring(0,1).toUpperCase() +
-				 * entityName.substring(1);
-				 * 
-				 * JMethod tempSet =
-				 * ((JDefinedClass)owner.asJDefinedClass()).getMethod
-				 * (methodName, new JType[]{});
-				 * 
-				 * if(temp != null){ jMethod =
-				 * ((JDefinedClass)owner.asJDefinedClass()).method(JMod.PUBLIC,
-				 * responseType, methodName); if(owner instanceof
-				 * AbstractOntologyCodeClassImpl){
-				 * 
-				 * jMethod.annotate(POST.class);
-				 * jMethod.annotate(Path.class).param("value", "/" +
-				 * entityName); jMethod.param(String.class,
-				 * "constraint").annotate(FormParam.class).param("value",
-				 * entityName);
-				 * 
-				 * jMethod.body()._return(JExpr._null()); }
-				 */
+
+				if (methodResource.isDatatypeProperty()) {
+					// The property corresponding to the method is a datatype property
+
+				} else {
+					// The property corresponding to the method is a object property
+					createSetMethodForObjectProperty();
+				}
+
 				break;
 
 			default:
 				break;
 			}
 		}
+	}
+
+	public void createSetMethodForObjectProperty() {
+		JType responseType = super.jCodeModel.ref(Response.class);
+		String methodName = "set" + entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
+
+		JMethod tempSet = ((JDefinedClass) owner.asJDefinedClass()).getMethod(methodName, new JType[] { super.jCodeModel._ref(String.class), super.jCodeModel._ref(String.class) });
+
+		if (tempSet == null) {
+			jMethod = ((JDefinedClass) owner.asJDefinedClass()).method(JMod.PUBLIC, responseType, methodName);
+			if (owner instanceof OntologyCodeClass) {
+
+				// Create annotation SET method
+				jMethod.annotate(POST.class);
+				jMethod.annotate(Path.class).param("value", "/entity/set" + entityName.substring(0, 1).toUpperCase()+entityName.substring(1));
+				String operationId = "set_" + ((RestOntologyCodeClass) owner).getPath().substring(1) + "_" + entityName;
+				jMethod.annotate(ApiOperation.class).param("value", "Set " + entityName).param("nickname", operationId);
+
+				// Create SET parameter
+				// IRI of the target individual where the property will be added
+				JVar idParam = jMethod.param(String.class, "id");
+				idParam.annotate(ApiParam.class).param("value", "id").param("required", true);
+				idParam.annotate(QueryParam.class).param("value", "id");
+
+				JVar iriRangeParam = jMethod.param(String.class, "value");
+				iriRangeParam.annotate(ApiParam.class).param("value", "value").param("required", true);
+				iriRangeParam.annotate(QueryParam.class).param("value", "value");
+
+				/*
+				 * Method Body
+				 */
+				JBlock methodBody = jMethod.body();
+
+				// Getting the target individual where the property will be added
+				AbstractOntologyCodeClass ownerInterface = ontologyModel.getOntologyClass(owner.getOntResource(), BeanOntologyCodeInterface.class);
+				AbstractOntologyCodeClass rangeJenaClass = null;
+				AbstractOntologyCodeClass rangeJenaInterface = null;
+				if (range == null) {
+					rangeJenaClass = ontologyModel.getOntologyClass(ModelFactory.createOntologyModel().getOntResource(OWL.Thing), JenaOntologyCodeClass.class);
+					rangeJenaInterface = ontologyModel.getOntologyClass(ModelFactory.createOntologyModel().getOntResource(OWL.Thing), BeanOntologyCodeInterface.class);
+				} else {
+					rangeJenaClass = ontologyModel.getOntologyClass(range.getOntResource(), JenaOntologyCodeClass.class);
+					rangeJenaInterface = ontologyModel.getOntologyClass(range.getOntResource(), BeanOntologyCodeInterface.class);
+					if (rangeJenaClass == null) {
+						// The range is a boolean class
+						rangeJenaClass = ontologyModel.getOntologyClass(range.getOntResource(), BooleanAnonClass.class);
+						rangeJenaInterface = ontologyModel.getOntologyClass(range.getOntResource(), BooleanAnonClass.class);
+					}
+				}
+
+				// Creting set to be added
+				JType hashSetType_range = super.jCodeModel.ref(HashSet.class).narrow(rangeJenaInterface.asJDefinedClass());
+				JType setType_range = super.jCodeModel.ref(Set.class).narrow(rangeJenaInterface.asJDefinedClass());
+				JVar kbSetVar = methodBody.decl(setType_range, "toAdd", JExpr._new(hashSetType_range));
+				methodBody.add(kbSetVar.invoke("add").arg(JExpr._new(rangeJenaClass.asJDefinedClass()).arg(jCodeModel.ref(ModelFactory.class).staticInvoke("createDefaultModel").invoke("createResource").arg(iriRangeParam))));
+
+				// add set to the individual
+				JVar entityVar = methodBody.decl(ownerInterface.asJDefinedClass(), "_entity", ownerInterface.asJDefinedClass().staticInvoke("get").arg(idParam));
+				methodBody.add(entityVar.invoke(methodName).arg(kbSetVar));
+
+				// Respond OK
+				JVar responseBuilderVar = methodBody.decl(super.jCodeModel._ref(ResponseBuilder.class), "_responseBuilder", super.jCodeModel.ref(Response.class).staticInvoke("ok"));
+				methodBody._return(responseBuilderVar.invoke("build"));
+			}
+		}
+
 	}
 
 	@Override

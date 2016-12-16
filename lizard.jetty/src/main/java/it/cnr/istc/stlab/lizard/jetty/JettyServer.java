@@ -1,17 +1,18 @@
 package it.cnr.istc.stlab.lizard.jetty;
 
-import java.util.ArrayList;
+import it.cnr.istc.stlab.lizard.commons.inmemory.RestInterface;
+import it.cnr.istc.stlab.lizard.commons.jersey.SetBodyWriter;
+import it.cnr.istc.stlab.lizard.jetty.resources.Lizard;
+import it.cnr.istc.stlab.lizard.jetty.utils.FileUtils;
+
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.ServiceLoader;
 
 import org.apache.log4j.Logger;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
-
-import it.cnr.istc.stlab.lizard.commons.inmemory.RestInterface;
-import it.cnr.istc.stlab.lizard.commons.jersey.SetBodyWriter;
-import it.cnr.istc.stlab.lizard.jetty.utils.FileUtils;
 
 public class JettyServer {
 
@@ -34,8 +35,9 @@ public class JettyServer {
 					port = 8080;
 				}
 			}
-		} else
+		} else {
 			port = 8080;
+		}
 
 		Server jettyServer = new Server(port);
 
@@ -43,20 +45,25 @@ public class JettyServer {
 		servletContextHandler.setContextPath("/");
 		jettyServer.setHandler(servletContextHandler);
 
-		ServletHolder servletHolder = servletContextHandler.addServlet(org.glassfish.jersey.servlet.ServletContainer.class, "/*");
+		// Lizard servlet
+		ServletHolder servletHolder = servletContextHandler.addServlet(org.glassfish.jersey.servlet.ServletContainer.class, "/lizard/*");
 		servletHolder.setInitOrder(1);
-
-		// Tells the Jersey Servlet which REST service/class to load.
-		servletHolder.setInitParameter("jersey.config.server.provider.packages", "io.swagger.jaxrs.listing," + FileUtils.getNamePackage(SetBodyWriter.class) + "," + getRestinterfaces());
-
-		ServletHolder servletHolderBootrstrap = servletContextHandler.addServlet(org.glassfish.jersey.servlet.ServletContainer.class, "");
-
-		servletHolderBootrstrap.setInitParameter("jersey.config.server.provider.classnames", Bootstrap.class.getCanonicalName());
-		servletHolderBootrstrap.setInitOrder(2);
+		servletHolder.setInitParameter("jersey.config.server.provider.packages", "io.swagger.jaxrs.listing," + FileUtils.getNamePackage(SetBodyWriter.class) + "," + FileUtils.getNamePackage(Lizard.class));
 
 		try {
 			jettyServer.start();
-			new Bootstrap().init(servletHolderBootrstrap.getServlet().getServletConfig());
+
+			getLizardBootstrap().init(servletHolder.getServlet().getServletConfig());
+
+			// Ontology servlet
+			for (Bootstrap b : getBootstraps("localhost:" + port)) {
+				System.out.println("Package " + b.get_package() + " on localhost:" + port + "/" + b.getPath() + "/");
+				ServletHolder servletHolderRestOntology = servletContextHandler.addServlet(org.glassfish.jersey.servlet.ServletContainer.class, "/" + b.getPath() + "/*");
+				servletHolderRestOntology.setInitOrder(2);
+				servletHolderRestOntology.setInitParameter("jersey.config.server.provider.packages", "io.swagger.jaxrs.listing," + FileUtils.getNamePackage(SetBodyWriter.class) + "," + b.get_package());
+				b.init(servletHolderRestOntology.getServlet().getServletConfig());
+			}
+
 			jettyServer.join();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -65,24 +72,37 @@ public class JettyServer {
 		}
 	}
 
-	static String getRestinterfaces() {
+	static Bootstrap getLizardBootstrap() {
+		Bootstrap b = new Bootstrap();
+		b.setTitle("Lizard");
+		b.set_package(FileUtils.getNamePackage(Lizard.class));
+		b.setBasePath("/lizard/");
+		b.setDescription("Lizard automatically generates API Rest for managing ontologies");
+		b.setHost("localhost:8080");
+		return b;
+	}
+
+	static Collection<Bootstrap> getBootstraps(String host) {
 		ServiceLoader<RestInterface> restInterfaceLoader = ServiceLoader.load(RestInterface.class);
-
-		Collection<String> packages = new ArrayList<String>();
+		Collection<Bootstrap> result = new HashSet<Bootstrap>();
+		Collection<String> aaPackages = new HashSet<String>();
 		restInterfaceLoader.forEach(restInterface -> {
-			String packageName = FileUtils.getNamePackage(restInterface.getClass());
-			if (!packages.contains(packageName) && !packageName.equals("org.w3._2001.XMLSchema.web"))
-				packages.add(packageName);
+			String packageJavaName = FileUtils.getNamePackage(restInterface.getClass());
+			if (!aaPackages.contains(packageJavaName)) {
+				Bootstrap b = new Bootstrap();
+				String basePathResources = packageJavaName.replace(".web", "");
+				basePathResources = basePathResources.replaceAll("\\.", "_");
+				b.setTitle(packageJavaName);
+				b.set_package(packageJavaName);
+				b.setBasePath("/" + basePathResources + "/");
+				b.setPath(basePathResources);
+				b.setDescription("Rest services defined in package " + packageJavaName + " for accessing the corresponding ontology.");
+				b.setHost(host);
+				b.setVersion("0.99"); // TODO
+				aaPackages.add(packageJavaName);
+				result.add(b);
+			}
 		});
-
-		StringBuilder sb = new StringBuilder();
-		packages.forEach(pkg -> {
-			if (sb.length() > 0)
-				sb.append(",");
-			sb.append(pkg);
-			System.out.println(pkg);
-		});
-
-		return sb.toString();
+		return result;
 	}
 }

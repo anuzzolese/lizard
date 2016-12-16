@@ -35,6 +35,8 @@ public class RestOntologyCodeClass extends OntologyCodeClass {
 
 		String artifactId = packageName + "." + SUBPACKAGE_NAME + ".";
 
+		// String packagePath = packageName.replaceAll("\\.", "_");
+
 		String localName = Constants.getJavaName(resource.getLocalName());
 
 		super.entityName = artifactId + localName;
@@ -74,8 +76,8 @@ public class RestOntologyCodeClass extends OntologyCodeClass {
 			super.jClass = codeModel._getClass(entityName);
 		}
 	}
-	
-	public String getPath(){
+
+	public String getPath() {
 		return path;
 	}
 

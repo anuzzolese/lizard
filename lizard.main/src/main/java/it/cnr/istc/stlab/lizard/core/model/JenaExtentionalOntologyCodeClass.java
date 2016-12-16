@@ -82,7 +82,6 @@ public class JenaExtentionalOntologyCodeClass extends ExtentionalOntologyCodeCla
         	/*
              * Add the body to the method.
              */
-            JType setClass = jCodeModel.ref(Set.class).narrow(range.asJDefinedClass());
             
             JMethod existingMethod = ((JDefinedClass)super.jClass).getMethod(methodResource.getLocalName(), new JType[]{});
             
@@ -97,11 +96,9 @@ public class JenaExtentionalOntologyCodeClass extends ExtentionalOntologyCodeCla
             
             ontologyMethod = new JenaOntologyCodeMethod(methodType, methodResource, this, classDomain, range, ontologyModel, jCodeModel);
             
-            JMethod jMethod = ontologyMethod.asJMethod();
             
             
             
-            String entityName = ontologyMethod.getEntityName();
             //if(methodType == OntologyCodeMethodType.Set) jMethod.param(setClass, entityName);
             
             Set<AbstractOntologyCodeMethod> ontologyMethods = methodMap.get(methodResource);

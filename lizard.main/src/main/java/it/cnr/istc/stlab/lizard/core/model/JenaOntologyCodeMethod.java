@@ -54,9 +54,9 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 
 	JenaOntologyCodeMethod(OntologyCodeMethodType methodType, OntResource methodResource, AbstractOntologyCodeClass owner, Collection<AbstractOntologyCodeClass> domain, AbstractOntologyCodeClass range, OntologyCodeModel ontologyModel, JCodeModel codeModel) {
 		super(methodType, methodResource, owner, domain, range, ontologyModel, codeModel);
-		
-//		System.out.println("JenaOntologyCodeMethod.JenaOntologyCodeMethod() "+(domain==null));
-		
+
+		// System.out.println("JenaOntologyCodeMethod.JenaOntologyCodeMethod() "+(domain==null));
+
 		if (methodResource.isURIResource()) {
 
 			String namespace = methodResource.getNameSpace();
@@ -85,8 +85,7 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 				String methodName = "get" + entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
 				jMethod = jOwner.method(1, setClass, methodName);
 				/*
-				 * Code the method for converting a JenaOntologyClass to its
-				 * corresponding Java bean.
+				 * Code the method for converting a JenaOntologyClass to its corresponding Java bean.
 				 */
 				JMethod asBeanMethod = jOwner.getMethod("asBean", new JType[] {});
 				JMethod asMicroBeanMethod = jOwner.getMethod("asMicroBean", new JType[] {});
@@ -150,7 +149,7 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 				}
 
 				addSideGetMethod();
-				
+
 			} else {
 
 				String methodName = entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
@@ -207,7 +206,7 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 	private void addSideGetMethod() {
 
 		// TODO
-		
+
 		JType setClass = super.jCodeModel.ref(Set.class).narrow(range.asJDefinedClass());
 		JDefinedClass jOwner = ((JDefinedClass) owner.asJDefinedClass());
 		String methodName = "get" + entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
@@ -311,8 +310,7 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 					JBlock methodBody = jMethod.body();
 
 					/*
-					 * Add the code to set a variable for the URI representing
-					 * the property and the type of the method.
+					 * Add the code to set a variable for the URI representing the property and the type of the method.
 					 */
 					JVar ontPropertyVar = methodBody.decl(jCodeModel._ref(Property.class), "predicate", jCodeModel.ref(ModelFactory.class).staticInvoke("createDefaultModel").invoke("createProperty").arg(ontResource.toString()));
 
@@ -392,10 +390,10 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 									rangeConcreteClass = ontologyModel.createOntologyClass(range.getOntResource(), JenaOntologyCodeClass.class);
 									ontologyModel.createClassImplements((AbstractOntologyCodeClassImpl) rangeConcreteClass, rangeInterface);
 								} else {
-									
-									if(ontResource.isDatatypeProperty()){
-										rangeConcreteClass=ontologyModel.createOntologyClass(ontResource, BeanOntologyCodeInterface.class);
-									}else{
+
+									if (ontResource.isDatatypeProperty()) {
+										rangeConcreteClass = ontologyModel.createOntologyClass(ontResource, BeanOntologyCodeInterface.class);
+									} else {
 										rangeConcreteClass = ontologyModel.getOntologyClass(range.getOntResource(), BooleanAnonClass.class);
 									}
 
@@ -430,16 +428,16 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 					JBlock methodBody = jMethod.body();
 
 					/*
-					 * Add the code to set a variable for the URI representing
-					 * the property and the type of the method.
+					 * Add the code to set a variable for the URI representing the property and the type of the method.
 					 */
 					JVar ontPropertyVar = methodBody.decl(jCodeModel._ref(Property.class), "predicate", jCodeModel.ref(ModelFactory.class).staticInvoke("createDefaultModel").invoke("createProperty").arg(ontResource.toString()));
 					JVar jenaModelVar = methodBody.decl(jCodeModel._ref(Model.class), "model", jCodeModel.ref(RuntimeJenaLizardContext.class).staticInvoke("getContext").invoke("getModel"));
 
-					
+					// System.out.println("JenaOntologyCodeMethod.addMethodBody() " + owner.getOntResource().getURI() + " " + entityName + " " + this.domain);
+
 					int paramCounter = 0;
 					for (AbstractOntologyCodeClass domain : this.domain) {
-						
+
 						JForEach forEach = methodBody.forEach(domain.asJDefinedClass(), "object", jMethod.params().get(paramCounter));
 						JBlock forEachBlock = forEach.body();
 

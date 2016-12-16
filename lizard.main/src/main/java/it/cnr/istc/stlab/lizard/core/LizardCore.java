@@ -256,9 +256,7 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 		}
 
 		/*
-		 * CodeWriter writer = new SingleStreamCodeWriter(System.out); try {
-		 * codeModel.build(writer); } catch (IOException e) {
-		 * e.printStackTrace(); }
+		 * CodeWriter writer = new SingleStreamCodeWriter(System.out); try { codeModel.build(writer); } catch (IOException e) { e.printStackTrace(); }
 		 */
 
 		return new OntologyCodeProject(ontologyBaseURI, restOntologyModel);
@@ -390,9 +388,7 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 
 						OntologyCodeInterface rangeClass = null;
 						/*
-						 * The property is a datatype property. In this case we
-						 * use Jena to map the range to the appropriate Java
-						 * type. E.g. xsd:string -> java.lang.String
+						 * The property is a datatype property. In this case we use Jena to map the range to the appropriate Java type. E.g. xsd:string -> java.lang.String
 						 */
 						OntClass rangeOntClass = ModelFactory.createOntologyModel().createClass(range.getURI());
 						if (ontProperty.isDatatypeProperty()) {
@@ -453,8 +449,7 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 					onClass = restriction.asAllValuesFromRestriction().getAllValuesFrom();
 				}
 				/*
-				 * else if(restriction.isCardinalityRestriction()){ onClass =
-				 * restriction.asCardinalityRestriction().get }
+				 * else if(restriction.isCardinalityRestriction()){ onClass = restriction.asCardinalityRestriction().get }
 				 */
 				if (onClass != null) {
 
@@ -496,7 +491,6 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 	}
 
 	private void createBeanMethods(AbstractOntologyCodeClass owner, OntologyCodeModel ontologyModel) {
-
 		OntClass ontClass = ontologyModel.asOntModel().getOntClass(owner.getOntResource().getURI());
 
 		Set<OntProperty> props = ontClass.listDeclaredProperties().toSet();
@@ -598,8 +592,7 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 					onClass = restriction.asAllValuesFromRestriction().getAllValuesFrom();
 				}
 				/*
-				 * else if(restriction.isCardinalityRestriction()){ onClass =
-				 * restriction.asCardinalityRestriction().get }
+				 * else if(restriction.isCardinalityRestriction()){ onClass = restriction.asCardinalityRestriction().get }
 				 */
 				if (onClass != null) {
 					try {
@@ -631,10 +624,10 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 			// URI("http://stlab.istc.cnr.it/documents/mibact/cultural-ON_xml.owl");
 			// uri = new
 			// URI("http://www.ontologydesignpatterns.org/ont/mario/tagging.owl");
-			uri = new URI("http://www.ontologydesignpatterns.org/ont/framester/framester.owl");
 			// uri = new
-			// URI("http://www.ontologydesignpatterns.org/ont/mario/music.owl");
-			// uri = new URI("/Users/lgu/Desktop/music.owl");
+			// URI("http://www.ontologydesignpatterns.org/ont/framester/framester.owl");
+			// uri = new URI("http://www.ontologydesignpatterns.org/ont/mario/music.owl");
+			uri = new URI("/Users/lgu/Dropbox/stlab/ontologies/mario/modules/music.owl");
 			// uri = new URI("vocabs/foaf.rdf");
 
 			OntologyCodeGenerationRecipe codegen = new LizardCore(uri);
@@ -662,8 +655,7 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 				((LizardCore) codegen).createServiceAnnotations(new File("test_out"), ontologyCodeProject.getOntologyCodeModel());
 
 				/*
-				 * Generate the POM descriptor file and build the project as a
-				 * Maven project.
+				 * Generate the POM descriptor file and build the project as a Maven project.
 				 */
 				File pom = new File("test_out/pom.xml");
 				Writer pomWriter = new FileWriter(new File("test_out/pom.xml"));
