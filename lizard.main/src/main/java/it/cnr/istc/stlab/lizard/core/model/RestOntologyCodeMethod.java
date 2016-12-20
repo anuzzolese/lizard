@@ -25,6 +25,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 
+import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.ontology.OntResource;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.vocabulary.OWL;
@@ -233,7 +234,7 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 
 				if (methodResource.isDatatypeProperty()) {
 					// The property corresponding to the method is a datatype property
-
+					createSetMethodForDatatypeProperty();
 				} else {
 					// The property corresponding to the method is a object property
 					createSetMethodForObjectProperty();
@@ -259,7 +260,7 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 
 				// Create annotation SET method
 				jMethod.annotate(POST.class);
-				jMethod.annotate(Path.class).param("value", "/entity/set" + entityName.substring(0, 1).toUpperCase()+entityName.substring(1));
+				jMethod.annotate(Path.class).param("value", "/entity/set" + entityName.substring(0, 1).toUpperCase() + entityName.substring(1));
 				String operationId = "set_" + ((RestOntologyCodeClass) owner).getPath().substring(1) + "_" + entityName;
 				jMethod.annotate(ApiOperation.class).param("value", "Set " + entityName).param("nickname", operationId);
 
@@ -302,6 +303,73 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 				methodBody.add(kbSetVar.invoke("add").arg(JExpr._new(rangeJenaClass.asJDefinedClass()).arg(jCodeModel.ref(ModelFactory.class).staticInvoke("createDefaultModel").invoke("createResource").arg(iriRangeParam))));
 
 				// add set to the individual
+				JVar entityVar = methodBody.decl(ownerInterface.asJDefinedClass(), "_entity", ownerInterface.asJDefinedClass().staticInvoke("get").arg(idParam));
+				methodBody.add(entityVar.invoke(methodName).arg(kbSetVar));
+
+				// Respond OK
+				JVar responseBuilderVar = methodBody.decl(super.jCodeModel._ref(ResponseBuilder.class), "_responseBuilder", super.jCodeModel.ref(Response.class).staticInvoke("ok"));
+				methodBody._return(responseBuilderVar.invoke("build"));
+			}
+		}
+
+	}
+
+	public void createSetMethodForDatatypeProperty() {
+		JType responseType = super.jCodeModel.ref(Response.class);
+		String methodName = "set" + entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
+
+		JMethod tempSet = ((JDefinedClass) owner.asJDefinedClass()).getMethod(methodName, new JType[] { super.jCodeModel._ref(String.class), super.jCodeModel._ref(String.class) });
+
+		if (tempSet == null) {
+			jMethod = ((JDefinedClass) owner.asJDefinedClass()).method(JMod.PUBLIC, responseType, methodName);
+			if (owner instanceof OntologyCodeClass) {
+
+				// Create annotation SET method
+				jMethod.annotate(POST.class);
+				jMethod.annotate(Path.class).param("value", "/entity/set" + entityName.substring(0, 1).toUpperCase() + entityName.substring(1));
+				String operationId = "set_" + ((RestOntologyCodeClass) owner).getPath().substring(1) + "_" + entityName;
+				jMethod.annotate(ApiOperation.class).param("value", "Set " + entityName).param("nickname", operationId);
+
+				// Create SET parameter
+				// IRI of the target individual where the property will be added
+				JVar idParam = jMethod.param(String.class, "id");
+				idParam.annotate(ApiParam.class).param("value", "id").param("required", true);
+				idParam.annotate(QueryParam.class).param("value", "id");
+
+				JVar rangeValueParam = jMethod.param(String.class, "value");
+				rangeValueParam.annotate(ApiParam.class).param("value", "value").param("required", true);
+				rangeValueParam.annotate(QueryParam.class).param("value", "value");
+
+				/*
+				 * Method Body
+				 */
+				JBlock methodBody = jMethod.body();
+
+				// Getting the target individual where the property will be added
+				AbstractOntologyCodeClass ownerInterface = ontologyModel.getOntologyClass(owner.getOntResource(), BeanOntologyCodeInterface.class);
+
+				// Getting range class
+				Class<?> rangeClass = null;
+
+				if (range == null) {
+					rangeClass = String.class;
+				} else {
+					rangeClass = TypeMapper.getInstance().getTypeByName(range.getOntResource().getURI()).getJavaClass();
+				}
+
+				// Creting set to be added
+				JType hashSetType_range = super.jCodeModel.ref(HashSet.class).narrow(rangeClass);
+				JType setType_range = super.jCodeModel.ref(Set.class).narrow(rangeClass);
+				JVar kbSetVar = methodBody.decl(setType_range, "toAdd", JExpr._new(hashSetType_range));
+
+				// Adding value to the set that will be added
+				if (range == null || rangeClass.equals(String.class)) {
+					methodBody.add(kbSetVar.invoke("add").arg(rangeValueParam));
+				} else {
+					JVar value = methodBody.decl(jCodeModel.ref(rangeClass), "datatype", JExpr.cast(jCodeModel.ref(rangeClass), jCodeModel.ref(TypeMapper.class).staticInvoke("getInstance").invoke("getTypeByClass").arg(jCodeModel.ref(rangeClass).dotclass()).invoke("parse").arg(rangeValueParam)));
+					methodBody.add(kbSetVar.invoke("add").arg(value));
+				}
+				// Add set to the individual
 				JVar entityVar = methodBody.decl(ownerInterface.asJDefinedClass(), "_entity", ownerInterface.asJDefinedClass().staticInvoke("get").arg(idParam));
 				methodBody.add(entityVar.invoke(methodName).arg(kbSetVar));
 
