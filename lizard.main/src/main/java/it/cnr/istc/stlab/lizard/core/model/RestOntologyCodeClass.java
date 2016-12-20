@@ -1,23 +1,35 @@
 package it.cnr.istc.stlab.lizard.core.model;
 
-import java.util.Set;
-
-import javax.ws.rs.Path;
-
-import org.apache.jena.ontology.OntClass;
-import org.apache.jena.ontology.OntResource;
-
-import com.sun.codemodel.JClassAlreadyExistsException;
-import com.sun.codemodel.JCodeModel;
-import com.sun.codemodel.JDefinedClass;
-import com.sun.codemodel.JMod;
-
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import it.cnr.istc.stlab.lizard.commons.Constants;
 import it.cnr.istc.stlab.lizard.commons.PrefixRegistry;
 import it.cnr.istc.stlab.lizard.commons.exception.ClassAlreadyExistsException;
 import it.cnr.istc.stlab.lizard.commons.inmemory.RestInterface;
+import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClass;
 import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeClass;
+
+import java.util.Set;
+import javax.ws.rs.core.Response.ResponseBuilder;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Response;
+
+import org.apache.jena.ontology.OntClass;
+import org.apache.jena.ontology.OntResource;
+import org.apache.jena.rdf.model.ModelFactory;
+
+import com.sun.codemodel.JBlock;
+import com.sun.codemodel.JClassAlreadyExistsException;
+import com.sun.codemodel.JCodeModel;
+import com.sun.codemodel.JDefinedClass;
+import com.sun.codemodel.JExpr;
+import com.sun.codemodel.JMethod;
+import com.sun.codemodel.JMod;
+import com.sun.codemodel.JType;
+import com.sun.codemodel.JVar;
 
 public class RestOntologyCodeClass extends OntologyCodeClass {
 
@@ -75,10 +87,50 @@ public class RestOntologyCodeClass extends OntologyCodeClass {
 		} catch (JClassAlreadyExistsException e) {
 			super.jClass = codeModel._getClass(entityName);
 		}
+
+		addCreateMethod();
 	}
 
 	public String getPath() {
 		return path;
+	}
+
+	public void addCreateMethod() {
+		String localName = this.ontResource.getLocalName().substring(0, 1).toUpperCase() + this.ontResource.getLocalName().substring(1);
+		JType responseType = super.jCodeModel.ref(Response.class);
+		String methodName = "create" + localName;
+
+		JMethod tempSet = ((JDefinedClass) this.asJDefinedClass()).getMethod(methodName, new JType[] { super.jCodeModel._ref(String.class) });
+
+		if (tempSet == null) {
+			JMethod jMethod = ((JDefinedClass) this.asJDefinedClass()).method(JMod.PUBLIC, responseType, methodName);
+
+			// Create annotations
+			jMethod.annotate(POST.class);
+			jMethod.annotate(Path.class).param("value", "/" + methodName);
+			String operationId = "create" + localName;
+			jMethod.annotate(ApiOperation.class).param("value", "Create a new " + this.ontResource.getLocalName()).param("nickname", operationId);
+
+			// Create parameters
+			JVar idParam = jMethod.param(String.class, "id");
+			idParam.annotate(ApiParam.class).param("value", "id").param("required", true);
+			idParam.annotate(QueryParam.class).param("value", "id");
+
+			/*
+			 * Method Body
+			 */
+
+			JBlock methodBody = jMethod.body();
+
+			// Getting the bean class of the individual
+			AbstractOntologyCodeClass jenaClass = ontologyModel.getOntologyClass(this.getOntResource(), JenaOntologyCodeClass.class);
+			methodBody.add(JExpr._new(jenaClass.asJDefinedClass()).arg(jCodeModel.ref(ModelFactory.class).staticInvoke("createDefaultModel").invoke("createResource").arg(idParam)));
+
+			// Respond OK
+			JVar responseBuilderVar = methodBody.decl(super.jCodeModel._ref(ResponseBuilder.class), "_responseBuilder", super.jCodeModel.ref(Response.class).staticInvoke("ok"));
+			methodBody._return(responseBuilderVar.invoke("build"));
+
+		}
 	}
 
 }
