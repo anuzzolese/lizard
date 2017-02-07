@@ -61,6 +61,7 @@ public class JettyServer {
 				ServletHolder servletHolderRestOntology = servletContextHandler.addServlet(org.glassfish.jersey.servlet.ServletContainer.class, "/" + b.getPath() + "/*");
 				servletHolderRestOntology.setInitOrder(2);
 				servletHolderRestOntology.setInitParameter("jersey.config.server.provider.packages", "io.swagger.jaxrs.listing," + FileUtils.getNamePackage(SetBodyWriter.class) + "," + b.get_package());
+				
 				b.init(servletHolderRestOntology.getServlet().getServletConfig());
 			}
 
