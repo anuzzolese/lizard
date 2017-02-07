@@ -48,10 +48,8 @@ public abstract class AbstractTemplate implements ITemplate {
             template.process(model, out);
             return ((StringWriter)out).toString();
         } catch (TemplateException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         return null;

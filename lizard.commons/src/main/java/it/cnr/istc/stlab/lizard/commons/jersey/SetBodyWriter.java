@@ -33,7 +33,6 @@ public class SetBodyWriter implements MessageBodyWriter<HashSet<?>> {
 	@Override
 	public long getSize(HashSet<?> t, Class<?> type, Type genericType,
 			Annotation[] annotations, MediaType mediaType) {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 
