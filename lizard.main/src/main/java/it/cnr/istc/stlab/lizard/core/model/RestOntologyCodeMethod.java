@@ -29,6 +29,8 @@ import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.ontology.OntResource;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.vocabulary.OWL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.sun.codemodel.JBlock;
 import com.sun.codemodel.JCodeModel;
@@ -43,6 +45,8 @@ import com.sun.codemodel.JType;
 import com.sun.codemodel.JVar;
 
 public class RestOntologyCodeMethod extends OntologyCodeMethod {
+	
+	private static Logger logger = LoggerFactory.getLogger(RestOntologyCodeMethod.class);
 
 	RestOntologyCodeMethod(OntologyCodeMethodType methodType, OntResource methodResource, AbstractOntologyCodeClass owner, Collection<AbstractOntologyCodeClass> domain, AbstractOntologyCodeClass range, OntologyCodeModel ontologyModel, JCodeModel codeModel) {
 		super(methodType, methodResource, owner, domain, range, ontologyModel, codeModel);
@@ -241,11 +245,157 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 				}
 
 				break;
+			case Delete:
 
+				if (methodResource.isDatatypeProperty()) {
+					// The property corresponding to the method is a datatype property
+					createDeleteMethodForDatatypeProperty();
+				} else {
+					// The property corresponding to the method is a object property
+					createDeleteMethodForObjectProperty();
+				}
+				break;
 			default:
 				break;
 			}
 		}
+	}
+	
+	public void createDeleteMethodForObjectProperty() {
+		
+		JType responseType = super.jCodeModel.ref(Response.class);
+		String methodName = "delete" + entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
+
+		JMethod tempSet = ((JDefinedClass) owner.asJDefinedClass()).getMethod(methodName, new JType[] { super.jCodeModel._ref(String.class), super.jCodeModel._ref(String.class) });
+
+		if (tempSet == null) {
+			jMethod = ((JDefinedClass) owner.asJDefinedClass()).method(JMod.PUBLIC, responseType, methodName);
+			if (owner instanceof OntologyCodeClass) {
+
+				// Create annotation SET method
+				jMethod.annotate(POST.class);
+				jMethod.annotate(Path.class).param("value", "/entity/delete" + entityName.substring(0, 1).toUpperCase() + entityName.substring(1));
+				String operationId = "delete_" + ((RestOntologyCodeClass) owner).getPath().substring(1) + "_" + entityName;
+				jMethod.annotate(ApiOperation.class).param("value", "Delete " + entityName).param("nickname", operationId);
+
+				// Create SET parameter
+				// IRI of the target individual where the property will be added
+				JVar idParam = jMethod.param(String.class, "id");
+				idParam.annotate(ApiParam.class).param("value", "id").param("required", true);
+				idParam.annotate(QueryParam.class).param("value", "id");
+
+				JVar iriRangeParam = jMethod.param(String.class, "value");
+				iriRangeParam.annotate(ApiParam.class).param("value", "value").param("required", true);
+				iriRangeParam.annotate(QueryParam.class).param("value", "value");
+
+				/*
+				 * Method Body
+				 */
+				JBlock methodBody = jMethod.body();
+
+				// Getting the target individual where the property will be added
+				AbstractOntologyCodeClass ownerInterface = ontologyModel.getOntologyClass(owner.getOntResource(), BeanOntologyCodeInterface.class);
+				AbstractOntologyCodeClass rangeJenaClass = null;
+				AbstractOntologyCodeClass rangeJenaInterface = null;
+				if (range == null) {
+					rangeJenaClass = ontologyModel.getOntologyClass(ModelFactory.createOntologyModel().getOntResource(OWL.Thing), JenaOntologyCodeClass.class);
+					rangeJenaInterface = ontologyModel.getOntologyClass(ModelFactory.createOntologyModel().getOntResource(OWL.Thing), BeanOntologyCodeInterface.class);
+				} else {
+					rangeJenaClass = ontologyModel.getOntologyClass(range.getOntResource(), JenaOntologyCodeClass.class);
+					rangeJenaInterface = ontologyModel.getOntologyClass(range.getOntResource(), BeanOntologyCodeInterface.class);
+					if (rangeJenaClass == null) {
+						// The range is a boolean class
+						rangeJenaClass = ontologyModel.getOntologyClass(range.getOntResource(), BooleanAnonClass.class);
+						rangeJenaInterface = ontologyModel.getOntologyClass(range.getOntResource(), BooleanAnonClass.class);
+					}
+				}
+
+				// Creting set to be added
+				JType hashSetType_range = super.jCodeModel.ref(HashSet.class).narrow(rangeJenaInterface.asJDefinedClass());
+				JType setType_range = super.jCodeModel.ref(Set.class).narrow(rangeJenaInterface.asJDefinedClass());
+				JVar kbSetVar = methodBody.decl(setType_range, "toDelete", JExpr._new(hashSetType_range));
+				methodBody.add(kbSetVar.invoke("add").arg(JExpr._new(rangeJenaClass.asJDefinedClass()).arg(jCodeModel.ref(ModelFactory.class).staticInvoke("createDefaultModel").invoke("createResource").arg(iriRangeParam))));
+
+				// add set to the individual
+				JVar entityVar = methodBody.decl(ownerInterface.asJDefinedClass(), "_entity", ownerInterface.asJDefinedClass().staticInvoke("get").arg(idParam));
+				methodBody.add(entityVar.invoke(methodName).arg(kbSetVar));
+
+				// Respond OK
+				JVar responseBuilderVar = methodBody.decl(super.jCodeModel._ref(ResponseBuilder.class), "_responseBuilder", super.jCodeModel.ref(Response.class).staticInvoke("ok"));
+				methodBody._return(responseBuilderVar.invoke("build"));
+			}
+		}
+
+	}
+
+	public void createDeleteMethodForDatatypeProperty() {
+		JType responseType = super.jCodeModel.ref(Response.class);
+		String methodName = "delete" + entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
+
+		JMethod tempSet = ((JDefinedClass) owner.asJDefinedClass()).getMethod(methodName, new JType[] { super.jCodeModel._ref(String.class), super.jCodeModel._ref(String.class) });
+
+		if (tempSet == null) {
+			jMethod = ((JDefinedClass) owner.asJDefinedClass()).method(JMod.PUBLIC, responseType, methodName);
+			if (owner instanceof OntologyCodeClass) {
+
+				// Create annotation DELETE method
+				jMethod.annotate(POST.class);
+				jMethod.annotate(Path.class).param("value", "/entity/delete" + entityName.substring(0, 1).toUpperCase() + entityName.substring(1));
+				String operationId = "delete_" + ((RestOntologyCodeClass) owner).getPath().substring(1) + "_" + entityName;
+				jMethod.annotate(ApiOperation.class).param("value", "Delete " + entityName).param("nickname", operationId);
+
+				// Create SET parameter
+				// IRI of the target individual where the property will be added
+				JVar idParam = jMethod.param(String.class, "id");
+				idParam.annotate(ApiParam.class).param("value", "id").param("required", true);
+				idParam.annotate(QueryParam.class).param("value", "id");
+
+				JVar rangeValueParam = jMethod.param(String.class, "value");
+				rangeValueParam.annotate(ApiParam.class).param("value", "value").param("required", true);
+				rangeValueParam.annotate(QueryParam.class).param("value", "value");
+
+				/*
+				 * Method Body
+				 */
+				JBlock methodBody = jMethod.body();
+
+				// Getting the target individual where the property will be added
+				AbstractOntologyCodeClass ownerInterface = ontologyModel.getOntologyClass(owner.getOntResource(), BeanOntologyCodeInterface.class);
+
+				// Getting range class
+				Class<?> rangeClass = null;
+				
+				logger.debug("OWNER "+owner.getEntityName()+" "+this.ontResource.getLocalName());
+
+				if (range == null) {
+					rangeClass = String.class;
+				} else {
+					logger.debug(range.getOntResource().getLocalName());
+					rangeClass = TypeMapper.getInstance().getTypeByName(range.getOntResource().getURI()).getJavaClass();
+				}
+
+				// Creting set to be added
+				JType hashSetType_range = super.jCodeModel.ref(HashSet.class).narrow(rangeClass);
+				JType setType_range = super.jCodeModel.ref(Set.class).narrow(rangeClass);
+				JVar kbSetVar = methodBody.decl(setType_range, "toDelete", JExpr._new(hashSetType_range));
+
+				// Adding value to the set that will be added
+				if (range == null || rangeClass.equals(String.class)) {
+					methodBody.add(kbSetVar.invoke("add").arg(rangeValueParam));
+				} else {
+					JVar value = methodBody.decl(jCodeModel.ref(rangeClass), "datatype", JExpr.cast(jCodeModel.ref(rangeClass), jCodeModel.ref(TypeMapper.class).staticInvoke("getInstance").invoke("getTypeByClass").arg(jCodeModel.ref(rangeClass).dotclass()).invoke("parse").arg(rangeValueParam)));
+					methodBody.add(kbSetVar.invoke("add").arg(value));
+				}
+				// Add set to the individual
+				JVar entityVar = methodBody.decl(ownerInterface.asJDefinedClass(), "_entity", ownerInterface.asJDefinedClass().staticInvoke("get").arg(idParam));
+				methodBody.add(entityVar.invoke(methodName).arg(kbSetVar));
+
+				// Respond OK
+				JVar responseBuilderVar = methodBody.decl(super.jCodeModel._ref(ResponseBuilder.class), "_responseBuilder", super.jCodeModel.ref(Response.class).staticInvoke("ok"));
+				methodBody._return(responseBuilderVar.invoke("build"));
+			}
+		}
+
 	}
 
 	public void createSetMethodForObjectProperty() {
@@ -350,10 +500,13 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 
 				// Getting range class
 				Class<?> rangeClass = null;
+				
+				logger.debug("OWNER "+owner.getEntityName()+" "+this.ontResource.getLocalName());
 
 				if (range == null) {
 					rangeClass = String.class;
 				} else {
+					logger.debug(range.getOntResource().getLocalName());
 					rangeClass = TypeMapper.getInstance().getTypeByName(range.getOntResource().getURI()).getJavaClass();
 				}
 

@@ -11,15 +11,18 @@ import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClass;
 import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeClass;
 
 import java.util.Set;
-import javax.ws.rs.core.Response.ResponseBuilder;
+
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 
 import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntResource;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.sun.codemodel.JBlock;
 import com.sun.codemodel.JClassAlreadyExistsException;
@@ -32,6 +35,8 @@ import com.sun.codemodel.JType;
 import com.sun.codemodel.JVar;
 
 public class RestOntologyCodeClass extends OntologyCodeClass {
+	
+	private static Logger logger = LoggerFactory.getLogger(RestOntologyCodeClass.class);
 
 	private static final String SUBPACKAGE_NAME = "web";
 
@@ -44,8 +49,10 @@ public class RestOntologyCodeClass extends OntologyCodeClass {
 
 	RestOntologyCodeClass(OntResource resource, RestOntologyCodeModel ontologyModel, JCodeModel codeModel) throws ClassAlreadyExistsException {
 		super(resource, ontologyModel, codeModel);
+		
 
 		String artifactId = packageName + "." + SUBPACKAGE_NAME + ".";
+		logger.debug(artifactId);
 
 		// String packagePath = packageName.replaceAll("\\.", "_");
 
@@ -98,7 +105,7 @@ public class RestOntologyCodeClass extends OntologyCodeClass {
 	public void addCreateMethod() {
 		String localName = this.ontResource.getLocalName().substring(0, 1).toUpperCase() + this.ontResource.getLocalName().substring(1);
 		JType responseType = super.jCodeModel.ref(Response.class);
-		String methodName = "create" + localName;
+		String methodName = "create" + Constants.getJavaName(localName);
 
 		JMethod tempSet = ((JDefinedClass) this.asJDefinedClass()).getMethod(methodName, new JType[] { super.jCodeModel._ref(String.class) });
 
@@ -119,11 +126,14 @@ public class RestOntologyCodeClass extends OntologyCodeClass {
 			/*
 			 * Method Body
 			 */
+			
+			logger.debug(entityName+" "+path+" "+methodName+" "+this.ontResource.getLocalName());
 
 			JBlock methodBody = jMethod.body();
 
 			// Getting the bean class of the individual
 			AbstractOntologyCodeClass jenaClass = ontologyModel.getOntologyClass(this.getOntResource(), JenaOntologyCodeClass.class);
+			logger.debug("JENA CLASS "+ ((jenaClass==null)?"null":"not null") + " "+this.getOntResource().getURI());
 			methodBody.add(JExpr._new(jenaClass.asJDefinedClass()).arg(jCodeModel.ref(ModelFactory.class).staticInvoke("createDefaultModel").invoke("createResource").arg(idParam)));
 
 			// Respond OK

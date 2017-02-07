@@ -4,6 +4,7 @@ import it.cnr.istc.stlab.lizard.commons.MavenUtils;
 import it.cnr.istc.stlab.lizard.commons.OntologyCodeProject;
 import it.cnr.istc.stlab.lizard.commons.exception.NotAvailableOntologyCodeEntityException;
 import it.cnr.istc.stlab.lizard.commons.inmemory.RestInterface;
+import it.cnr.istc.stlab.lizard.commons.jena.rdfdatatypes.XSDNonNegativeIntegerType;
 import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClass;
 import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClassImpl;
 import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeClass;
@@ -36,6 +37,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.ontology.BooleanClassDescription;
 import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
@@ -88,6 +90,11 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 
 		return project;
 
+	}
+	
+	private static void registerDatatypes(){
+		// TODO let register custom datatype
+		TypeMapper.getInstance().registerDatatype(new XSDNonNegativeIntegerType());
 	}
 
 	private OntologyCodeProject generateBeans() throws NotAvailableOntologyCodeEntityException {
@@ -412,6 +419,7 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 						domain.add(rangeClass);
 						ontologyModel.createMethod(OntologyCodeMethodType.Get, ontProperty, owner, domain, rangeClass);
 						ontologyModel.createMethod(OntologyCodeMethodType.Set, ontProperty, owner, domain, rangeClass);
+						ontologyModel.createMethod(OntologyCodeMethodType.Delete, ontProperty, owner, domain, rangeClass);
 					}
 				} else {
 
@@ -422,6 +430,7 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 
 					ontologyModel.createMethod(OntologyCodeMethodType.Get, ontProperty, owner, domain, anonClass);
 					ontologyModel.createMethod(OntologyCodeMethodType.Set, ontProperty, owner, domain, anonClass);
+					ontologyModel.createMethod(OntologyCodeMethodType.Delete, ontProperty, owner, domain, anonClass);
 
 				}
 			} else {
@@ -432,6 +441,7 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 
 				ontologyModel.createMethod(OntologyCodeMethodType.Get, ontProperty, owner, domain, ontologyModel.getOntologyClass(thing, RestOntologyCodeClass.class));
 				ontologyModel.createMethod(OntologyCodeMethodType.Set, ontProperty, owner, domain, ontologyModel.getOntologyClass(thing, RestOntologyCodeClass.class));
+				ontologyModel.createMethod(OntologyCodeMethodType.Delete, ontProperty, owner, domain, ontologyModel.getOntologyClass(thing, RestOntologyCodeClass.class));
 			}
 
 		}
@@ -461,6 +471,7 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 
 						ontologyModel.createMethod(OntologyCodeMethodType.Get, onProperty, owner, null, rangeClass);
 						ontologyModel.createMethod(OntologyCodeMethodType.Set, onProperty, owner, null, rangeClass);
+						ontologyModel.createMethod(OntologyCodeMethodType.Delete, onProperty, owner, null, rangeClass);
 
 					} catch (NotAvailableOntologyCodeEntityException e) {
 						e.printStackTrace();
@@ -532,6 +543,7 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 
 						ontologyModel.createMethod(OntologyCodeMethodType.Get, ontProperty, owner, null, rangeClass);
 						ontologyModel.createMethod(OntologyCodeMethodType.Set, ontProperty, owner, domain, null);
+						ontologyModel.createMethod(OntologyCodeMethodType.Delete, ontProperty, owner, domain, null);
 
 					}
 				} else {
@@ -543,6 +555,7 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 
 					ontologyModel.createMethod(OntologyCodeMethodType.Get, ontProperty, owner, null, anonClass);
 					ontologyModel.createMethod(OntologyCodeMethodType.Set, ontProperty, owner, domain, null);
+					ontologyModel.createMethod(OntologyCodeMethodType.Delete, ontProperty, owner, domain, null);
 				}
 			} else {
 
@@ -575,6 +588,7 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 
 				ontologyModel.createMethod(OntologyCodeMethodType.Get, ontProperty, owner, null, rangeClass);
 				ontologyModel.createMethod(OntologyCodeMethodType.Set, ontProperty, owner, domain, null);
+				ontologyModel.createMethod(OntologyCodeMethodType.Delete, ontProperty, owner, domain, null);
 			}
 
 		}
@@ -603,6 +617,8 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 
 						ontologyModel.createMethod(OntologyCodeMethodType.Get, onProperty, owner, null, rangeClass);
 						ontologyModel.createMethod(OntologyCodeMethodType.Set, onProperty, owner, null, rangeClass);
+						ontologyModel.createMethod(OntologyCodeMethodType.Delete, onProperty, owner, null, rangeClass);
+						
 					} catch (NotAvailableOntologyCodeEntityException e) {
 						e.printStackTrace();
 					}
@@ -615,6 +631,10 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 	public static void main(String[] args) {
 		System.setProperty("M2_HOME", "/Users/lgu/Programs/apache-maven");
 		System.setProperty("JAVA_HOME", "/Library/Java/JavaVirtualMachines/jdk1.8.0_25.jdk/Contents/Home");
+		
+		registerDatatypes();
+		
+		
 		// codegen.generate();
 		URI uri = null;
 		try {
@@ -627,7 +647,7 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 			// uri = new
 			// URI("http://www.ontologydesignpatterns.org/ont/framester/framester.owl");
 			// uri = new URI("http://www.ontologydesignpatterns.org/ont/mario/music.owl");
-			uri = new URI("/Users/lgu/Dropbox/stlab/ontologies/mario/modules/music.owl");
+			uri = new URI("http://www.ontologydesignpatterns.org/ont/mario/person.owl");
 			// uri = new URI("vocabs/foaf.rdf");
 
 			OntologyCodeGenerationRecipe codegen = new LizardCore(uri);

@@ -26,6 +26,8 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.sun.codemodel.JAnnotationUse;
 import com.sun.codemodel.JBlock;
@@ -41,6 +43,8 @@ import com.sun.codemodel.JVar;
 import com.sun.codemodel.JWhileLoop;
 
 public class BeanOntologyCodeMethod extends OntologyCodeMethod {
+
+	private static Logger logger = LoggerFactory.getLogger(BeanOntologyCodeMethod.class);
 
 	BeanOntologyCodeMethod(OntologyCodeMethodType methodType, OntResource methodResource, AbstractOntologyCodeClass owner, Collection<AbstractOntologyCodeClass> domain, AbstractOntologyCodeClass range, OntologyCodeModel ontologyModel, JCodeModel codeModel) {
 		super(methodType, methodResource, owner, domain, range, ontologyModel, codeModel);
@@ -71,12 +75,30 @@ public class BeanOntologyCodeMethod extends OntologyCodeMethod {
 				// jMethod = ((JDefinedClass)owner.asJDefinedClass()).method(1, setClass, entityName);
 				String methodName = entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
 				jMethod = ((JDefinedClass) owner.asJDefinedClass()).method(1, setClass, "get" + methodName);
-			} else {
+			} else if (methodType == OntologyCodeMethodType.Set) {
 
 				String methodName = entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
 				jMethod = domainJClass.method(1, void.class, "set" + methodName);
 				if (domain != null) {
 
+					for (AbstractOntologyCodeClass domainClass : domain) {
+						String name = domainClass.getEntityName();
+						name = name.substring(name.lastIndexOf(".") + 1);
+						name = name.substring(0, 1).toLowerCase() + name.substring(1);
+						JType setClass = codeModel.ref(Set.class).narrow(domainClass.asJDefinedClass());
+						jMethod.param(setClass, name);
+					}
+				} else {
+					JType setClass = codeModel.ref(Set.class).narrow(range.asJDefinedClass());
+					jMethod.param(setClass, entityName);
+				}
+			} else if (methodType == OntologyCodeMethodType.Delete) {
+				
+				// create delete method
+				String methodName = entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
+				jMethod = domainJClass.method(1, void.class, "delete" + methodName);
+				
+				if (domain != null) {
 					for (AbstractOntologyCodeClass domainClass : domain) {
 						String name = domainClass.getEntityName();
 						name = name.substring(name.lastIndexOf(".") + 1);
@@ -158,18 +180,26 @@ public class BeanOntologyCodeMethod extends OntologyCodeMethod {
 					methodBody._return(ownerClassField);
 				}
 
-			} else {
+			} else if (methodType == OntologyCodeMethodType.Set) {
 				if (owner instanceof OntologyCodeClass) {
 					JBlock methodBody = jMethod.body();
 					JVar ownerClassField = ownerJClass.fields().get(entityName);
 					if (ownerClassField == null) {
-						// System.out.println(getClass() + " OWNER " + ontResource + " " + (domain == null));
+						logger.debug(getClass() + " OWNER " + ontResource + " " + (domain == null));
 						AbstractOntologyCodeClass fieldType = ((ArrayList<AbstractOntologyCodeClass>) domain).get(0);
 						JType setClass = jCodeModel.ref(Set.class).narrow(fieldType.asJDefinedClass());
 						ownerClassField = ownerJClass.field(JMod.PRIVATE, setClass, entityName);
 					}
 
 					methodBody.assign(ownerClassField, jMethod.params().get(0));
+				}
+			} else if (methodType == OntologyCodeMethodType.Delete) {
+				if (owner instanceof OntologyCodeClass) {
+					
+					JBlock methodBody = jMethod.body();
+					
+					methodBody.directStatement("throw new UnsupportedOperationException(\"Unsupported Operation!\");");
+					
 				}
 			}
 		}
