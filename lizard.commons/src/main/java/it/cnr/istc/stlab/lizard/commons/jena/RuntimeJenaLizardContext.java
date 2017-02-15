@@ -18,6 +18,7 @@ public class RuntimeJenaLizardContext {
 				InputStream is = RuntimeJenaLizardContext.class
 						.getClassLoader().getResourceAsStream(CONF_FILE);
 				props.load(is);
+				
 
 			} catch (Exception e) {
 				props.setProperty("type", "virtuoso");

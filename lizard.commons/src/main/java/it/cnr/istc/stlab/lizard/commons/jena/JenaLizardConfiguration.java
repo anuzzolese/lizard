@@ -5,6 +5,8 @@ import java.util.Properties;
 public class JenaLizardConfiguration {
 
 	public static final String TYPE = "type";
+	public static final String MODEL_FILEPATH = "modelFilepath";
+	public static final String MODEL_LANG = "lang";
 	public static final String TDB_LOCATION = "location";
 	public static final String VIRTUOSO_USER = "user";
 	public static final String VIRTUOSO_PASSWORD = "password";
@@ -13,12 +15,14 @@ public class JenaLizardConfiguration {
 	public static final String GRAPH = "graph";
 
 	private String tdbLocation;
+	private String modelFilePath;
 	private RepositoryType type;
 	private String virtuosoUser;
 	private String virtuosoPassword;
 	private String virtuosoHost;
 	private String virtuosoPort;
 	private String graph;
+	private String lang;
 
 	public JenaLizardConfiguration() {
 
@@ -27,10 +31,10 @@ public class JenaLizardConfiguration {
 	public JenaLizardConfiguration(Properties props) {
 		this();
 
-		String tmp = props.getProperty(TYPE);
-		if (tmp != null) {
-			tmp = tmp.toLowerCase().trim();
-			if (tmp.equals("virtuoso")) {
+		String typeString = props.getProperty(TYPE);
+		if (typeString != null) {
+			typeString = typeString.toLowerCase().trim();
+			if (typeString.equals("virtuoso")) {
 				type = RepositoryType.Virtuoso;
 				setType(type);
 				setVirtuosoUser(props.getProperty(VIRTUOSO_USER));
@@ -38,14 +42,19 @@ public class JenaLizardConfiguration {
 				setVirtuosoHost(props.getProperty(VIRTUOSO_HOST));
 				setVirtuosoPort(props.getProperty(VIRTUOSO_PORT));
 				setGraph(props.getProperty(GRAPH));
-			} else if (tmp.equals("tdb")) {
+			} else if (typeString.equals("tdb")) {
 				type = RepositoryType.TDB;
 				setType(type);
-				tmp = props.getProperty(TDB_LOCATION);
-				if (tmp != null)
-					setTdbLocation(tmp);
-			} else if (tmp.equals("inmemory"))
+				typeString = props.getProperty(TDB_LOCATION);
+				if (typeString != null)
+					setTdbLocation(typeString);
+			} else if (typeString.equals("inmemory")){
 				type = RepositoryType.InMemory;
+			} else if(typeString.equalsIgnoreCase("file")){
+				type = RepositoryType.File;
+				this.setModelFilePath(props.getProperty(MODEL_FILEPATH));
+				this.setLang(props.getProperty(MODEL_LANG));
+			}
 
 		}
 
@@ -131,6 +140,22 @@ public class JenaLizardConfiguration {
 
 	public void setGraph(String graph) {
 		this.graph = graph;
+	}
+
+	public String getModelFilePath() {
+		return modelFilePath;
+	}
+
+	public void setModelFilePath(String modelFilePath) {
+		this.modelFilePath = modelFilePath;
+	}
+
+	public String getLang() {
+		return lang;
+	}
+
+	public void setLang(String lang) {
+		this.lang = lang;
 	}
 
 }
