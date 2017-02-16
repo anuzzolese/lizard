@@ -45,7 +45,7 @@ import com.sun.codemodel.JType;
 import com.sun.codemodel.JVar;
 
 public class RestOntologyCodeMethod extends OntologyCodeMethod {
-	
+
 	private static Logger logger = LoggerFactory.getLogger(RestOntologyCodeMethod.class);
 
 	RestOntologyCodeMethod(OntologyCodeMethodType methodType, OntResource methodResource, AbstractOntologyCodeClass owner, Collection<AbstractOntologyCodeClass> domain, AbstractOntologyCodeClass range, OntologyCodeModel ontologyModel, JCodeModel codeModel) {
@@ -177,6 +177,9 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 						JDefinedClass jdc = (JDefinedClass) ontologyModel.getOntologyClass(owner.getOntResource(), BeanOntologyCodeInterface.class).asJDefinedClass();
 						// JMethod meth = jdc.getMethod(entityName, new
 						// JType[]{});
+
+						logger.debug("Method name: " + getMethodName);
+
 						JMethod meth = jdc.getMethod(getMethodName, new JType[] {});
 
 						JType methRetType = meth.type();
@@ -260,9 +263,9 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 			}
 		}
 	}
-	
+
 	public void createDeleteMethodForObjectProperty() {
-		
+
 		JType responseType = super.jCodeModel.ref(Response.class);
 		String methodName = "delete" + entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
 
@@ -364,8 +367,8 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 
 				// Getting range class
 				Class<?> rangeClass = null;
-				
-				logger.debug("OWNER "+owner.getEntityName()+" "+this.ontResource.getLocalName());
+
+				logger.debug("OWNER " + owner.getEntityName() + " " + this.ontResource.getLocalName());
 
 				if (range == null) {
 					rangeClass = String.class;
@@ -500,8 +503,8 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 
 				// Getting range class
 				Class<?> rangeClass = null;
-				
-				logger.debug("OWNER "+owner.getEntityName()+" "+this.ontResource.getLocalName());
+
+				logger.debug("OWNER " + owner.getEntityName() + " " + this.ontResource.getLocalName());
 
 				if (range == null) {
 					rangeClass = String.class;

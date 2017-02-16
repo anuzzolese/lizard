@@ -72,7 +72,6 @@ public class BeanOntologyCodeMethod extends OntologyCodeMethod {
 
 			if (methodType == OntologyCodeMethodType.Get) {
 				JType setClass = codeModel.ref(Set.class).narrow(range.asJDefinedClass());
-				// jMethod = ((JDefinedClass)owner.asJDefinedClass()).method(1, setClass, entityName);
 				String methodName = entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
 				jMethod = ((JDefinedClass) owner.asJDefinedClass()).method(1, setClass, "get" + methodName);
 			} else if (methodType == OntologyCodeMethodType.Set) {
@@ -206,9 +205,15 @@ public class BeanOntologyCodeMethod extends OntologyCodeMethod {
 	}
 
 	private void addClassCentricStaticMethod(JCodeModel codeModel, String fieldName) {
+		
+		// Adding static methods in the class interface
+		
 		if (this.methodType == OntologyCodeMethodType.Get) {
+			
 			OntologyCodeInterface ontInterface = ontologyModel.getOntologyClass(owner.getOntResource(), BeanOntologyCodeInterface.class);
+			
 			if (ontInterface != null) {
+				
 				JDefinedClass interfaceClass = (JDefinedClass) ontInterface.asJDefinedClass();
 
 				JFieldVar staticField = interfaceClass.fields().get(fieldName);

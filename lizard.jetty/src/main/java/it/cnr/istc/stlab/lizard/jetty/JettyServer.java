@@ -64,6 +64,8 @@ public class JettyServer {
 				
 				b.init(servletHolderRestOntology.getServlet().getServletConfig());
 			}
+			
+			System.out.println("Done!");
 
 			jettyServer.join();
 		} catch (Exception e) {

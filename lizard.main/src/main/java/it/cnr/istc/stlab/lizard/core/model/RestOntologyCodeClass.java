@@ -9,14 +9,18 @@ import it.cnr.istc.stlab.lizard.commons.exception.ClassAlreadyExistsException;
 import it.cnr.istc.stlab.lizard.commons.inmemory.RestInterface;
 import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClass;
 import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeClass;
+import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeInterface;
 
+import java.util.HashSet;
 import java.util.Set;
 
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
+import javax.ws.rs.core.Response.Status;
 
 import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntResource;
@@ -27,8 +31,11 @@ import org.slf4j.LoggerFactory;
 import com.sun.codemodel.JBlock;
 import com.sun.codemodel.JClassAlreadyExistsException;
 import com.sun.codemodel.JCodeModel;
+import com.sun.codemodel.JConditional;
 import com.sun.codemodel.JDefinedClass;
 import com.sun.codemodel.JExpr;
+import com.sun.codemodel.JExpression;
+import com.sun.codemodel.JForEach;
 import com.sun.codemodel.JMethod;
 import com.sun.codemodel.JMod;
 import com.sun.codemodel.JType;
@@ -96,6 +103,62 @@ public class RestOntologyCodeClass extends OntologyCodeClass {
 		}
 
 		addCreateMethod();
+		addGetAllMethod();
+	}
+
+	private void addGetAllMethod() {
+		String localName = this.ontResource.getLocalName().substring(0, 1).toUpperCase() + this.ontResource.getLocalName().substring(1);
+		JType responseType = super.jCodeModel.ref(Response.class);
+		String methodName = "getAll" + Constants.getJavaName(localName);
+		
+		JMethod tempSet = ((JDefinedClass) this.asJDefinedClass()).getMethod(methodName, new JType[] { });
+		
+		if (tempSet == null) {
+			JMethod jMethod = ((JDefinedClass) this.asJDefinedClass()).method(JMod.PUBLIC, responseType, methodName);
+
+			/*
+			 * Method Body
+			 */
+
+			logger.debug(entityName+" "+path+" "+methodName+" "+this.ontResource.getLocalName());
+
+			JBlock methodBody = jMethod.body();
+			
+			jMethod.annotate(GET.class);
+			jMethod.annotate(Path.class).param("value", "/" + methodName);
+			jMethod.annotate(ApiOperation.class).param("value", "Retrieve all " + Constants.getJavaName(localName)).param("nickname", methodName);
+
+			JVar responseBuilderVar = methodBody.decl(jCodeModel._ref(ResponseBuilder.class), "_responseBuilder", JExpr._null());
+			OntologyCodeInterface javaInterface = ontologyModel.getOntologyClass(ontResource, BeanOntologyCodeInterface.class);
+			JType setType = jCodeModel.ref(Set.class).narrow(javaInterface.asJDefinedClass());
+			JType hashSetType = jCodeModel.ref(HashSet.class).narrow(javaInterface.asJDefinedClass());
+
+			JVar kbSetVar = methodBody.decl(setType, "_kbSet", javaInterface.asJDefinedClass().staticInvoke("getAll"));
+			JVar retSetVar = methodBody.decl(setType, "_retSet", JExpr._new(hashSetType));
+
+			JConditional ifBlock = methodBody._if(kbSetVar.ne(JExpr._null()));
+			/*
+			 * Then
+			 */
+			JBlock ifThenBlock = ifBlock._then();
+			JForEach forEach = ifThenBlock.forEach(javaInterface.asJDefinedClass(), "_obj", kbSetVar);
+
+			JBlock forEachBlock = forEach.body();
+			JExpression castExpression = JExpr.cast(ontologyModel.getOntologyClass(ontResource, JenaOntologyCodeClass.class).asJDefinedClass(), forEach.var());
+			forEachBlock.add(retSetVar.invoke("add").arg(castExpression.invoke("asMicroBean")));
+
+			ifThenBlock.assign(responseBuilderVar, jCodeModel.ref(Response.class).staticInvoke("ok").arg(retSetVar));
+
+			/*
+			 * Else
+			 */
+			JBlock ifElseBlock = ifBlock._else();
+			ifElseBlock.assign(responseBuilderVar, jCodeModel.ref(Response.class).staticInvoke("status").arg(jCodeModel.ref(Status.class).staticRef("NOT_FOUND")));
+
+			methodBody._return(responseBuilderVar.invoke("build"));
+
+		}
+		
 	}
 
 	public String getPath() {
@@ -103,6 +166,7 @@ public class RestOntologyCodeClass extends OntologyCodeClass {
 	}
 
 	public void addCreateMethod() {
+		
 		String localName = this.ontResource.getLocalName().substring(0, 1).toUpperCase() + this.ontResource.getLocalName().substring(1);
 		JType responseType = super.jCodeModel.ref(Response.class);
 		String methodName = "create" + Constants.getJavaName(localName);

@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.ontology.OntResource;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
@@ -463,6 +464,10 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 			JVar jenaModelVar = methodBody.decl(jCodeModel._ref(Model.class), "model", jCodeModel.ref(RuntimeJenaLizardContext.class).staticInvoke("getContext").invoke("getModel"));
 
 			logger.debug(owner.getOntResource().getURI() + " " + entityName + " " + (this.domain == null));
+			
+			if(owner.getOntResource().isDatatypeProperty() && owner.getOntResource().asDatatypeProperty().getRange()!=null && TypeMapper.getInstance().getTypeByName(owner.getOntResource().asDatatypeProperty().getRange().getURI())!=null){
+				
+			}
 
 			int paramCounter = 0;
 			for (AbstractOntologyCodeClass domain : this.domain) {

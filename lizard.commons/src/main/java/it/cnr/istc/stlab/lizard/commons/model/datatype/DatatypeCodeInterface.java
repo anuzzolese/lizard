@@ -18,37 +18,36 @@ import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeInterface;
 import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeModel;
 
 public class DatatypeCodeInterface extends OntologyCodeInterface {
-	
-	
+
 	public DatatypeCodeInterface(OntResource ontResource, OntologyCodeModel ontologyModel, JCodeModel jCodeModel) throws ClassAlreadyExistsException {
 		super();
-		
+
 		super.ontResource = ontResource;
 		super.ontologyModel = ontologyModel;
 		super.jCodeModel = jCodeModel;
-		
+
 		String datatypeUri = ontResource.getURI();
 		String localName = ontResource.getLocalName();
-		if(!SourceVersion.isName(localName)) localName = "_" + localName;
+		if (!SourceVersion.isName(localName))
+			localName = "_" + localName;
 		super.entityName = localName;
-		
+
 		RDFDatatype datatype = TypeMapper.getInstance().getTypeByName(datatypeUri);
-		if(datatype == null) datatype = XSDDatatype.XSDstring;
-        
+		if (datatype == null)
+			datatype = XSDDatatype.XSDstring;
+
 		super.jClass = jCodeModel.ref(datatype.getJavaClass());
-            
+
 	}
 
 	@Override
 	protected void extendsClasses(AbstractOntologyCodeClass oClass) {
-		
-		
+
 	}
 
 	@Override
 	public Set<AbstractOntologyCodeClass> listSuperClasses() {
 		return Collections.emptySet();
 	}
-
 
 }
