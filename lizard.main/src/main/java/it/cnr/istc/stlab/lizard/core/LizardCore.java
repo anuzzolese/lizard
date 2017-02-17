@@ -183,7 +183,7 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 		});
 
 		ontologyClasses.forEach(ontologyClass -> {
-			
+
 			OntClass ontClass = (OntClass) ontologyClass.getOntResource();
 			OntologyCodeInterface ontologyInterface = ontologyCodeModel.getOntologyClass(ontClass, BeanOntologyCodeInterface.class);
 

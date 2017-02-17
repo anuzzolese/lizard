@@ -35,8 +35,6 @@ import org.apache.jena.rdf.model.StmtIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import virtuoso.jena.driver.VirtuosoQueryExecutionFactory;
-
 import com.sun.codemodel.JAnnotationUse;
 import com.sun.codemodel.JBlock;
 import com.sun.codemodel.JClass;
@@ -193,8 +191,8 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 			JVar queryVar = asBeanMethodBody.decl(jCodeModel._ref(Query.class), "query", jCodeModel.ref(QueryFactory.class).staticInvoke("create").arg(JExpr.lit("DESCRIBE <").plus(JExpr._super().ref("individual").invoke("asResource").invoke("getURI").plus(JExpr.lit(">")))));
 			JVar queryVarMB = asMicroBeanMethodBody.decl(jCodeModel._ref(Query.class), "query", jCodeModel.ref(QueryFactory.class).staticInvoke("create").arg(JExpr.lit("DESCRIBE <").plus(JExpr._super().ref("individual").invoke("asResource").invoke("getURI").plus(JExpr.lit(">")))));
 
-			JVar qexecVar = asBeanMethodBody.decl(jCodeModel._ref(QueryExecution.class), "qexec", jCodeModel.ref(VirtuosoQueryExecutionFactory.class).staticInvoke("create").arg(queryVar).arg(jenaModelVar));
-			JVar qexecVarMB = asMicroBeanMethodBody.decl(jCodeModel._ref(QueryExecution.class), "qexec", jCodeModel.ref(VirtuosoQueryExecutionFactory.class).staticInvoke("create").arg(queryVarMB).arg(jenaModelVarMB));
+			JVar qexecVar = asBeanMethodBody.decl(jCodeModel._ref(QueryExecution.class), "qexec", jCodeModel.ref(RuntimeJenaLizardContext.class).staticInvoke("getContext").invoke("createQueryExecution").arg(queryVar).arg(jenaModelVar));
+			JVar qexecVarMB = asMicroBeanMethodBody.decl(jCodeModel._ref(QueryExecution.class), "qexec", jCodeModel.ref(RuntimeJenaLizardContext.class).staticInvoke("getContext").invoke("createQueryExecution").arg(queryVarMB).arg(jenaModelVarMB));
 
 			asBeanMethodBody.decl(jCodeModel._ref(Model.class), "m", qexecVar.invoke("execDescribe"));
 			asMicroBeanMethodBody.decl(jCodeModel._ref(Model.class), "m", qexecVarMB.invoke("execDescribe"));
