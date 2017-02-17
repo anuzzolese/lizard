@@ -55,8 +55,13 @@ public class JenaOntologyCodeClass extends OntologyCodeClass {
 		init(resource);
 		addStaticReferencerMethodInInterface();
 
+	}
+
+	private void createBodyConstructors() {
+
 		((JDefinedClass) super.jClass)._extends(InMemoryLizardClass.class);
 
+		// Constructor taking RDFNode
 		JExpression expression = jCodeModel.ref(ModelFactory.class).staticInvoke("createOntologyModel").invoke("createOntResource").arg(ontResource.getURI());
 
 		JMethod constructor = ((JDefinedClass) super.jClass).getConstructor(new JType[] { jClass.owner()._ref(RDFNode.class) });
@@ -70,7 +75,19 @@ public class JenaOntologyCodeClass extends OntologyCodeClass {
 		JInvocation invocation = jenaModelVar.invoke("add").arg(JExpr.cast(jCodeModel._ref(Resource.class), JExpr._super().ref("individual"))).arg(jCodeModel.ref(RDF.class).staticRef("type")).arg(expression);
 		ifThenBlock.add(invocation);
 
-		// constructorBody.add(invocation);
+		// Constructor taking URI
+
+		JMethod constructorURI = ((JDefinedClass) super.jClass).getConstructor(new JType[] { jCodeModel.ref(String.class) });
+		JVar paramURI = constructorURI.listParams()[0];
+		JBlock constructorBodyURI = constructorURI.body();
+		JExpression expressionCreateResource = jCodeModel.ref(ModelFactory.class).staticInvoke("createDefaultModel").invoke("createResource").arg(paramURI);
+		constructorBodyURI.invoke("super").arg(expressionCreateResource).arg(expression);
+
+		JVar jenaModelVarURI = constructorBodyURI.decl(jCodeModel._ref(Model.class), "model", jCodeModel.ref(RuntimeJenaLizardContext.class).staticInvoke("getContext").invoke("getModel"));
+		JBlock ifThenBlockURI = constructorBodyURI._if(jenaModelVarURI.invoke("contains").arg(JExpr.cast(jCodeModel._ref(Resource.class), JExpr._super().ref("individual"))).arg(jCodeModel.ref(RDF.class).staticRef("type")).arg(expression).not())._then();
+
+		JInvocation invocationURI = jenaModelVarURI.invoke("add").arg(JExpr.cast(jCodeModel._ref(Resource.class), JExpr._super().ref("individual"))).arg(jCodeModel.ref(RDF.class).staticRef("type")).arg(expression);
+		ifThenBlockURI.add(invocationURI);
 
 	}
 
@@ -91,6 +108,9 @@ public class JenaOntologyCodeClass extends OntologyCodeClass {
 				 */
 				JMethod constructor = ((JDefinedClass) super.jClass).constructor(1);
 				constructor.param(RDFNode.class, "individual");
+
+				JMethod constructorURI = ((JDefinedClass) super.jClass).constructor(1);
+				constructorURI.param(String.class, "individual");
 
 				((JDefinedClass) super.jClass)._extends(LizardClass.class);
 
@@ -115,6 +135,7 @@ public class JenaOntologyCodeClass extends OntologyCodeClass {
 				throw new ClassAlreadyExistsException(ontResource);
 			}
 		}
+		createBodyConstructors();
 	}
 
 	private void addStaticReferencerMethodInInterface() {
@@ -137,24 +158,23 @@ public class JenaOntologyCodeClass extends OntologyCodeClass {
 
 		JExpression rdfTypeExpr = jCodeModel.ref(RDF.class).staticRef("type");
 		JExpression owlTypeExpr = jCodeModel.ref(ModelFactory.class).staticInvoke("createDefaultModel").invoke("createResource").arg(ontResource.toString());
-		
+
 		JVar modelVar = staticMethodBlock.decl(ontologyModel.asJCodeModel().ref(Model.class), "model", ontologyModel.asJCodeModel().ref(RuntimeJenaLizardContext.class).staticInvoke("getContext").invoke("getModel"));
 		JVar stmtItVar = staticMethodBlock.decl(ontologyModel.asJCodeModel().ref(StmtIterator.class), "stmtIt", modelVar.invoke("listStatements").arg(JExpr._null()).arg(rdfTypeExpr).arg(owlTypeExpr));
 
-		 /*
+		/*
 		 * While loop to iterate StmtIterator statements
 		 */
-		 JWhileLoop whileLoop = staticMethodBlock._while(stmtItVar.invoke("hasNext"));
-		 JBlock whileLoopBlock = whileLoop.body();
-		 JVar stmtVar = whileLoopBlock.decl(jCodeModel.ref(Statement.class), "stmt", stmtItVar.invoke("next"));
-		
-		 JVar subjVar = whileLoopBlock.decl(jCodeModel.ref(Resource.class), "subj", stmtVar.invoke("getSubject"));
-		
-		 
-		 JVar indVar = whileLoopBlock.decl(interfaceClass.asJDefinedClass(), "individual", JExpr._new(super.jClass).arg(subjVar));
-		 
-		 whileLoopBlock.add(retVar.invoke("add").arg(indVar));
-		
+		JWhileLoop whileLoop = staticMethodBlock._while(stmtItVar.invoke("hasNext"));
+		JBlock whileLoopBlock = whileLoop.body();
+		JVar stmtVar = whileLoopBlock.decl(jCodeModel.ref(Statement.class), "stmt", stmtItVar.invoke("next"));
+
+		JVar subjVar = whileLoopBlock.decl(jCodeModel.ref(Resource.class), "subj", stmtVar.invoke("getSubject"));
+
+		JVar indVar = whileLoopBlock.decl(interfaceClass.asJDefinedClass(), "individual", JExpr._new(super.jClass).arg(subjVar));
+
+		whileLoopBlock.add(retVar.invoke("add").arg(indVar));
+
 		staticMethodBlock._return(retVar);
 	}
 

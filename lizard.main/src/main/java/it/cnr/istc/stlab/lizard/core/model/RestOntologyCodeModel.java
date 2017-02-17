@@ -295,9 +295,9 @@ public class RestOntologyCodeModel implements OntologyCodeModel {
 	public <T extends AbstractOntologyCodeClass> T createOntologyClass(OntResource resource, Class<T> ontologyEntityClass) throws NotAvailableOntologyCodeEntityException {
 
 		logger.trace("Creating class of " + resource.getURI());
-//		if (resource.isProperty() || LizardCore.hasTypeMapper(resource.getURI())) {
-//			throw new RuntimeException("Cannot create a class of the resource " + resource.getURI());
-//		}
+		if (resource.isProperty() || (LizardCore.hasTypeMapper(resource.getURI()) && !DatatypeCodeInterface.class.isAssignableFrom(ontologyEntityClass))) {
+			throw new RuntimeException("Cannot create a class of the resource " + resource.getURI());
+		}
 
 		T ontologyClass = null;
 		if (resource.isAnon()) {

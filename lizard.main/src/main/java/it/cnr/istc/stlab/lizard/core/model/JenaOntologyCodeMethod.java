@@ -79,8 +79,6 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 			else
 				entityName = prefix + "_" + localName;
 
-			JDefinedClass domainJClass = (JDefinedClass) owner.asJDefinedClass();
-
 			if (methodType == OntologyCodeMethodType.Get) {
 
 				JType setClass = codeModel.ref(Set.class).narrow(range.asJDefinedClass());
@@ -95,9 +93,9 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 				createBeanMethod(jOwner, methodResource);
 
 			} else if (methodType == OntologyCodeMethodType.Set) {
-				createSetMethod(domainJClass);
+				createSetMethod();
 			} else if (this.methodType == OntologyCodeMethodType.Delete) {
-				createDeleteMethod(domainJClass);
+				createDeleteMethod();
 			}
 
 			char[] fieldNameChars = entityName.toCharArray();
@@ -114,6 +112,7 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 			}
 
 			if (owner instanceof OntologyCodeInterface) {
+				JDefinedClass domainJClass = (JDefinedClass) owner.asJDefinedClass();
 				JFieldVar staticField = domainJClass.fields().get(sb.toString());
 				if (staticField == null)
 					staticField = domainJClass.field(JMod.PUBLIC | JMod.STATIC | JMod.FINAL, String.class, sb.toString(), JExpr.lit(ontResource.getURI()));
@@ -130,7 +129,8 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 		addMethodBody();
 	}
 
-	private void createDeleteMethod(JDefinedClass domainJClass) {
+	private void createDeleteMethod() {
+		JDefinedClass domainJClass = (JDefinedClass) owner.asJDefinedClass();
 		String methodName = entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
 		jMethod = domainJClass.method(1, void.class, "delete" + methodName);
 
@@ -149,7 +149,8 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 
 	}
 
-	private void createSetMethod(JDefinedClass domainJClass) {
+	private void createSetMethod() {
+		JDefinedClass domainJClass = (JDefinedClass) owner.asJDefinedClass();
 		String methodName = entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
 		jMethod = domainJClass.method(1, void.class, "set" + methodName);
 		if (domain != null) {
@@ -299,7 +300,7 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 								} else {
 
 									if (ontResource.isDatatypeProperty()) {
-										rangeConcreteClass = ontologyModel.createOntologyClass(rangeRes, BeanOntologyCodeInterface.class);
+										rangeConcreteClass = ontologyModel.createOntologyClass(rangeRes, DatatypeCodeInterface.class);
 									} else {
 										rangeConcreteClass = ontologyModel.getOntologyClass(range.getOntResource(), BooleanAnonClass.class);
 									}
@@ -554,7 +555,7 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 						} else {
 
 							if (ontResource.isDatatypeProperty()) {
-								rangeConcreteClass = ontologyModel.createOntologyClass(range.getOntResource(), BeanOntologyCodeInterface.class);
+								rangeConcreteClass = ontologyModel.createOntologyClass(range.getOntResource(), DatatypeCodeInterface.class);
 							} else {
 								rangeConcreteClass = ontologyModel.getOntologyClass(range.getOntResource(), BooleanAnonClass.class);
 							}

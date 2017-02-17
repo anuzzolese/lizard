@@ -372,10 +372,10 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 				AbstractOntologyCodeClass ownerInterface = ontologyModel.getOntologyClass(owner.getOntResource(), BeanOntologyCodeInterface.class);
 
 				// Getting range class
-				Class<?> rangeClass = null;
 
 				logger.debug("OWNER " + owner.getEntityName() + " " + this.ontResource.getLocalName());
 
+				Class<?> rangeClass = null;
 				if (range == null) {
 					rangeClass = String.class;
 				} else if (LizardCore.hasTypeMapper(range.getOntResource().getURI())) {
@@ -388,15 +388,19 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 				// Creting set to be added
 				JType hashSetType_range = super.jCodeModel.ref(HashSet.class).narrow(rangeClass);
 				JType setType_range = super.jCodeModel.ref(Set.class).narrow(rangeClass);
+
 				JVar kbSetVar = methodBody.decl(setType_range, "toDelete", JExpr._new(hashSetType_range));
 
 				// Adding value to the set that will be added
-				if (range == null || rangeClass.equals(String.class)) {
-					methodBody.add(kbSetVar.invoke("add").arg(rangeValueParam));
-				} else {
-					JVar value = methodBody.decl(jCodeModel.ref(rangeClass), "datatype", JExpr.cast(jCodeModel.ref(rangeClass), jCodeModel.ref(TypeMapper.class).staticInvoke("getInstance").invoke("getTypeByClass").arg(jCodeModel.ref(rangeClass).dotclass()).invoke("parse").arg(rangeValueParam)));
-					methodBody.add(kbSetVar.invoke("add").arg(value));
-				}
+				// if (range == null || rangeClass.equals(String.class)) {
+				// methodBody.add(kbSetVar.invoke("add").arg(rangeValueParam));
+				// } else {
+				// JVar value = methodBody.decl(jCodeModel.ref(rangeClass), "datatype", JExpr.cast(jCodeModel.ref(rangeClass), jCodeModel.ref(TypeMapper.class).staticInvoke("getInstance").invoke("getTypeByClass").arg(jCodeModel.ref(rangeClass).dotclass()).invoke("parse").arg(rangeValueParam)));
+				// methodBody.add(kbSetVar.invoke("add").arg(value));
+				// }
+				// JVar value = methodBody.decl(range.asJDefinedClass(), "datatype", JExpr.cast(range.asJDefinedClass(), jCodeModel.ref(TypeMapper.class).staticInvoke("getInstance").invoke("getTypeByClass").arg(rangeClass).invoke("parse").arg(rangeValueParam)));
+				JVar value = methodBody.decl(jCodeModel.ref(rangeClass), "datatype", JExpr.cast(jCodeModel.ref(rangeClass), jCodeModel.ref(TypeMapper.class).staticInvoke("getInstance").invoke("getTypeByClass").arg(jCodeModel.ref(rangeClass).dotclass()).invoke("parse").arg(rangeValueParam)));
+				methodBody.add(kbSetVar.invoke("add").arg(value));
 				// Add set to the individual
 				JVar entityVar = methodBody.decl(ownerInterface.asJDefinedClass(), "_entity", ownerInterface.asJDefinedClass().staticInvoke("get").arg(idParam));
 				methodBody.add(entityVar.invoke(methodName).arg(kbSetVar));

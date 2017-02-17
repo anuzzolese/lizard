@@ -27,7 +27,6 @@ public abstract class AbstractOntologyCodeEntity implements OntologyCodeEntity {
         try {
         	this.packageName = PackageResolver.resolve(ontResource);
         } catch (URISyntaxException e1) {
-            // TODO Auto-generated catch block
             e1.printStackTrace();
         }
     }
