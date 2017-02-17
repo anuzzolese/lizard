@@ -1,5 +1,10 @@
 package it.cnr.istc.stlab.lizard.commons.model.datatype;
 
+import it.cnr.istc.stlab.lizard.commons.exception.ClassAlreadyExistsException;
+import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClass;
+import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeInterface;
+import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeModel;
+
 import java.util.Collections;
 import java.util.Set;
 
@@ -11,11 +16,6 @@ import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.ontology.OntResource;
 
 import com.sun.codemodel.JCodeModel;
-
-import it.cnr.istc.stlab.lizard.commons.exception.ClassAlreadyExistsException;
-import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClass;
-import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeInterface;
-import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeModel;
 
 public class DatatypeCodeInterface extends OntologyCodeInterface {
 
@@ -33,11 +33,11 @@ public class DatatypeCodeInterface extends OntologyCodeInterface {
 		super.entityName = localName;
 
 		RDFDatatype datatype = TypeMapper.getInstance().getTypeByName(datatypeUri);
-		if (datatype == null)
+		if (datatype == null) {
 			datatype = XSDDatatype.XSDstring;
+		}
 
 		super.jClass = jCodeModel.ref(datatype.getJavaClass());
-
 	}
 
 	@Override

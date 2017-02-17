@@ -60,8 +60,6 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 	JenaOntologyCodeMethod(OntologyCodeMethodType methodType, OntResource methodResource, AbstractOntologyCodeClass owner, Collection<AbstractOntologyCodeClass> domain, AbstractOntologyCodeClass range, OntologyCodeModel ontologyModel, JCodeModel codeModel) {
 		super(methodType, methodResource, owner, domain, range, ontologyModel, codeModel);
 
-		// System.out.println("JenaOntologyCodeMethod.JenaOntologyCodeMethod() "+(domain==null));
-
 		if (methodResource.isURIResource()) {
 
 			String namespace = methodResource.getNameSpace();
@@ -225,12 +223,13 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 		if (methodResource.isDatatypeProperty()) {
 			asBeanMethodBody.directStatement(name + "." + beanSetMethodName + "(this." + beanGetMethodName + "(m));");
 			asMicroBeanMethodBody.directStatement(name + "." + beanSetMethodName + "(this." + beanGetMethodName + "(m));");
+			addSideGetMethodDatatypeProperty();
 		} else {
 			asBeanMethodBody.directStatement(name + "." + beanSetMethodName + "(this." + beanGetMethodName + "(m,false));");
 			asMicroBeanMethodBody.directStatement(name + "." + beanSetMethodName + "(this." + beanGetMethodName + "(m,true));");
+			addSideGetMethodObjectProperty();
 		}
 
-		addSideGetMethod();
 	}
 
 	@Override
@@ -238,19 +237,13 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 		return methodType.hashCode() + super.hashCode();
 	}
 
-	private void addSideGetMethod() {
-
-		// TODO
+	private void addSideGetMethodDatatypeProperty() {
 
 		JType setClass = super.jCodeModel.ref(Set.class).narrow(range.asJDefinedClass());
 		JDefinedClass jOwner = ((JDefinedClass) owner.asJDefinedClass());
 		String methodName = "get" + entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
 		JMethod sideGetMethod = jOwner.method(JMod.PRIVATE, setClass, methodName);
 		JVar jenaModelVar = sideGetMethod.param(Model.class, "model");
-		JVar isForMicroBeanVar = null;
-		if (!ontResource.isDatatypeProperty()) {
-			isForMicroBeanVar = sideGetMethod.param(Boolean.class, "isForMicroBean");
-		}
 
 		/*
 		 * Add the body to the method.
@@ -258,6 +251,7 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 		if (owner instanceof OntologyCodeClass) {
 
 			if (methodType == OntologyCodeMethodType.Get) {
+
 				if (owner instanceof OntologyCodeClass) {
 
 					JBlock methodBody = sideGetMethod.body();
@@ -280,6 +274,7 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 					if (range.getOntResource() != null) {
 
 						OntResource rangeRes = range.getOntResource();
+
 						AbstractOntologyCodeClass rangeConcreteClass = null;
 						AbstractOntologyCodeClass rangeConcreteClassBean = null;
 
@@ -294,18 +289,157 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 							try {
 								OntologyCodeInterface rangeInterface = ontologyModel.getOntologyClass(range.getOntResource(), BeanOntologyCodeInterface.class);
 								if (rangeInterface != null) {
-									rangeConcreteClass = ontologyModel.createOntologyClass(range.getOntResource(), JenaOntologyCodeClass.class);
-									rangeConcreteClassBean = ontologyModel.createOntologyClass(range.getOntResource(), BeanOntologyCodeClass.class);
-									ontologyModel.createClassImplements((AbstractOntologyCodeClassImpl) rangeConcreteClass, rangeInterface);
+
+									if (!ontResource.isDatatypeProperty()) {
+										rangeConcreteClass = ontologyModel.createOntologyClass(range.getOntResource(), JenaOntologyCodeClass.class);
+										rangeConcreteClassBean = ontologyModel.createOntologyClass(range.getOntResource(), BeanOntologyCodeClass.class);
+										ontologyModel.createClassImplements((AbstractOntologyCodeClassImpl) rangeConcreteClass, rangeInterface);
+									}
+
 								} else {
-									// System.out.println(owner.getOntResource().getURI()+" "+super.entityName+" "+range.getOntResource());
+
 									if (ontResource.isDatatypeProperty()) {
 										rangeConcreteClass = ontologyModel.createOntologyClass(rangeRes, BeanOntologyCodeInterface.class);
 									} else {
 										rangeConcreteClass = ontologyModel.getOntologyClass(range.getOntResource(), BooleanAnonClass.class);
 									}
-									if (rangeConcreteClass == null)
+
+									if (rangeConcreteClass == null) {
 										rangeConcreteClass = ontologyModel.createAnonClass(range.getOntResource().asClass());
+									}
+								}
+
+							} catch (NotAvailableOntologyCodeEntityException e) {
+								e.printStackTrace();
+							}
+						}
+
+						JVar retObj = null;
+						if (range instanceof DatatypeCodeInterface) {
+							JVar objectLiteralVar = stmtItHasNextWhileBlock.decl(jCodeModel.ref(Literal.class), "objectLiteral", JExpr.cast(jCodeModel.ref(Literal.class), stmtObjectVar));
+							retObj = stmtItHasNextWhileBlock.decl(rangeClass, "obj", JExpr.cast(rangeClass, objectLiteralVar.invoke("getValue")));
+						} else {
+							// TODO manage problem with AnonClasses
+							retObj = stmtItHasNextWhileBlock.decl(rangeClass, "obj", JExpr._new(rangeConcreteClass.asJDefinedClass()).arg(stmtObjectVar));
+							stmtItHasNextWhileBlock.directStatement("obj.setIsCompleted(false);");
+						}
+						stmtItHasNextWhileBlock.add(returnVar.invoke("add").arg(retObj));
+
+						methodBody._return(returnVar);
+					}
+				}
+			} else {
+				if (owner instanceof OntologyCodeClass) {
+
+					JBlock methodBody = jMethod.body();
+
+					/*
+					 * Add the code to set a variable for the URI representing the property and the type of the method.
+					 */
+					JVar ontPropertyVar = methodBody.decl(jCodeModel._ref(Property.class), "predicate", jCodeModel.ref(ModelFactory.class).staticInvoke("createDefaultModel").invoke("createProperty").arg(ontResource.toString()));
+
+					int paramCounter = 0;
+					for (AbstractOntologyCodeClass domain : this.domain) {
+						JForEach forEach = methodBody.forEach(domain.asJDefinedClass(), "object", jMethod.params().get(paramCounter));
+						JBlock forEachBlock = forEach.body();
+
+						JInvocation invocation = jenaModelVar.invoke("add").arg(JExpr.cast(jCodeModel._ref(Resource.class), JExpr._super().ref("individual"))).arg(ontPropertyVar);
+
+						if (domain instanceof DatatypeCodeInterface) {
+							JVar literalVar = forEachBlock.decl(jCodeModel._ref(Literal.class), "_literal_", jCodeModel.ref(ModelFactory.class).staticInvoke("createDefaultModel").invoke("createTypedLiteral").arg(forEach.var()));
+
+							invocation.arg(literalVar);
+						} else {
+							invocation.arg(forEach.var().invoke("getIndividual"));
+						}
+
+						forEachBlock.add(invocation);
+
+						paramCounter += 1;
+					}
+
+				}
+			}
+		}
+
+	}
+
+	private void addSideGetMethodObjectProperty() {
+
+		JType setClass = super.jCodeModel.ref(Set.class).narrow(range.asJDefinedClass());
+		JDefinedClass jOwner = ((JDefinedClass) owner.asJDefinedClass());
+		String methodName = "get" + entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
+		JMethod sideGetMethod = jOwner.method(JMod.PRIVATE, setClass, methodName);
+		JVar jenaModelVar = sideGetMethod.param(Model.class, "model");
+		JVar isForMicroBeanVar = null;
+
+		if (!ontResource.isDatatypeProperty()) {
+			isForMicroBeanVar = sideGetMethod.param(Boolean.class, "isForMicroBean");
+		}
+
+		/*
+		 * Add the body to the method.
+		 */
+		if (owner instanceof OntologyCodeClass) {
+
+			if (methodType == OntologyCodeMethodType.Get) {
+
+				if (owner instanceof OntologyCodeClass) {
+
+					JBlock methodBody = sideGetMethod.body();
+
+					JClass hashSetClass = jCodeModel.ref(HashSet.class).narrow(range.asJDefinedClass());
+
+					JVar returnVar = methodBody.decl(setClass, "retValue", JExpr._new(hashSetClass));
+
+					JVar ontPropertyVar = methodBody.decl(jCodeModel._ref(Property.class), "predicate", jCodeModel.ref(ModelFactory.class).staticInvoke("createDefaultModel").invoke("createProperty").arg(ontResource.toString()));
+
+					JVar stmtIteratorVar = methodBody.decl(jCodeModel._ref(StmtIterator.class), "stmtIt", jenaModelVar.invoke("listStatements").arg(JExpr.cast(jCodeModel._ref(Resource.class), JExpr._super().ref("individual"))).arg(ontPropertyVar).arg(JExpr.cast(jCodeModel._ref(RDFNode.class), JExpr._null())));
+
+					JWhileLoop stmtItHasNextWhile = methodBody._while(stmtIteratorVar.invoke("hasNext"));
+					JBlock stmtItHasNextWhileBlock = stmtItHasNextWhile.body();
+					JVar stmtVar = stmtItHasNextWhileBlock.decl(jCodeModel._ref(Statement.class), "stmt", stmtIteratorVar.invoke("next"));
+					JVar stmtObjectVar = stmtItHasNextWhileBlock.decl(jCodeModel._ref(RDFNode.class), "object", stmtVar.invoke("getObject"));
+
+					JClass rangeClass = range.asJDefinedClass();
+
+					if (range.getOntResource() != null) {
+
+						OntResource rangeRes = range.getOntResource();
+
+						AbstractOntologyCodeClass rangeConcreteClass = null;
+						AbstractOntologyCodeClass rangeConcreteClassBean = null;
+
+						if (rangeRes.isURIResource()) {
+
+							rangeConcreteClass = ontologyModel.getOntologyClass(range.getOntResource(), JenaOntologyCodeClass.class);
+							rangeConcreteClassBean = ontologyModel.getOntologyClass(range.getOntResource(), BeanOntologyCodeClass.class);
+						} else {
+							rangeConcreteClass = ontologyModel.getOntologyClass(range.getOntResource(), BooleanAnonClass.class);
+						}
+
+						if (rangeConcreteClass == null) {
+							try {
+								OntologyCodeInterface rangeInterface = ontologyModel.getOntologyClass(range.getOntResource(), BeanOntologyCodeInterface.class);
+								if (rangeInterface != null) {
+
+									if (!ontResource.isDatatypeProperty()) {
+										rangeConcreteClass = ontologyModel.createOntologyClass(range.getOntResource(), JenaOntologyCodeClass.class);
+										rangeConcreteClassBean = ontologyModel.createOntologyClass(range.getOntResource(), BeanOntologyCodeClass.class);
+										ontologyModel.createClassImplements((AbstractOntologyCodeClassImpl) rangeConcreteClass, rangeInterface);
+									}
+
+								} else {
+
+									if (ontResource.isDatatypeProperty()) {
+										rangeConcreteClass = ontologyModel.createOntologyClass(rangeRes, BeanOntologyCodeInterface.class);
+									} else {
+										rangeConcreteClass = ontologyModel.getOntologyClass(range.getOntResource(), BooleanAnonClass.class);
+									}
+
+									if (rangeConcreteClass == null) {
+										rangeConcreteClass = ontologyModel.createAnonClass(range.getOntResource().asClass());
+									}
 								}
 
 							} catch (NotAvailableOntologyCodeEntityException e) {
@@ -414,13 +548,13 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 
 						OntologyCodeInterface rangeInterface = ontologyModel.getOntologyClass(range.getOntResource(), BeanOntologyCodeInterface.class);
 
-						if (rangeInterface != null) {
+						if (rangeInterface != null && !ontResource.isDatatypeProperty()) {
 							rangeConcreteClass = ontologyModel.createOntologyClass(range.getOntResource(), JenaOntologyCodeClass.class);
 							ontologyModel.createClassImplements((AbstractOntologyCodeClassImpl) rangeConcreteClass, rangeInterface);
 						} else {
 
 							if (ontResource.isDatatypeProperty()) {
-								rangeConcreteClass = ontologyModel.createOntologyClass(ontResource, BeanOntologyCodeInterface.class);
+								rangeConcreteClass = ontologyModel.createOntologyClass(range.getOntResource(), BeanOntologyCodeInterface.class);
 							} else {
 								rangeConcreteClass = ontologyModel.getOntologyClass(range.getOntResource(), BooleanAnonClass.class);
 							}
@@ -464,9 +598,9 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 			JVar jenaModelVar = methodBody.decl(jCodeModel._ref(Model.class), "model", jCodeModel.ref(RuntimeJenaLizardContext.class).staticInvoke("getContext").invoke("getModel"));
 
 			logger.debug(owner.getOntResource().getURI() + " " + entityName + " " + (this.domain == null));
-			
-			if(owner.getOntResource().isDatatypeProperty() && owner.getOntResource().asDatatypeProperty().getRange()!=null && TypeMapper.getInstance().getTypeByName(owner.getOntResource().asDatatypeProperty().getRange().getURI())!=null){
-				
+
+			if (owner.getOntResource().isDatatypeProperty() && owner.getOntResource().asDatatypeProperty().getRange() != null && TypeMapper.getInstance().getTypeByName(owner.getOntResource().asDatatypeProperty().getRange().getURI()) != null) {
+
 			}
 
 			int paramCounter = 0;

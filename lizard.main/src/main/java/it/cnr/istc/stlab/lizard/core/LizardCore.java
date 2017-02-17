@@ -53,6 +53,8 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.apache.jena.vocabulary.OWL2;
 import org.apache.jena.vocabulary.RDFS;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.sun.codemodel.CodeWriter;
 import com.sun.codemodel.JDefinedClass;
@@ -61,6 +63,8 @@ import com.sun.codemodel.JMod;
 import com.sun.codemodel.writer.FileCodeWriter;
 
 public class LizardCore implements OntologyCodeGenerationRecipe {
+
+	private static Logger logger = LoggerFactory.getLogger(LizardCore.class);
 
 	private URI ontologyURI;
 	private RestOntologyCodeModel restOntologyModel;
@@ -72,7 +76,28 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 		OntModel ontModel = ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM);
 		ontModel.read(ontologyURI.toString());
 
+		validateOntology(ontModel);
+
 		this.ontologyModel = new RestOntologyCodeModel(ontModel);
+	}
+
+	private void validateOntology(OntModel ontModel) {
+
+		// TODO JENA resasoner takes so long, use another reasoners
+
+		// logger.trace("Validating inf model");
+		// ValidityReport validity = ontModel.validate();
+		// if (!validity.isValid()) {
+		// for (Iterator<Report> in = validity.getReports(); in.hasNext();) {
+		// logger.error(" - " + in.next());
+		// }
+		// throw new OntologyNotValidException("Ontology not valid!");
+		// } else {
+		// logger.trace("Ontology valid!");
+		// }
+
+		logger.warn("Validation of the ontology not performed!");
+
 	}
 
 	@Override
@@ -92,8 +117,6 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 		return project;
 
 	}
-
-	
 
 	private OntologyCodeProject generateBeans() throws NotAvailableOntologyCodeEntityException {
 
@@ -269,6 +292,8 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 
 	private void visitHierarchyTreeForRest(OntClass ontClass, OntologyCodeModel ontologyModel) {
 
+		logger.debug("Visit hierarchy for rest " + ontClass.getURI());
+
 		OntologyCodeClass ontologyClass;
 		try {
 			if (ontologyModel.getOntologyClass(ontClass, BeanOntologyCodeClass.class) != null) {
@@ -310,7 +335,7 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 		} catch (NotAvailableOntologyCodeEntityException e) {
 			e.printStackTrace();
 		}
-		
+
 		if (ontologyInterface != null) {
 
 			createBeanMethods(ontologyInterface, ontologyModel);
@@ -389,7 +414,7 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 						/*
 						 * The property is a datatype property. In this case we use Jena to map the range to the appropriate Java type. E.g. xsd:string -> java.lang.String
 						 */
-						
+
 						OntClass rangeOntClass = ModelFactory.createOntologyModel().createClass(range.getURI());
 						if (ontProperty.isDatatypeProperty()) {
 							try {
@@ -442,11 +467,11 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 		}
 
 		ExtendedIterator<OntClass> superClassesIt = ontClass.listSuperClasses();
-		
+
 		while (superClassesIt.hasNext()) {
-			
+
 			OntClass superClass = superClassesIt.next();
-			
+
 			if (superClass.isRestriction()) {
 				Restriction restriction = superClass.asRestriction();
 				OntProperty onProperty = restriction.getOnProperty();
@@ -457,7 +482,7 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 					onClass = restriction.asAllValuesFromRestriction().getAllValuesFrom();
 				}
 
-				if (onClass != null) {
+				if (onClass != null && !onProperty.isDatatypeProperty()) {
 
 					try {
 						OntologyCodeClass rangeClass = ontologyModel.createOntologyClass(ontologyModel.asOntModel().getOntResource(onClass), RestOntologyCodeClass.class);
@@ -521,11 +546,15 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 						OntClass rangeOntClass = ModelFactory.createOntologyModel().createClass(range.getURI());
 
 						if (ontProperty.isDatatypeProperty()) {
-							try {
-								rangeClass = ontologyModel.createOntologyClass(rangeOntClass, DatatypeCodeInterface.class);
-							} catch (NotAvailableOntologyCodeEntityException e) {
-								e.printStackTrace();
-							}
+
+//							if (!hasTypeMapper(range.getURI())) {
+								try {
+									rangeClass = ontologyModel.createOntologyClass(rangeOntClass, DatatypeCodeInterface.class);
+								} catch (NotAvailableOntologyCodeEntityException e) {
+									e.printStackTrace();
+								}
+//							}
+
 						} else {
 							try {
 								rangeClass = ontologyModel.createOntologyClass(rangeOntClass, BeanOntologyCodeInterface.class);
@@ -535,7 +564,8 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 						}
 
 						Collection<AbstractOntologyCodeClass> domain = new ArrayList<AbstractOntologyCodeClass>();
-						domain.add(rangeClass);
+						if (rangeClass != null)
+							domain.add(rangeClass);
 
 						ontologyModel.createMethod(OntologyCodeMethodType.Get, ontProperty, owner, null, rangeClass);
 						ontologyModel.createMethod(OntologyCodeMethodType.Set, ontProperty, owner, domain, null);
@@ -601,24 +631,24 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 				} else if (restriction.isAllValuesFromRestriction()) {
 					onClass = restriction.asAllValuesFromRestriction().getAllValuesFrom();
 				}
-				/*
-				 * else if(restriction.isCardinalityRestriction()){ onClass = restriction.asCardinalityRestriction().get }
-				 */
+
 				if (onClass != null) {
-					try {
-						AbstractOntologyCodeClass rangeClass = ontologyModel.createOntologyClass(ontologyModel.asOntModel().getOntResource(onClass), BeanOntologyCodeInterface.class);
 
-						Collection<AbstractOntologyCodeClass> domain = new ArrayList<AbstractOntologyCodeClass>();
-						domain.add(rangeClass);
+					if (!onProperty.isDatatypeProperty()) {
+						try {
+							AbstractOntologyCodeClass rangeClass = ontologyModel.createOntologyClass(ontologyModel.asOntModel().getOntResource(onClass), BeanOntologyCodeInterface.class);
 
-						ontologyModel.createMethod(OntologyCodeMethodType.Get, onProperty, owner, null, rangeClass);
-						ontologyModel.createMethod(OntologyCodeMethodType.Set, onProperty, owner, null, rangeClass);
-						ontologyModel.createMethod(OntologyCodeMethodType.Delete, onProperty, owner, null, rangeClass);
+							Collection<AbstractOntologyCodeClass> domain = new ArrayList<AbstractOntologyCodeClass>();
+							domain.add(rangeClass);
 
-					} catch (NotAvailableOntologyCodeEntityException e) {
-						e.printStackTrace();
+							ontologyModel.createMethod(OntologyCodeMethodType.Get, onProperty, owner, null, rangeClass);
+							ontologyModel.createMethod(OntologyCodeMethodType.Set, onProperty, owner, null, rangeClass);
+							ontologyModel.createMethod(OntologyCodeMethodType.Delete, onProperty, owner, null, rangeClass);
+
+						} catch (NotAvailableOntologyCodeEntityException e) {
+							e.printStackTrace();
+						}
 					}
-
 				}
 			}
 		}
@@ -634,17 +664,13 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 		URI uri = null;
 
 		try {
-			// uri = new
-			// URI("http://www.ontologydesignpatterns.org/cp/owl/timeindexedsituation.owl");
-			// uri = new
-			// URI("http://stlab.istc.cnr.it/documents/mibact/cultural-ON_xml.owl");
-			// uri = new
-			// URI("http://www.ontologydesignpatterns.org/ont/mario/tagging.owl");
-			// uri = new
-			// URI("http://www.ontologydesignpatterns.org/ont/framester/framester.owl");
-			// uri = new
-			// URI("http://www.ontologydesignpatterns.org/ont/mario/music.owl");
+			// uri = new URI("http://www.ontologydesignpatterns.org/cp/owl/timeindexedsituation.owl");
+			// uri = new URI("http://stlab.istc.cnr.it/documents/mibact/cultural-ON_xml.owl");
+			// uri = new URI("http://www.ontologydesignpatterns.org/ont/mario/tagging.owl");
+			// uri = new URI("http://www.ontologydesignpatterns.org/ont/framester/framester.owl");
+			// uri = new URI("http://www.ontologydesignpatterns.org/ont/mario/music.owl");
 			uri = new URI("http://www.ontologydesignpatterns.org/ont/mario/cga.owl");
+			// uri = new URI("/Users/lgu/Desktop/prova.owl");
 			// uri = new URI("/Users/lgu/Desktop/cga.owl");
 			// uri = new URI("vocabs/foaf.rdf");
 
@@ -697,7 +723,7 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 		Iterator<RDFDatatype> it = TypeMapper.getInstance().listTypes();
 		while (it.hasNext()) {
 			RDFDatatype rdfDatatype = (RDFDatatype) it.next();
-			if(rdfDatatype.getURI().equals(uri)){
+			if (rdfDatatype.getURI().equals(uri)) {
 				return true;
 			}
 		}

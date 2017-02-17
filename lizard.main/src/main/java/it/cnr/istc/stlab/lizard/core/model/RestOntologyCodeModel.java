@@ -1,20 +1,5 @@
 package it.cnr.istc.stlab.lizard.core.model;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
-import org.apache.jena.ontology.BooleanClassDescription;
-import org.apache.jena.ontology.OntClass;
-import org.apache.jena.ontology.OntModel;
-import org.apache.jena.ontology.OntResource;
-import org.apache.jena.util.iterator.ExtendedIterator;
-
-import com.sun.codemodel.JCodeModel;
-import com.sun.codemodel.JDefinedClass;
-
 import it.cnr.istc.stlab.lizard.commons.AnonClassType;
 import it.cnr.istc.stlab.lizard.commons.exception.ClassAlreadyExistsException;
 import it.cnr.istc.stlab.lizard.commons.exception.NotAvailableOntologyCodeEntityException;
@@ -28,9 +13,29 @@ import it.cnr.istc.stlab.lizard.commons.model.anon.BooleanAnonClass;
 import it.cnr.istc.stlab.lizard.commons.model.datatype.DatatypeCodeInterface;
 import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeClassType;
 import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeMethodType;
+import it.cnr.istc.stlab.lizard.core.LizardCore;
 import it.cnr.istc.stlab.lizard.core.anonymous.AnonymousClassBuilder;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+import org.apache.jena.ontology.BooleanClassDescription;
+import org.apache.jena.ontology.OntClass;
+import org.apache.jena.ontology.OntModel;
+import org.apache.jena.ontology.OntResource;
+import org.apache.jena.util.iterator.ExtendedIterator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.sun.codemodel.JCodeModel;
+import com.sun.codemodel.JDefinedClass;
+
 public class RestOntologyCodeModel implements OntologyCodeModel {
+
+	private static Logger logger = LoggerFactory.getLogger(RestOntologyCodeModel.class);
 
 	private OntologyCodeModel apiCodeModel;
 
@@ -63,7 +68,6 @@ public class RestOntologyCodeModel implements OntologyCodeModel {
 	@SuppressWarnings({ "unchecked" })
 	private <T extends AbstractOntologyCodeClass> T createBeanClass(OntResource resource) {
 
-		// System.out.println("RestOntologyCodeModel.createBeanClass() "+resource);
 		OntologyCodeClass ontologyClass = null;
 		try {
 			if (resource.isURIResource()) {
@@ -289,27 +293,47 @@ public class RestOntologyCodeModel implements OntologyCodeModel {
 	@Override
 	@SuppressWarnings("unchecked")
 	public <T extends AbstractOntologyCodeClass> T createOntologyClass(OntResource resource, Class<T> ontologyEntityClass) throws NotAvailableOntologyCodeEntityException {
+
+		logger.trace("Creating class of " + resource.getURI());
+//		if (resource.isProperty() || LizardCore.hasTypeMapper(resource.getURI())) {
+//			throw new RuntimeException("Cannot create a class of the resource " + resource.getURI());
+//		}
+
 		T ontologyClass = null;
-		if (resource.isAnon())
+		if (resource.isAnon()) {
 			ontologyClass = (T) createAnonClass(resource.asClass());
-		else {
-			if (DatatypeCodeInterface.class.isAssignableFrom(ontologyEntityClass))
+		} else {
+
+			if (DatatypeCodeInterface.class.isAssignableFrom(ontologyEntityClass)) {
 				try {
 					ontologyClass = (T) new DatatypeCodeInterface(resource, this, this.codeModel);
 				} catch (ClassAlreadyExistsException e) {
 					ontologyClass = (T) getOntologyClass(resource, BeanOntologyCodeInterface.class);
 					e.printStackTrace();
 				}
-			else if (BeanOntologyCodeClass.class.isAssignableFrom(ontologyEntityClass))
+			} else if (BeanOntologyCodeClass.class.isAssignableFrom(ontologyEntityClass)) {
+				if (resource.isDataRange() || resource.isDatatypeProperty()) {
+					throw new RuntimeException();
+				}
 				ontologyClass = (T) createBeanClass(resource);
-			else if (BeanOntologyCodeInterface.class.isAssignableFrom(ontologyEntityClass))
+			} else if (BeanOntologyCodeInterface.class.isAssignableFrom(ontologyEntityClass)) {
+				if (resource.isDataRange()) {
+					throw new RuntimeException();
+				}
 				ontologyClass = (T) createInterface(resource);
-			else if (JenaOntologyCodeClass.class.isAssignableFrom(ontologyEntityClass))
+			} else if (JenaOntologyCodeClass.class.isAssignableFrom(ontologyEntityClass)) {
+				if (resource.isDataRange()) {
+					throw new RuntimeException();
+				}
 				ontologyClass = (T) createJenaClass(resource);
-			else if (RestOntologyCodeClass.class.isAssignableFrom(ontologyEntityClass)) {
+			} else if (RestOntologyCodeClass.class.isAssignableFrom(ontologyEntityClass)) {
+				if (resource.isDataRange()) {
+					throw new RuntimeException();
+				}
 				ontologyClass = (T) createRestClass(resource);
-			} else
+			} else {
 				throw new NotAvailableOntologyCodeEntityException(ontologyEntityClass);
+			}
 		}
 
 		return ontologyClass;
