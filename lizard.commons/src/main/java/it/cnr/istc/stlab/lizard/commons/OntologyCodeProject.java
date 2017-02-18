@@ -22,8 +22,8 @@ public class OntologyCodeProject {
         artifactId = PackageResolver.resolveArtifactId(ontologyURI);
         //this.projectFolder = projectFolder;
         //this.srcFolder = this.projectFolder + "/src";
-        this.mainFolder = this.srcFolder + "/main";
-        this.testFolder = this.srcFolder + "/test";
+        this.setMainFolder(this.srcFolder + "/main");
+        this.setTestFolder(this.srcFolder + "/test");
     }
     
     public OntologyCodeModel getOntologyCodeModel() {
@@ -39,4 +39,20 @@ public class OntologyCodeProject {
     }
     
     public void write(String destinationFolder) throws IOException{}
+
+	public String getTestFolder() {
+		return testFolder;
+	}
+
+	public void setTestFolder(String testFolder) {
+		this.testFolder = testFolder;
+	}
+
+	public String getMainFolder() {
+		return mainFolder;
+	}
+
+	public void setMainFolder(String mainFolder) {
+		this.mainFolder = mainFolder;
+	}
 }

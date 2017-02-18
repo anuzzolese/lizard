@@ -12,14 +12,12 @@ import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeInterface;
 import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeMethod;
 import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeModel;
 import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeMethodType;
-import it.cnr.istc.stlab.lizard.core.LizardCore;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.ontology.OntResource;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;

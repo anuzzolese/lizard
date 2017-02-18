@@ -275,11 +275,11 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 						OntResource rangeRes = range.getOntResource();
 
 						AbstractOntologyCodeClass rangeConcreteClass = null;
-						AbstractOntologyCodeClass rangeConcreteClassBean = null;
+//						AbstractOntologyCodeClass rangeConcreteClassBean = null;
 
 						if (rangeRes.isURIResource()) {
 							rangeConcreteClass = ontologyModel.getOntologyClass(range.getOntResource(), JenaOntologyCodeClass.class);
-							rangeConcreteClassBean = ontologyModel.getOntologyClass(range.getOntResource(), BeanOntologyCodeClass.class);
+//							rangeConcreteClassBean = ontologyModel.getOntologyClass(range.getOntResource(), BeanOntologyCodeClass.class);
 						} else {
 							rangeConcreteClass = ontologyModel.getOntologyClass(range.getOntResource(), BooleanAnonClass.class);
 						}
@@ -291,7 +291,7 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 
 									if (!ontResource.isDatatypeProperty()) {
 										rangeConcreteClass = ontologyModel.createOntologyClass(range.getOntResource(), JenaOntologyCodeClass.class);
-										rangeConcreteClassBean = ontologyModel.createOntologyClass(range.getOntResource(), BeanOntologyCodeClass.class);
+//										rangeConcreteClassBean = ontologyModel.createOntologyClass(range.getOntResource(), BeanOntologyCodeClass.class);
 										ontologyModel.createClassImplements((AbstractOntologyCodeClassImpl) rangeConcreteClass, rangeInterface);
 									}
 
