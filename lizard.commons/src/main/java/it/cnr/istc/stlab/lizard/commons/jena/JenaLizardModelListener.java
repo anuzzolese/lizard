@@ -9,6 +9,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelChangedListener;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.shared.Lock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,9 +29,12 @@ public class JenaLizardModelListener implements ModelChangedListener {
 
 	private void updateFileModel() {
 		try {
+			model.enterCriticalSection(Lock.WRITE);
 			model.write(new FileOutputStream(new File(filePath)),lang);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
+		} finally {
+			model.leaveCriticalSection();
 		}
 	}
 

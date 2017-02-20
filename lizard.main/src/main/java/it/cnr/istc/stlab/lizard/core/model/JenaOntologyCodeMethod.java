@@ -674,8 +674,10 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 			 */
 			JVar ontPropertyVar = methodBody.decl(jCodeModel._ref(Property.class), "predicate", jCodeModel.ref(ModelFactory.class).staticInvoke("createDefaultModel").invoke("createProperty").arg(ontResource.toString()));
 			JVar jenaModelVar = methodBody.decl(jCodeModel._ref(Model.class), "model", jCodeModel.ref(RuntimeJenaLizardContext.class).staticInvoke("getContext").invoke("getModel"));
-			
-			methodBody.add(JExpr._super().ref("individual").invoke("asResource").invoke("removeAll").arg(ontPropertyVar));
+
+			// methodBody.add(JExpr._super().ref("individual").invoke("asResource").invoke("removeAll").arg(ontPropertyVar));
+
+			methodBody.add(jenaModelVar.invoke("getResource").arg(JExpr._super().ref("individual").invoke("asResource").invoke("getURI")).invoke("removeAll").arg(ontPropertyVar));
 
 			logger.debug(owner.getOntResource().getURI() + " " + entityName + " " + (this.domain == null));
 
@@ -706,8 +708,7 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 		if (owner instanceof OntologyCodeClass) {
 
 			JBlock methodBody = jMethod.body();
-			
-			
+
 			/*
 			 * Add the code to set a variable for the URI representing the property and the type of the method.
 			 */
