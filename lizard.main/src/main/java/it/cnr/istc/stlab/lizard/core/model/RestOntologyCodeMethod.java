@@ -74,11 +74,11 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 
 			switch (methodType) {
 
-			case Get:
+			case GET:
 				createGetMethod();
 				break;
 
-			case Set:
+			case SET:
 				if (methodResource.isDatatypeProperty()) {
 					// The property corresponding to the method is a datatype property
 					createSetMethodForDatatypeProperty();
@@ -88,13 +88,13 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 				}
 				break;
 
-			case Delete:
+			case REMOVE_ALL:
 				if (methodResource.isDatatypeProperty()) {
 					// The property corresponding to the method is a datatype property
-					createDeleteMethodForDatatypeProperty();
+					createRemoveAllMethodForDatatypeProperty();
 				} else {
 					// The property corresponding to the method is a object property
-					createDeleteMethodForObjectProperty();
+					createRemoveAllMethodForObjectProperty();
 				}
 				break;
 
@@ -270,10 +270,10 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 
 	}
 
-	public void createDeleteMethodForObjectProperty() {
+	public void createRemoveAllMethodForObjectProperty() {
 
 		JType responseType = super.jCodeModel.ref(Response.class);
-		String methodName = "delete" + entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
+		String methodName = "removeAll" + entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
 
 		JMethod tempSet = ((JDefinedClass) owner.asJDefinedClass()).getMethod(methodName, new JType[] { super.jCodeModel._ref(String.class), super.jCodeModel._ref(String.class) });
 
@@ -283,8 +283,8 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 
 				// Create annotation SET method
 				jMethod.annotate(POST.class);
-				jMethod.annotate(Path.class).param("value", "/entity/delete" + entityName.substring(0, 1).toUpperCase() + entityName.substring(1));
-				String operationId = "delete_" + ((RestOntologyCodeClass) owner).getPath().substring(1) + "_" + entityName;
+				jMethod.annotate(Path.class).param("value", "/entity/removeAll" + entityName.substring(0, 1).toUpperCase() + entityName.substring(1));
+				String operationId = "removeAll_" + ((RestOntologyCodeClass) owner).getPath().substring(1) + "_" + entityName;
 				jMethod.annotate(ApiOperation.class).param("value", "Delete " + entityName).param("nickname", operationId);
 
 				// Create SET parameter
@@ -337,9 +337,9 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 
 	}
 
-	public void createDeleteMethodForDatatypeProperty() {
+	public void createRemoveAllMethodForDatatypeProperty() {
 		JType responseType = super.jCodeModel.ref(Response.class);
-		String methodName = "delete" + entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
+		String methodName = "removeAll" + entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
 
 		JMethod tempSet = ((JDefinedClass) owner.asJDefinedClass()).getMethod(methodName, new JType[] { super.jCodeModel._ref(String.class), super.jCodeModel._ref(String.class) });
 
@@ -349,8 +349,8 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 
 				// Create annotation DELETE method
 				jMethod.annotate(POST.class);
-				jMethod.annotate(Path.class).param("value", "/entity/delete" + entityName.substring(0, 1).toUpperCase() + entityName.substring(1));
-				String operationId = "delete_" + ((RestOntologyCodeClass) owner).getPath().substring(1) + "_" + entityName;
+				jMethod.annotate(Path.class).param("value", "/entity/" +methodName);
+				String operationId = "removeAll_" + ((RestOntologyCodeClass) owner).getPath().substring(1) + "_" + entityName;
 				jMethod.annotate(ApiOperation.class).param("value", "Delete " + entityName).param("nickname", operationId);
 
 				// Create SET parameter

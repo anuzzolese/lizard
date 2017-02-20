@@ -19,7 +19,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.ontology.OntResource;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
@@ -77,60 +76,140 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 			else
 				entityName = prefix + "_" + localName;
 
-			if (methodType == OntologyCodeMethodType.Get) {
-
-				JType setClass = codeModel.ref(Set.class).narrow(range.asJDefinedClass());
-				JDefinedClass jOwner = ((JDefinedClass) owner.asJDefinedClass());
-				String methodName = "get" + entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
-				jMethod = jOwner.method(1, setClass, methodName);
-
-				/*
-				 * Code the method for converting a JenaOntologyClass to its corresponding Java bean.
-				 */
-
-				createBeanMethod(jOwner, methodResource);
-
-			} else if (methodType == OntologyCodeMethodType.Set) {
-				createSetMethod();
-			} else if (this.methodType == OntologyCodeMethodType.Delete) {
-				createDeleteMethod();
+			if (methodType == OntologyCodeMethodType.GET) {
+				createGetMethodSignature();
+			} else if (methodType == OntologyCodeMethodType.SET) {
+				createSetMethodSignature();
+			} else if (this.methodType == OntologyCodeMethodType.REMOVE_ALL) {
+				createRemoveAllMethodSignature();
+			} else if (this.methodType == OntologyCodeMethodType.ADD_ALL) {
+				createAddAllMethodSignature();
 			}
 
-			char[] fieldNameChars = entityName.toCharArray();
-			StringBuilder sb = new StringBuilder();
-
-			Character previous = null;
-			for (char fieldNameChar : fieldNameChars) {
-				if (previous != null) {
-					if (Character.isLowerCase(previous) && Character.isUpperCase(fieldNameChar))
-						sb.append("_");
-				}
-				sb.append(Character.toUpperCase(fieldNameChar));
-				previous = fieldNameChar;
-			}
-
-			if (owner instanceof OntologyCodeInterface) {
-				JDefinedClass domainJClass = (JDefinedClass) owner.asJDefinedClass();
-				JFieldVar staticField = domainJClass.fields().get(sb.toString());
-				if (staticField == null)
-					staticField = domainJClass.field(JMod.PUBLIC | JMod.STATIC | JMod.FINAL, String.class, sb.toString(), JExpr.lit(ontResource.getURI()));
-
-				JAnnotationUse jAnnotationUse = jMethod.annotate(ObjectPropertyAnnotation.class);
-				jAnnotationUse.param("uri", staticField);
-				jAnnotationUse.param("method", methodType);
-
-			} else
-				jMethod.annotate(Override.class);
+			annotateMethod();
 
 		}
 
-		addMethodBody();
+		/*
+		 * Add the body to the method.
+		 */
+		if (owner instanceof OntologyCodeClass) {
+
+			if (methodType == OntologyCodeMethodType.GET) {
+				addGetBody();
+			} else if (methodType == OntologyCodeMethodType.SET) {
+				addSetBody();
+			} else if (methodType == OntologyCodeMethodType.REMOVE_ALL) {
+				addDeleteBody();
+			} else if (methodType == OntologyCodeMethodType.ADD_ALL) {
+				addAddAllBody();
+			}
+		}
 	}
 
-	private void createDeleteMethod() {
+	private void addAddAllBody() {
+		if (owner instanceof OntologyCodeClass) {
+
+			JBlock methodBody = jMethod.body();
+
+			/*
+			 * Add the code to set a variable for the URI representing the property and the type of the method.
+			 */
+			JVar ontPropertyVar = methodBody.decl(jCodeModel._ref(Property.class), "predicate", jCodeModel.ref(ModelFactory.class).staticInvoke("createDefaultModel").invoke("createProperty").arg(ontResource.toString()));
+			JVar jenaModelVar = methodBody.decl(jCodeModel._ref(Model.class), "model", jCodeModel.ref(RuntimeJenaLizardContext.class).staticInvoke("getContext").invoke("getModel"));
+
+			logger.debug(owner.getOntResource().getURI() + " " + entityName + " " + (this.domain == null));
+
+			int paramCounter = 0;
+			for (AbstractOntologyCodeClass domain : this.domain) {
+
+				JForEach forEach = methodBody.forEach(domain.asJDefinedClass(), "object", jMethod.params().get(paramCounter));
+				JBlock forEachBlock = forEach.body();
+
+				JInvocation invocation = jenaModelVar.invoke("add").arg(JExpr.cast(jCodeModel._ref(Resource.class), JExpr._super().ref("individual"))).arg(ontPropertyVar);
+
+				if (domain instanceof DatatypeCodeInterface) {
+					JVar literalVar = forEachBlock.decl(jCodeModel._ref(Literal.class), "_literal_", jCodeModel.ref(ModelFactory.class).staticInvoke("createDefaultModel").invoke("createTypedLiteral").arg(forEach.var()));
+
+					invocation.arg(literalVar);
+				} else {
+					invocation.arg(forEach.var().invoke("getIndividual"));
+				}
+
+				forEachBlock.add(invocation);
+
+				paramCounter += 1;
+			}
+		}
+
+	}
+
+	private void annotateMethod() {
+		char[] fieldNameChars = entityName.toCharArray();
+		StringBuilder sb = new StringBuilder();
+
+		Character previous = null;
+		for (char fieldNameChar : fieldNameChars) {
+			if (previous != null) {
+				if (Character.isLowerCase(previous) && Character.isUpperCase(fieldNameChar))
+					sb.append("_");
+			}
+			sb.append(Character.toUpperCase(fieldNameChar));
+			previous = fieldNameChar;
+		}
+
+		if (owner instanceof OntologyCodeInterface) {
+			JDefinedClass domainJClass = (JDefinedClass) owner.asJDefinedClass();
+			JFieldVar staticField = domainJClass.fields().get(sb.toString());
+			if (staticField == null)
+				staticField = domainJClass.field(JMod.PUBLIC | JMod.STATIC | JMod.FINAL, String.class, sb.toString(), JExpr.lit(ontResource.getURI()));
+
+			JAnnotationUse jAnnotationUse = jMethod.annotate(ObjectPropertyAnnotation.class);
+			jAnnotationUse.param("uri", staticField);
+			jAnnotationUse.param("method", methodType);
+
+		} else
+			jMethod.annotate(Override.class);
+
+	}
+
+	private void createAddAllMethodSignature() {
 		JDefinedClass domainJClass = (JDefinedClass) owner.asJDefinedClass();
 		String methodName = entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
-		jMethod = domainJClass.method(1, void.class, "delete" + methodName);
+		jMethod = domainJClass.method(1, void.class, "addAll" + methodName);
+		if (domain != null) {
+			for (AbstractOntologyCodeClass domainClass : domain) {
+				String name = domainClass.getEntityName();
+				name = name.substring(name.lastIndexOf(".") + 1);
+				name = name.substring(0, 1).toLowerCase() + name.substring(1);
+				JType setClass = super.jCodeModel.ref(Set.class).narrow(domainClass.asJDefinedClass());
+				jMethod.param(setClass, name);
+			}
+		} else {
+			JType setClass = super.jCodeModel.ref(Set.class).narrow(range.asJDefinedClass());
+			jMethod.param(setClass, entityName);
+		}
+
+	}
+
+	private void createGetMethodSignature() {
+		JType setClass = jCodeModel.ref(Set.class).narrow(range.asJDefinedClass());
+		JDefinedClass jOwner = ((JDefinedClass) owner.asJDefinedClass());
+		String methodName = "get" + entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
+		jMethod = jOwner.method(1, setClass, methodName);
+
+		/*
+		 * Code the method for converting a JenaOntologyClass to its corresponding Java bean.
+		 */
+
+		createBeanMethod(jOwner, this.ontResource);
+
+	}
+
+	private void createRemoveAllMethodSignature() {
+		JDefinedClass domainJClass = (JDefinedClass) owner.asJDefinedClass();
+		String methodName = entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
+		jMethod = domainJClass.method(1, void.class, "removeAll" + methodName);
 
 		if (domain != null) {
 			for (AbstractOntologyCodeClass domainClass : domain) {
@@ -147,7 +226,7 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 
 	}
 
-	private void createSetMethod() {
+	private void createSetMethodSignature() {
 		JDefinedClass domainJClass = (JDefinedClass) owner.asJDefinedClass();
 		String methodName = entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
 		jMethod = domainJClass.method(1, void.class, "set" + methodName);
@@ -249,7 +328,7 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 		 */
 		if (owner instanceof OntologyCodeClass) {
 
-			if (methodType == OntologyCodeMethodType.Get) {
+			if (methodType == OntologyCodeMethodType.GET) {
 
 				if (owner instanceof OntologyCodeClass) {
 
@@ -275,11 +354,11 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 						OntResource rangeRes = range.getOntResource();
 
 						AbstractOntologyCodeClass rangeConcreteClass = null;
-//						AbstractOntologyCodeClass rangeConcreteClassBean = null;
+						// AbstractOntologyCodeClass rangeConcreteClassBean = null;
 
 						if (rangeRes.isURIResource()) {
 							rangeConcreteClass = ontologyModel.getOntologyClass(range.getOntResource(), JenaOntologyCodeClass.class);
-//							rangeConcreteClassBean = ontologyModel.getOntologyClass(range.getOntResource(), BeanOntologyCodeClass.class);
+							// rangeConcreteClassBean = ontologyModel.getOntologyClass(range.getOntResource(), BeanOntologyCodeClass.class);
 						} else {
 							rangeConcreteClass = ontologyModel.getOntologyClass(range.getOntResource(), BooleanAnonClass.class);
 						}
@@ -291,7 +370,7 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 
 									if (!ontResource.isDatatypeProperty()) {
 										rangeConcreteClass = ontologyModel.createOntologyClass(range.getOntResource(), JenaOntologyCodeClass.class);
-//										rangeConcreteClassBean = ontologyModel.createOntologyClass(range.getOntResource(), BeanOntologyCodeClass.class);
+										// rangeConcreteClassBean = ontologyModel.createOntologyClass(range.getOntResource(), BeanOntologyCodeClass.class);
 										ontologyModel.createClassImplements((AbstractOntologyCodeClassImpl) rangeConcreteClass, rangeInterface);
 									}
 
@@ -381,7 +460,7 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 		 */
 		if (owner instanceof OntologyCodeClass) {
 
-			if (methodType == OntologyCodeMethodType.Get) {
+			if (methodType == OntologyCodeMethodType.GET) {
 
 				if (owner instanceof OntologyCodeClass) {
 
@@ -595,12 +674,10 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 			 */
 			JVar ontPropertyVar = methodBody.decl(jCodeModel._ref(Property.class), "predicate", jCodeModel.ref(ModelFactory.class).staticInvoke("createDefaultModel").invoke("createProperty").arg(ontResource.toString()));
 			JVar jenaModelVar = methodBody.decl(jCodeModel._ref(Model.class), "model", jCodeModel.ref(RuntimeJenaLizardContext.class).staticInvoke("getContext").invoke("getModel"));
+			
+			methodBody.add(JExpr._super().ref("individual").invoke("asResource").invoke("removeAll").arg(ontPropertyVar));
 
 			logger.debug(owner.getOntResource().getURI() + " " + entityName + " " + (this.domain == null));
-
-			if (owner.getOntResource().isDatatypeProperty() && owner.getOntResource().asDatatypeProperty().getRange() != null && TypeMapper.getInstance().getTypeByName(owner.getOntResource().asDatatypeProperty().getRange().getURI()) != null) {
-
-			}
 
 			int paramCounter = 0;
 			for (AbstractOntologyCodeClass domain : this.domain) {
@@ -629,7 +706,8 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 		if (owner instanceof OntologyCodeClass) {
 
 			JBlock methodBody = jMethod.body();
-
+			
+			
 			/*
 			 * Add the code to set a variable for the URI representing the property and the type of the method.
 			 */
@@ -657,22 +735,6 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 				forEachBlock.add(invocation);
 
 				paramCounter += 1;
-			}
-		}
-	}
-
-	private void addMethodBody() {
-		/*
-		 * Add the body to the method.
-		 */
-		if (owner instanceof OntologyCodeClass) {
-
-			if (methodType == OntologyCodeMethodType.Get) {
-				addGetBody();
-			} else if (methodType == OntologyCodeMethodType.Set) {
-				addSetBody();
-			} else if (methodType == OntologyCodeMethodType.Delete) {
-				addDeleteBody();
 			}
 		}
 	}

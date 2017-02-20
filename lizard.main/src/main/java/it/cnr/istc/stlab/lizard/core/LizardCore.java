@@ -82,7 +82,7 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 
 	private void validateOntology(OntModel ontModel) {
 
-		// TODO JENA resasoner takes so long, use another reasoners
+		// TODO JENA resasoner takes so long, use another reasoner
 
 		// logger.trace("Validating inf model");
 		// ValidityReport validity = ontModel.validate();
@@ -436,9 +436,10 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 						Collection<AbstractOntologyCodeClass> domain = new ArrayList<AbstractOntologyCodeClass>();
 						domain.add(rangeClass);
 
-						ontologyModel.createMethod(OntologyCodeMethodType.Get, ontProperty, owner, domain, rangeClass);
-						ontologyModel.createMethod(OntologyCodeMethodType.Set, ontProperty, owner, domain, rangeClass);
-						ontologyModel.createMethod(OntologyCodeMethodType.Delete, ontProperty, owner, domain, rangeClass);
+						ontologyModel.createMethod(OntologyCodeMethodType.GET, ontProperty, owner, domain, rangeClass);
+						ontologyModel.createMethod(OntologyCodeMethodType.SET, ontProperty, owner, domain, rangeClass);
+						ontologyModel.createMethod(OntologyCodeMethodType.ADD_ALL, ontProperty, owner, domain, rangeClass);
+						ontologyModel.createMethod(OntologyCodeMethodType.REMOVE_ALL, ontProperty, owner, domain, rangeClass);
 					}
 				} else {
 
@@ -447,9 +448,10 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 					Collection<AbstractOntologyCodeClass> domain = new ArrayList<AbstractOntologyCodeClass>();
 					domain.add(anonClass);
 
-					ontologyModel.createMethod(OntologyCodeMethodType.Get, ontProperty, owner, domain, anonClass);
-					ontologyModel.createMethod(OntologyCodeMethodType.Set, ontProperty, owner, domain, anonClass);
-					ontologyModel.createMethod(OntologyCodeMethodType.Delete, ontProperty, owner, domain, anonClass);
+					ontologyModel.createMethod(OntologyCodeMethodType.GET, ontProperty, owner, domain, anonClass);
+					ontologyModel.createMethod(OntologyCodeMethodType.SET, ontProperty, owner, domain, anonClass);
+					ontologyModel.createMethod(OntologyCodeMethodType.ADD_ALL, ontProperty, owner, domain, anonClass);
+					ontologyModel.createMethod(OntologyCodeMethodType.REMOVE_ALL, ontProperty, owner, domain, anonClass);
 
 				}
 			} else {
@@ -458,9 +460,10 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 				Collection<AbstractOntologyCodeClass> domain = new ArrayList<AbstractOntologyCodeClass>();
 				domain.add(ontologyModel.getOntologyClass(thing, BeanOntologyCodeInterface.class));
 
-				ontologyModel.createMethod(OntologyCodeMethodType.Get, ontProperty, owner, domain, ontologyModel.getOntologyClass(thing, RestOntologyCodeClass.class));
-				ontologyModel.createMethod(OntologyCodeMethodType.Set, ontProperty, owner, domain, ontologyModel.getOntologyClass(thing, RestOntologyCodeClass.class));
-				ontologyModel.createMethod(OntologyCodeMethodType.Delete, ontProperty, owner, domain, ontologyModel.getOntologyClass(thing, RestOntologyCodeClass.class));
+				ontologyModel.createMethod(OntologyCodeMethodType.GET, ontProperty, owner, domain, ontologyModel.getOntologyClass(thing, RestOntologyCodeClass.class));
+				ontologyModel.createMethod(OntologyCodeMethodType.SET, ontProperty, owner, domain, ontologyModel.getOntologyClass(thing, RestOntologyCodeClass.class));
+				ontologyModel.createMethod(OntologyCodeMethodType.ADD_ALL, ontProperty, owner, domain, ontologyModel.getOntologyClass(thing, RestOntologyCodeClass.class));
+				ontologyModel.createMethod(OntologyCodeMethodType.REMOVE_ALL, ontProperty, owner, domain, ontologyModel.getOntologyClass(thing, RestOntologyCodeClass.class));
 			}
 
 		}
@@ -489,9 +492,10 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 						Collection<AbstractOntologyCodeClass> domain = new ArrayList<AbstractOntologyCodeClass>();
 						domain.add(rangeClass);
 
-						ontologyModel.createMethod(OntologyCodeMethodType.Get, onProperty, owner, null, rangeClass);
-						ontologyModel.createMethod(OntologyCodeMethodType.Set, onProperty, owner, null, rangeClass);
-						ontologyModel.createMethod(OntologyCodeMethodType.Delete, onProperty, owner, null, rangeClass);
+						ontologyModel.createMethod(OntologyCodeMethodType.GET, onProperty, owner, null, rangeClass);
+						ontologyModel.createMethod(OntologyCodeMethodType.SET, onProperty, owner, null, rangeClass);
+						ontologyModel.createMethod(OntologyCodeMethodType.ADD_ALL, onProperty, owner, null, rangeClass);
+						ontologyModel.createMethod(OntologyCodeMethodType.REMOVE_ALL, onProperty, owner, null, rangeClass);
 
 					} catch (NotAvailableOntologyCodeEntityException e) {
 						e.printStackTrace();
@@ -566,9 +570,10 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 						if (rangeClass != null)
 							domain.add(rangeClass);
 
-						ontologyModel.createMethod(OntologyCodeMethodType.Get, ontProperty, owner, null, rangeClass);
-						ontologyModel.createMethod(OntologyCodeMethodType.Set, ontProperty, owner, domain, null);
-						ontologyModel.createMethod(OntologyCodeMethodType.Delete, ontProperty, owner, domain, null);
+						ontologyModel.createMethod(OntologyCodeMethodType.GET, ontProperty, owner, null, rangeClass);
+						ontologyModel.createMethod(OntologyCodeMethodType.SET, ontProperty, owner, domain, null);
+						ontologyModel.createMethod(OntologyCodeMethodType.ADD_ALL, ontProperty, owner, domain, null);
+						ontologyModel.createMethod(OntologyCodeMethodType.REMOVE_ALL, ontProperty, owner, domain, null);
 
 					}
 				} else {
@@ -578,9 +583,10 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 					Collection<AbstractOntologyCodeClass> domain = new ArrayList<AbstractOntologyCodeClass>();
 					domain.add(anonClass);
 
-					ontologyModel.createMethod(OntologyCodeMethodType.Get, ontProperty, owner, null, anonClass);
-					ontologyModel.createMethod(OntologyCodeMethodType.Set, ontProperty, owner, domain, null);
-					ontologyModel.createMethod(OntologyCodeMethodType.Delete, ontProperty, owner, domain, null);
+					ontologyModel.createMethod(OntologyCodeMethodType.GET, ontProperty, owner, null, anonClass);
+					ontologyModel.createMethod(OntologyCodeMethodType.SET, ontProperty, owner, domain, null);
+					ontologyModel.createMethod(OntologyCodeMethodType.ADD_ALL, ontProperty, owner, domain, null);
+					ontologyModel.createMethod(OntologyCodeMethodType.REMOVE_ALL, ontProperty, owner, domain, null);
 				}
 			} else {
 
@@ -611,9 +617,10 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 				Collection<AbstractOntologyCodeClass> domain = new ArrayList<AbstractOntologyCodeClass>();
 				domain.add(rangeClass);
 
-				ontologyModel.createMethod(OntologyCodeMethodType.Get, ontProperty, owner, null, rangeClass);
-				ontologyModel.createMethod(OntologyCodeMethodType.Set, ontProperty, owner, domain, null);
-				ontologyModel.createMethod(OntologyCodeMethodType.Delete, ontProperty, owner, domain, null);
+				ontologyModel.createMethod(OntologyCodeMethodType.GET, ontProperty, owner, null, rangeClass);
+				ontologyModel.createMethod(OntologyCodeMethodType.SET, ontProperty, owner, domain, null);
+				ontologyModel.createMethod(OntologyCodeMethodType.ADD_ALL, ontProperty, owner, domain, null);
+				ontologyModel.createMethod(OntologyCodeMethodType.REMOVE_ALL, ontProperty, owner, domain, null);
 			}
 
 		}
@@ -640,9 +647,10 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 							Collection<AbstractOntologyCodeClass> domain = new ArrayList<AbstractOntologyCodeClass>();
 							domain.add(rangeClass);
 
-							ontologyModel.createMethod(OntologyCodeMethodType.Get, onProperty, owner, null, rangeClass);
-							ontologyModel.createMethod(OntologyCodeMethodType.Set, onProperty, owner, null, rangeClass);
-							ontologyModel.createMethod(OntologyCodeMethodType.Delete, onProperty, owner, null, rangeClass);
+							ontologyModel.createMethod(OntologyCodeMethodType.GET, onProperty, owner, null, rangeClass);
+							ontologyModel.createMethod(OntologyCodeMethodType.SET, onProperty, owner, null, rangeClass);
+							ontologyModel.createMethod(OntologyCodeMethodType.ADD_ALL, onProperty, owner, null, rangeClass);
+							ontologyModel.createMethod(OntologyCodeMethodType.REMOVE_ALL, onProperty, owner, null, rangeClass);
 
 						} catch (NotAvailableOntologyCodeEntityException e) {
 							e.printStackTrace();

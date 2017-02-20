@@ -58,26 +58,54 @@ public class BeanOntologyCodeMethod extends OntologyCodeMethod {
 
 			logger.trace("Creating method for: " + ontResource.getURI() + " ");
 
-			if (methodType == OntologyCodeMethodType.Get) {
+			if (methodType == OntologyCodeMethodType.GET) {
 				createGetSignature();
-			} else if (methodType == OntologyCodeMethodType.Set) {
+			} else if (methodType == OntologyCodeMethodType.SET) {
 				createSetSignature();
-			} else if (methodType == OntologyCodeMethodType.Delete) {
+			} else if (methodType == OntologyCodeMethodType.REMOVE_ALL) {
 				createDeleteSignature();
+			} else if (methodType == OntologyCodeMethodType.ADD_ALL) {
+				createAddAllSignature();
 			}
 
 			annotateMethod();
 		}
 
 		if (owner instanceof OntologyCodeClass) {
-			if (methodType == OntologyCodeMethodType.Get) {
+			if (methodType == OntologyCodeMethodType.GET) {
 				addGetBody();
-			} else if (methodType == OntologyCodeMethodType.Set) {
+			} else if (methodType == OntologyCodeMethodType.SET) {
 				addSetBody();
-			} else if (methodType == OntologyCodeMethodType.Delete) {
+			} else if (methodType == OntologyCodeMethodType.REMOVE_ALL) {
 				addDeleteBody();
+			} else if (methodType == OntologyCodeMethodType.ADD_ALL) {
+				addAddAllBody();
 			}
 		}
+	}
+
+	private void addAddAllBody() {
+		JDefinedClass ownerJClass = (JDefinedClass) owner.asJDefinedClass();
+		if (owner instanceof OntologyCodeClass) {
+			JBlock methodBody = jMethod.body();
+			JVar ownerClassField = ownerJClass.fields().get(entityName);
+			if (ownerClassField == null) {
+				logger.debug(getClass() + " OWNER " + ontResource + " " + (domain == null));
+				if (domain.size() > 0) {
+					AbstractOntologyCodeClass fieldType = ((ArrayList<AbstractOntologyCodeClass>) domain).get(0);
+					JType setClass = jCodeModel.ref(Set.class).narrow(fieldType.asJDefinedClass());
+					ownerClassField = ownerJClass.field(JMod.PRIVATE, setClass, entityName);
+				} else {
+					ownerClassField = ownerJClass.field(JMod.PRIVATE, jCodeModel.ref(String.class), entityName);
+				}
+			}
+
+			logger.debug("Number of parameters  " + jMethod.params().size());
+
+			methodBody.invoke(ownerClassField, "addAll").arg(jMethod.params().get(0));
+
+		}
+
 	}
 
 	private void annotateMethod() {
@@ -109,7 +137,7 @@ public class BeanOntologyCodeMethod extends OntologyCodeMethod {
 		} else {
 			jMethod.annotate(Override.class);
 
-			if (this.methodType == OntologyCodeMethodType.Get) {
+			if (this.methodType == OntologyCodeMethodType.GET) {
 				addClassCentricStaticMethod(jCodeModel, sb.toString());
 				addClassCentricStaticMethodWithParam(jCodeModel, sb.toString());
 			}
@@ -141,10 +169,32 @@ public class BeanOntologyCodeMethod extends OntologyCodeMethod {
 		// create delete method
 		JDefinedClass domainJClass = (JDefinedClass) owner.asJDefinedClass();
 		String methodName = entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
-		jMethod = domainJClass.method(1, void.class, "delete" + methodName);
+		jMethod = domainJClass.method(1, void.class, "removeAll" + methodName);
 
 		if (domain != null) {
 			for (AbstractOntologyCodeClass domainClass : domain) {
+				String name = domainClass.getEntityName();
+				name = name.substring(name.lastIndexOf(".") + 1);
+				name = name.substring(0, 1).toLowerCase() + name.substring(1);
+				JType setClass = jCodeModel.ref(Set.class).narrow(domainClass.asJDefinedClass());
+				jMethod.param(setClass, name);
+			}
+		} else {
+			JType setClass = jCodeModel.ref(Set.class).narrow(range.asJDefinedClass());
+			jMethod.param(setClass, entityName);
+		}
+
+	}
+
+	private void createAddAllSignature() {
+
+		String methodName = entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
+		JDefinedClass domainJClass = (JDefinedClass) owner.asJDefinedClass();
+		jMethod = domainJClass.method(1, void.class, "addAll" + methodName);
+
+		if (domain != null) {
+			for (AbstractOntologyCodeClass domainClass : domain) {
+				logger.trace("DOMAIN: " + domainClass.getOntResource().getURI());
 				String name = domainClass.getEntityName();
 				name = name.substring(name.lastIndexOf(".") + 1);
 				name = name.substring(0, 1).toLowerCase() + name.substring(1);
@@ -182,16 +232,16 @@ public class BeanOntologyCodeMethod extends OntologyCodeMethod {
 
 	private void createGetSignature() {
 		JType setClass = null;
-//		if (ontResource.isDatatypeProperty()) {
-//			OntResource rangeResource = ontResource.asDatatypeProperty().getRange();
-//			if (rangeResource != null && rangeResource.isURIResource() && LizardCore.hasTypeMapper(rangeResource.getURI())) {
-//				setClass = jCodeModel.ref(Set.class).narrow(TypeMapper.getInstance().getSafeTypeByName(rangeResource.getURI()).getJavaClass());
-//			} else {
-//				setClass = jCodeModel.ref(Set.class).narrow(String.class);
-//			}
-//		} else {
-			setClass = jCodeModel.ref(Set.class).narrow(range.asJDefinedClass());
-//		}
+		// if (ontResource.isDatatypeProperty()) {
+		// OntResource rangeResource = ontResource.asDatatypeProperty().getRange();
+		// if (rangeResource != null && rangeResource.isURIResource() && LizardCore.hasTypeMapper(rangeResource.getURI())) {
+		// setClass = jCodeModel.ref(Set.class).narrow(TypeMapper.getInstance().getSafeTypeByName(rangeResource.getURI()).getJavaClass());
+		// } else {
+		// setClass = jCodeModel.ref(Set.class).narrow(String.class);
+		// }
+		// } else {
+		setClass = jCodeModel.ref(Set.class).narrow(range.asJDefinedClass());
+		// }
 		String methodName = entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
 		jMethod = ((JDefinedClass) owner.asJDefinedClass()).method(1, setClass, "get" + methodName);
 
@@ -203,9 +253,25 @@ public class BeanOntologyCodeMethod extends OntologyCodeMethod {
 	}
 
 	private void addDeleteBody() {
+		JDefinedClass ownerJClass = (JDefinedClass) owner.asJDefinedClass();
 		if (owner instanceof OntologyCodeClass) {
 			JBlock methodBody = jMethod.body();
-			methodBody.directStatement("throw new UnsupportedOperationException(\"Unsupported Operation!\");");
+			JVar ownerClassField = ownerJClass.fields().get(entityName);
+			if (ownerClassField == null) {
+				logger.debug(getClass() + " OWNER " + ontResource + " " + (domain == null));
+				if (domain.size() > 0) {
+					AbstractOntologyCodeClass fieldType = ((ArrayList<AbstractOntologyCodeClass>) domain).get(0);
+					JType setClass = jCodeModel.ref(Set.class).narrow(fieldType.asJDefinedClass());
+					ownerClassField = ownerJClass.field(JMod.PRIVATE, setClass, entityName);
+				} else {
+					ownerClassField = ownerJClass.field(JMod.PRIVATE, jCodeModel.ref(String.class), entityName);
+				}
+			}
+
+			logger.debug("Number of parameters  " + jMethod.params().size());
+
+			methodBody.invoke(ownerClassField, "removeAll").arg(jMethod.params().get(0));
+
 		}
 	}
 
@@ -216,16 +282,16 @@ public class BeanOntologyCodeMethod extends OntologyCodeMethod {
 			JType setClass = null;
 			JClass rangeJClass = null;
 
-//			if (ontResource.isDatatypeProperty()) {
-//				OntResource rangeResource = ontResource.asDatatypeProperty().getRange();
-//				if (rangeResource != null && rangeResource.isURIResource() && LizardCore.hasTypeMapper(rangeResource.getURI())) {
-//					rangeJClass = jCodeModel.ref(TypeMapper.getInstance().getSafeTypeByName(rangeResource.getURI()).getJavaClass());
-//				} else {
-//					rangeJClass = jCodeModel.ref(String.class);
-//				}
-//			} else {
-				rangeJClass = range.asJDefinedClass();
-//			}
+			// if (ontResource.isDatatypeProperty()) {
+			// OntResource rangeResource = ontResource.asDatatypeProperty().getRange();
+			// if (rangeResource != null && rangeResource.isURIResource() && LizardCore.hasTypeMapper(rangeResource.getURI())) {
+			// rangeJClass = jCodeModel.ref(TypeMapper.getInstance().getSafeTypeByName(rangeResource.getURI()).getJavaClass());
+			// } else {
+			// rangeJClass = jCodeModel.ref(String.class);
+			// }
+			// } else {
+			rangeJClass = range.asJDefinedClass();
+			// }
 			setClass = jCodeModel.ref(Set.class).narrow(rangeJClass);
 
 			JVar ownerClassField = ownerJClass.fields().get(entityName);
@@ -269,7 +335,7 @@ public class BeanOntologyCodeMethod extends OntologyCodeMethod {
 
 		// Adding static methods in the class interface
 
-		if (this.methodType == OntologyCodeMethodType.Get) {
+		if (this.methodType == OntologyCodeMethodType.GET) {
 
 			OntologyCodeInterface ontInterface = ontologyModel.getOntologyClass(owner.getOntResource(), BeanOntologyCodeInterface.class);
 
@@ -319,7 +385,7 @@ public class BeanOntologyCodeMethod extends OntologyCodeMethod {
 	}
 
 	private void addClassCentricStaticMethodWithParam(JCodeModel codeModel, String fieldName) {
-		if (this.methodType == OntologyCodeMethodType.Get) {
+		if (this.methodType == OntologyCodeMethodType.GET) {
 			OntologyCodeInterface ontInterface = ontologyModel.getOntologyClass(owner.getOntResource(), BeanOntologyCodeInterface.class);
 
 			if (ontInterface != null) {
