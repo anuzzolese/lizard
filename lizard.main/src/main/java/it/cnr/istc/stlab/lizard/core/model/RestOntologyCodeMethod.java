@@ -270,7 +270,7 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 
 	}
 
-	public void createRemoveAllMethodForObjectProperty() {
+	private void createRemoveAllMethodForObjectProperty() {
 
 		JType responseType = super.jCodeModel.ref(Response.class);
 		String methodName = "removeAll" + entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
@@ -337,7 +337,7 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 
 	}
 
-	public void createRemoveAllMethodForDatatypeProperty() {
+	private void createRemoveAllMethodForDatatypeProperty() {
 		JType responseType = super.jCodeModel.ref(Response.class);
 		String methodName = "removeAll" + entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
 
@@ -349,7 +349,7 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 
 				// Create annotation DELETE method
 				jMethod.annotate(POST.class);
-				jMethod.annotate(Path.class).param("value", "/entity/" +methodName);
+				jMethod.annotate(Path.class).param("value", "/entity/" + methodName);
 				String operationId = "removeAll_" + ((RestOntologyCodeClass) owner).getPath().substring(1) + "_" + entityName;
 				jMethod.annotate(ApiOperation.class).param("value", "Delete " + entityName).param("nickname", operationId);
 
@@ -413,7 +413,7 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 
 	}
 
-	public void createSetMethodForObjectProperty() {
+	private void createSetMethodForObjectProperty() {
 		JType responseType = super.jCodeModel.ref(Response.class);
 		String methodName = "set" + entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
 
@@ -448,6 +448,7 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 				AbstractOntologyCodeClass ownerInterface = ontologyModel.getOntologyClass(owner.getOntResource(), BeanOntologyCodeInterface.class);
 				AbstractOntologyCodeClass rangeJenaClass = null;
 				AbstractOntologyCodeClass rangeJenaInterface = null;
+
 				if (range == null) {
 					rangeJenaClass = ontologyModel.getOntologyClass(ModelFactory.createOntologyModel().getOntResource(OWL.Thing), JenaOntologyCodeClass.class);
 					rangeJenaInterface = ontologyModel.getOntologyClass(ModelFactory.createOntologyModel().getOntResource(OWL.Thing), BeanOntologyCodeInterface.class);
@@ -471,15 +472,21 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 				JVar entityVar = methodBody.decl(ownerInterface.asJDefinedClass(), "_entity", ownerInterface.asJDefinedClass().staticInvoke("get").arg(idParam));
 				methodBody.add(entityVar.invoke(methodName).arg(kbSetVar));
 
+				// create set response
+				JType hashSetType_range_res = super.jCodeModel.ref(HashSet.class).narrow(ownerInterface.asJDefinedClass());
+				JType setType_range_res = super.jCodeModel.ref(Set.class).narrow(ownerInterface.asJDefinedClass());
+				JVar kbSetVar_res = methodBody.decl(setType_range_res, "response", JExpr._new(hashSetType_range_res));
+				methodBody.add(kbSetVar_res.invoke("add").arg(entityVar));
+
 				// Respond OK
-				JVar responseBuilderVar = methodBody.decl(super.jCodeModel._ref(ResponseBuilder.class), "_responseBuilder", super.jCodeModel.ref(Response.class).staticInvoke("ok"));
+				JVar responseBuilderVar = methodBody.decl(super.jCodeModel._ref(ResponseBuilder.class), "_responseBuilder", super.jCodeModel.ref(Response.class).staticInvoke("ok").arg(kbSetVar_res));
 				methodBody._return(responseBuilderVar.invoke("build"));
 			}
 		}
 
 	}
 
-	public void createSetMethodForDatatypeProperty() {
+	private void createSetMethodForDatatypeProperty() {
 		JType responseType = super.jCodeModel.ref(Response.class);
 		String methodName = "set" + entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
 
@@ -542,9 +549,15 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 				// Add set to the individual
 				JVar entityVar = methodBody.decl(ownerInterface.asJDefinedClass(), "_entity", ownerInterface.asJDefinedClass().staticInvoke("get").arg(idParam));
 				methodBody.add(entityVar.invoke(methodName).arg(kbSetVar));
+				
+				// create set response
+				JType hashSetType_range_res = super.jCodeModel.ref(HashSet.class).narrow(ownerInterface.asJDefinedClass());
+				JType setType_range_res = super.jCodeModel.ref(Set.class).narrow(ownerInterface.asJDefinedClass());
+				JVar kbSetVar_res = methodBody.decl(setType_range_res, "response", JExpr._new(hashSetType_range_res));
+				methodBody.add(kbSetVar_res.invoke("add").arg(entityVar));
 
 				// Respond OK
-				JVar responseBuilderVar = methodBody.decl(super.jCodeModel._ref(ResponseBuilder.class), "_responseBuilder", super.jCodeModel.ref(Response.class).staticInvoke("ok"));
+				JVar responseBuilderVar = methodBody.decl(super.jCodeModel._ref(ResponseBuilder.class), "_responseBuilder", super.jCodeModel.ref(Response.class).staticInvoke("ok").arg(kbSetVar_res));
 				methodBody._return(responseBuilderVar.invoke("build"));
 			}
 		}
