@@ -1,18 +1,26 @@
 package it.cnr.istc.stlab.lizard.jetty;
 
-import io.swagger.jaxrs.config.BeanConfig;
-
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
+
+import io.swagger.jaxrs.config.BeanConfig;
+import io.swagger.jaxrs.config.SwaggerContextService;
+import io.swagger.models.Swagger;
 
 public class Bootstrap extends HttpServlet {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-
-	private String title, version, basepath, host, description, _package, path;
+	
+	public static final String TITLE = "title";
+	public static final String VERSION = "version";
+	public static final String BASE_PATH = "basepath";
+	public static final String HOST = "host";
+	public static final String DESCRIPTION = "description";
+	public static final String PACKAGE = "package";
+	public static final String PATH = "path";
 
 	@Override
 	public void init(ServletConfig config) throws ServletException {
@@ -21,80 +29,30 @@ public class Bootstrap extends HttpServlet {
 		BeanConfig beanConfig = new BeanConfig();
 
 		// info
-		beanConfig.setTitle(this.title);
-		beanConfig.setDescription(this.description);
-		beanConfig.setSchemes(new String[] { "http" });
-		beanConfig.setHost(this.host);
-		beanConfig.setBasePath(this.basepath);
-		beanConfig.setVersion(this.version);
+		beanConfig.setTitle(config.getInitParameter(TITLE));
+		beanConfig.setDescription(config.getInitParameter(DESCRIPTION));
+		beanConfig.setSchemes(new String[] {"http"});
+		beanConfig.setHost(config.getInitParameter(HOST));
+		//beanConfig.setUsePathBasedConfig(true);
+		beanConfig.setBasePath(config.getInitParameter(BASE_PATH));
 		beanConfig.setContact("stlab@cnr.it");
 		beanConfig.setLicense("Apache 2.0");
 		beanConfig.setLicenseUrl("http://www.apache.org/licenses/LICENSE-2.0.html");
 		beanConfig.setPrettyPrint(true);
+		beanConfig.setConfigId(config.getInitParameter("swagger.config.id"));
+		beanConfig.setScannerId(config.getInitParameter("swagger.scanner.id"));
+		beanConfig.setContextId(config.getInitParameter("swagger.context.id"));
+		beanConfig.setVersion(config.getInitParameter(VERSION));
 
 		// Resource package
-		beanConfig.setResourcePackage(this._package);
-		beanConfig.setScan(true);
+		System.err.println("BEAN CONFIG SCAN FOR " + config.getInitParameter(PACKAGE));
+		beanConfig.setResourcePackage(config.getInitParameter(PACKAGE));
+		beanConfig.setScan();
+		//beanConfig.setScan(true);
 		
+		Swagger swagger = new Swagger();
+		new SwaggerContextService().withSwaggerConfig(beanConfig).updateSwagger(swagger);
 		
-		
-
-	}
-
-	public String getBasePath() {
-		return basepath;
-	}
-
-	public void setBasePath(String basepath) {
-		this.basepath = basepath;
-	}
-
-	public String getHost() {
-		return host;
-	}
-
-	public void setHost(String host) {
-		this.host = host;
-	}
-
-	public String getDescription() {
-		return description;
-	}
-
-	public void setDescription(String description) {
-		this.description = description;
-	}
-
-	public String get_package() {
-		return _package;
-	}
-
-	public void set_package(String _package) {
-		this._package = _package;
-	}
-
-	public String getTitle() {
-		return title;
-	}
-
-	public void setTitle(String title) {
-		this.title = title;
-	}
-
-	public String getVersion() {
-		return version;
-	}
-
-	public void setVersion(String version) {
-		this.version = version;
-	}
-
-	public String getPath() {
-		return path;
-	}
-
-	public void setPath(String path) {
-		this.path = path;
 	}
 
 }

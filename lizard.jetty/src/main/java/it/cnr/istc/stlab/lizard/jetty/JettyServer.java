@@ -1,18 +1,18 @@
 package it.cnr.istc.stlab.lizard.jetty;
 
-import it.cnr.istc.stlab.lizard.commons.inmemory.RestInterface;
-import it.cnr.istc.stlab.lizard.commons.jersey.SetBodyWriter;
-import it.cnr.istc.stlab.lizard.jetty.resources.Lizard;
-import it.cnr.istc.stlab.lizard.jetty.utils.FileUtils;
-
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.ServiceLoader;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+
+import it.cnr.istc.stlab.lizard.commons.inmemory.RestInterface;
+import it.cnr.istc.stlab.lizard.commons.jersey.SetBodyWriter;
+import it.cnr.istc.stlab.lizard.jetty.resources.Lizard;
+import it.cnr.istc.stlab.lizard.jetty.utils.FileUtils;
 
 public class JettyServer {
 
@@ -39,73 +39,85 @@ public class JettyServer {
 			port = 8080;
 		}
 
+		// Jetty server
 		Server jettyServer = new Server(port);
 
+		// Main context handler
 		ServletContextHandler servletContextHandler = new ServletContextHandler(ServletContextHandler.SESSIONS);
 		servletContextHandler.setContextPath("/");
-		jettyServer.setHandler(servletContextHandler);
 
-		// Lizard servlet
+		// Lizard servlets
 		ServletHolder servletHolder = servletContextHandler.addServlet(org.glassfish.jersey.servlet.ServletContainer.class, "/lizard/*");
+		System.out.println("Lizard service will be available at " + "localhost:" + port + "/lizard/*");
 		servletHolder.setInitOrder(1);
-		servletHolder.setInitParameter("jersey.config.server.provider.packages", "io.swagger.jaxrs.listing," + FileUtils.getNamePackage(SetBodyWriter.class) + "," + FileUtils.getNamePackage(Lizard.class));
+		servletHolder.setInitParameter("jersey.config.server.provider.packages", "io.swagger.jaxrs.listing," + FileUtils.getNamePackage(Lizard.class));
+		servletHolder.setInitParameter("jersey.config.server.wadl.disableWadl", "true");
+		servletHolder.setInitParameter("swagger.scanner.id", Lizard.class.getName());
+		servletHolder.setInitParameter("swagger.context.id", Lizard.class.getName());
+		servletHolder.setInitParameter("swagger.config.id", Lizard.class.getName());
+		// servletHolder.setInitParameter("swagger.use.path.based.config","true");
+
+		ServletHolder lizardRestHolder = servletContextHandler.addServlet(Bootstrap.class, "/" + Lizard.class.getName());
+		lizardRestHolder.setInitOrder(2);
+		lizardRestHolder.setInitParameter("swagger.scanner.id", Lizard.class.getName());
+		lizardRestHolder.setInitParameter("swagger.context.id", Lizard.class.getName());
+		lizardRestHolder.setInitParameter("swagger.config.id", Lizard.class.getName());
+		// lizardRestHolder.setInitParameter("swagger.use.path.based.config","true");
+		lizardRestHolder.setInitParameter(Bootstrap.TITLE, "Lizard");
+		lizardRestHolder.setInitParameter(Bootstrap.PACKAGE, FileUtils.getNamePackage(Lizard.class));
+		lizardRestHolder.setInitParameter(Bootstrap.BASE_PATH, "/lizard");
+		lizardRestHolder.setInitParameter(Bootstrap.DESCRIPTION, "Lizard automatically generates Rest APIs for managing ontologies");
+		lizardRestHolder.setInitParameter(Bootstrap.HOST, "localhost:" + port);
+		lizardRestHolder.setInitParameter(Bootstrap.VERSION, "0.1");
+
+		// Other servlets
+		ServiceLoader<RestInterface> restInterfaceLoader = ServiceLoader.load(RestInterface.class);
+		Set<String> aaPackages = new HashSet<String>();
+		final int serverPort = port;
+		restInterfaceLoader.forEach(restInterface -> {
+			String packageJavaName = FileUtils.getNamePackage(restInterface.getClass());
+			if (!aaPackages.contains(packageJavaName)) {
+
+				String basePathResources = packageJavaName.replace(".web", "");
+				basePathResources = basePathResources.replaceAll("\\.", "_");
+
+				ServletHolder servletHolderRestOntology = servletContextHandler.addServlet(org.glassfish.jersey.servlet.ServletContainer.class, "/" + basePathResources + "/*");
+				System.out.println("Package " + packageJavaName + " - Service will be available at " + "http://localhost:" + serverPort + "/" + basePathResources + "/*");
+				servletHolderRestOntology.setInitOrder(1);
+				servletHolderRestOntology.setInitParameter("jersey.config.server.provider.packages", "io.swagger.jaxrs.listing," + FileUtils.getNamePackage(SetBodyWriter.class) + "," + packageJavaName);
+				servletHolderRestOntology.setInitParameter("jersey.config.server.wadl.disableWadl", "true");
+				servletHolderRestOntology.setInitParameter("swagger.scanner.id", packageJavaName);
+				servletHolderRestOntology.setInitParameter("swagger.context.id", packageJavaName);
+				servletHolderRestOntology.setInitParameter("swagger.config.id", packageJavaName);
+
+				ServletHolder ontologySwaggerHolder = servletContextHandler.addServlet(Bootstrap.class, "/swagger/" + basePathResources);
+				ontologySwaggerHolder.setInitOrder(2);
+				ontologySwaggerHolder.setInitParameter("swagger.scanner.id", packageJavaName);
+				ontologySwaggerHolder.setInitParameter("swagger.context.id", packageJavaName);
+				ontologySwaggerHolder.setInitParameter("swagger.config.id", packageJavaName);
+				// lizardRestHolder.setInitParameter("swagger.use.path.based.config","true");
+				ontologySwaggerHolder.setInitParameter(Bootstrap.TITLE, packageJavaName);
+				ontologySwaggerHolder.setInitParameter(Bootstrap.PACKAGE, packageJavaName);
+				ontologySwaggerHolder.setInitParameter(Bootstrap.BASE_PATH, "/" + basePathResources);
+				ontologySwaggerHolder.setInitParameter(Bootstrap.DESCRIPTION, "Rest services defined in package " + packageJavaName + " for accessing the corresponding ontology.");
+				ontologySwaggerHolder.setInitParameter(Bootstrap.HOST, "localhost:" + serverPort);
+				ontologySwaggerHolder.setInitParameter(Bootstrap.VERSION, "0.99"); // TODO
+				aaPackages.add(packageJavaName);
+
+			}
+		});
+
+		// add main context to Jetty
+		jettyServer.setHandler(servletContextHandler);
 
 		try {
 			jettyServer.start();
-
-			getLizardBootstrap().init(servletHolder.getServlet().getServletConfig());
-
-			// Ontology servlet
-			for (Bootstrap b : getBootstraps("localhost:" + port)) {
-				System.out.println("Package " + b.get_package() + " on localhost:" + port + "/" + b.getPath() + "/");
-				ServletHolder servletHolderRestOntology = servletContextHandler.addServlet(org.glassfish.jersey.servlet.ServletContainer.class, "/" + b.getPath() + "/*");
-				servletHolderRestOntology.setInitOrder(2);
-				servletHolderRestOntology.setInitParameter("jersey.config.server.provider.packages", "io.swagger.jaxrs.listing," + FileUtils.getNamePackage(SetBodyWriter.class) + "," + b.get_package());
-				
-				b.init(servletHolderRestOntology.getServlet().getServletConfig());
-			}
-			
-			System.out.println("Done!");
-
+			System.out.println("Done! Jetty Server is up and running!");
 			jettyServer.join();
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
 			jettyServer.destroy();
 		}
-	}
-
-	static Bootstrap getLizardBootstrap() {
-		Bootstrap b = new Bootstrap();
-		b.setTitle("Lizard");
-		b.set_package(FileUtils.getNamePackage(Lizard.class));
-		b.setBasePath("/lizard/");
-		b.setDescription("Lizard automatically generates API Rest for managing ontologies");
-		b.setHost("localhost:8080");
-		return b;
-	}
-
-	static Collection<Bootstrap> getBootstraps(String host) {
-		ServiceLoader<RestInterface> restInterfaceLoader = ServiceLoader.load(RestInterface.class);
-		Collection<Bootstrap> result = new HashSet<Bootstrap>();
-		Collection<String> aaPackages = new HashSet<String>();
-		restInterfaceLoader.forEach(restInterface -> {
-			String packageJavaName = FileUtils.getNamePackage(restInterface.getClass());
-			if (!aaPackages.contains(packageJavaName)) {
-				Bootstrap b = new Bootstrap();
-				String basePathResources = packageJavaName.replace(".web", "");
-				basePathResources = basePathResources.replaceAll("\\.", "_");
-				b.setTitle(packageJavaName);
-				b.set_package(packageJavaName);
-				b.setBasePath("/" + basePathResources + "/");
-				b.setPath(basePathResources);
-				b.setDescription("Rest services defined in package " + packageJavaName + " for accessing the corresponding ontology.");
-				b.setHost(host);
-				b.setVersion("0.99"); // TODO
-				aaPackages.add(packageJavaName);
-				result.add(b);
-			}
-		});
-		return result;
 	}
 }
