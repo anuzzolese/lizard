@@ -206,8 +206,6 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 				String getMethodName = "get" + entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
 
 				JDefinedClass jdc = (JDefinedClass) ontologyModel.getOntologyClass(owner.getOntResource(), BeanOntologyCodeInterface.class).asJDefinedClass();
-				// JMethod meth = jdc.getMethod(entityName, new
-				// JType[]{});
 
 				logger.debug("Method name: " + getMethodName);
 
@@ -473,10 +471,11 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 				methodBody.add(entityVar.invoke(methodName).arg(kbSetVar));
 
 				// create set response
+				JExpression cast = JExpr.cast(ontologyModel.getOntologyClass(owner.getOntResource(), JenaOntologyCodeClass.class).asJDefinedClass(), entityVar);
 				JType hashSetType_range_res = super.jCodeModel.ref(HashSet.class).narrow(ownerInterface.asJDefinedClass());
 				JType setType_range_res = super.jCodeModel.ref(Set.class).narrow(ownerInterface.asJDefinedClass());
 				JVar kbSetVar_res = methodBody.decl(setType_range_res, "response", JExpr._new(hashSetType_range_res));
-				methodBody.add(kbSetVar_res.invoke("add").arg(entityVar));
+				methodBody.add(kbSetVar_res.invoke("add").arg(cast.invoke("asMicroBean")));
 
 				// Respond OK
 				JVar responseBuilderVar = methodBody.decl(super.jCodeModel._ref(ResponseBuilder.class), "_responseBuilder", super.jCodeModel.ref(Response.class).staticInvoke("ok").arg(kbSetVar_res));
@@ -549,12 +548,13 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 				// Add set to the individual
 				JVar entityVar = methodBody.decl(ownerInterface.asJDefinedClass(), "_entity", ownerInterface.asJDefinedClass().staticInvoke("get").arg(idParam));
 				methodBody.add(entityVar.invoke(methodName).arg(kbSetVar));
-				
+
 				// create set response
+				JExpression cast = JExpr.cast(ontologyModel.getOntologyClass(owner.getOntResource(), JenaOntologyCodeClass.class).asJDefinedClass(), entityVar);
 				JType hashSetType_range_res = super.jCodeModel.ref(HashSet.class).narrow(ownerInterface.asJDefinedClass());
 				JType setType_range_res = super.jCodeModel.ref(Set.class).narrow(ownerInterface.asJDefinedClass());
 				JVar kbSetVar_res = methodBody.decl(setType_range_res, "response", JExpr._new(hashSetType_range_res));
-				methodBody.add(kbSetVar_res.invoke("add").arg(entityVar));
+				methodBody.add(kbSetVar_res.invoke("add").arg(cast.invoke("asMicroBean")));
 
 				// Respond OK
 				JVar responseBuilderVar = methodBody.decl(super.jCodeModel._ref(ResponseBuilder.class), "_responseBuilder", super.jCodeModel.ref(Response.class).staticInvoke("ok").arg(kbSetVar_res));

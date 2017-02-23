@@ -676,7 +676,8 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 			// uri = new URI("http://www.ontologydesignpatterns.org/ont/mario/tagging.owl");
 			// uri = new URI("http://www.ontologydesignpatterns.org/ont/framester/framester.owl");
 			// uri = new URI("http://www.ontologydesignpatterns.org/ont/mario/music.owl");
-			uri = new URI("http://www.ontologydesignpatterns.org/ont/mario/cga.owl");
+			// uri = new URI("http://www.ontologydesignpatterns.org/ont/mario/cga.owl");
+			uri = new URI("/Users/lgu/Dropbox/stlab/ontologies/paraphrase/ppdb.owl");
 			// uri = new URI("/Users/lgu/Desktop/prova.owl");
 			// uri = new URI("/Users/lgu/Desktop/cga.owl");
 			// uri = new URI("vocabs/foaf.rdf");
