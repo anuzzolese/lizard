@@ -35,10 +35,12 @@ public interface OntologyCodeModel {
 
 	BooleanAnonClass createAnonClass(OntClass ontClass);
 
-	void imports(OntologyCodeProject owlFakeProject);
-
 	Map<Class<? extends AbstractOntologyCodeClass>, Map<OntResource, AbstractOntologyCodeClass>> getEntityMap();
 
 	Map<OntResource, Set<AbstractOntologyCodeMethod>> getMethodMap();
 
+
+	OntologyCodeProject getOntologyCodeProject();
+
+	void setOntologyCodeProject(OntologyCodeProject ontologyCodeProject);
 }

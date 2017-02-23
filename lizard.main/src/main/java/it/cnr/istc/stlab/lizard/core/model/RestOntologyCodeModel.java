@@ -1,22 +1,5 @@
 package it.cnr.istc.stlab.lizard.core.model;
 
-import it.cnr.istc.stlab.lizard.commons.AnonClassType;
-import it.cnr.istc.stlab.lizard.commons.OntologyCodeProject;
-import it.cnr.istc.stlab.lizard.commons.exception.ClassAlreadyExistsException;
-import it.cnr.istc.stlab.lizard.commons.exception.NotAvailableOntologyCodeEntityException;
-import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClass;
-import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClassImpl;
-import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeMethod;
-import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeClass;
-import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeInterface;
-import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeModel;
-import it.cnr.istc.stlab.lizard.commons.model.anon.BooleanAnonClass;
-import it.cnr.istc.stlab.lizard.commons.model.datatype.DatatypeCodeInterface;
-import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeClassType;
-import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeMethodType;
-import it.cnr.istc.stlab.lizard.core.LizardCore;
-import it.cnr.istc.stlab.lizard.core.anonymous.AnonymousClassBuilder;
-
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -34,12 +17,29 @@ import org.slf4j.LoggerFactory;
 import com.sun.codemodel.JCodeModel;
 import com.sun.codemodel.JDefinedClass;
 
+import it.cnr.istc.stlab.lizard.commons.AnonClassType;
+import it.cnr.istc.stlab.lizard.commons.OntologyCodeProject;
+import it.cnr.istc.stlab.lizard.commons.exception.ClassAlreadyExistsException;
+import it.cnr.istc.stlab.lizard.commons.exception.NotAvailableOntologyCodeEntityException;
+import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClass;
+import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClassImpl;
+import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeMethod;
+import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeClass;
+import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeInterface;
+import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeModel;
+import it.cnr.istc.stlab.lizard.commons.model.anon.BooleanAnonClass;
+import it.cnr.istc.stlab.lizard.commons.model.datatype.DatatypeCodeInterface;
+import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeClassType;
+import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeMethodType;
+import it.cnr.istc.stlab.lizard.core.LizardCore;
+import it.cnr.istc.stlab.lizard.core.anonymous.AnonymousClassBuilder;
+
 public class RestOntologyCodeModel implements OntologyCodeModel {
 
 	private static Logger logger = LoggerFactory.getLogger(RestOntologyCodeModel.class);
 
 	private OntologyCodeModel apiCodeModel;
-	private Set<OntologyCodeProject> importedProjects = new HashSet<>();
+	protected OntologyCodeProject ontologyCodeProject;
 
 	protected JCodeModel codeModel;
 	protected OntModel ontModel;
@@ -305,7 +305,6 @@ public class RestOntologyCodeModel implements OntologyCodeModel {
 		if (resource.isAnon()) {
 			ontologyClass = (T) createAnonClass(resource.asClass());
 		} else {
-
 			if (DatatypeCodeInterface.class.isAssignableFrom(ontologyEntityClass)) {
 				try {
 					ontologyClass = (T) new DatatypeCodeInterface(resource, this, this.codeModel);
@@ -347,7 +346,7 @@ public class RestOntologyCodeModel implements OntologyCodeModel {
 		if (entityMap.containsKey(ontologyClass)) {
 			return (T) entityMap.get(ontologyClass).get(ontResource);
 		} else {
-			for (OntologyCodeProject ontologyCodeProject : importedProjects) {
+			for (OntologyCodeProject ontologyCodeProject : this.ontologyCodeProject.getImportedProjects()) {
 				return ontologyCodeProject.getOntologyCodeModel().getOntologyClass(ontResource, ontologyClass);
 			}
 		}
@@ -384,8 +383,13 @@ public class RestOntologyCodeModel implements OntologyCodeModel {
 	}
 
 	@Override
-	public void imports(OntologyCodeProject project) {
-		importedProjects.add(project);
+	public OntologyCodeProject getOntologyCodeProject() {
+		return ontologyCodeProject;
+	}
+
+	@Override
+	public void setOntologyCodeProject(OntologyCodeProject ontologyCodeProject) {
+		this.ontologyCodeProject = ontologyCodeProject;
 	}
 
 }

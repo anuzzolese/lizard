@@ -630,7 +630,6 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 							rangeConcreteClass = ontologyModel.createOntologyClass(range.getOntResource(), JenaOntologyCodeClass.class);
 							ontologyModel.createClassImplements((AbstractOntologyCodeClassImpl) rangeConcreteClass, rangeInterface);
 						} else {
-
 							if (ontResource.isDatatypeProperty()) {
 								rangeConcreteClass = ontologyModel.createOntologyClass(range.getOntResource(), DatatypeCodeInterface.class);
 							} else {
@@ -646,8 +645,6 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 						e.printStackTrace();
 					}
 
-					// ontologyModel.getClassMap().put(range.getOntResource(),
-					// (OntologyCodeClass)rangeConcreteClass);
 				}
 
 				JVar retObj = null;

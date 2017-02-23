@@ -176,16 +176,17 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 
 		URI ontologyBaseURI;
 		try {
-
 			ontologyBaseURI = new URI(baseURI);
-
 		} catch (URISyntaxException e) {
 			ontologyBaseURI = ontologyURI;
 		}
 
+		OntologyCodeProject ontologyCodeProject = new OntologyCodeProject(ontologyBaseURI, ontologyCodeModel);
+		result.add(ontologyCodeProject);
+
 		try {
 			OntologyCodeProject owlFakeProject = createOwlFakeCodeModel();
-			ontologyCodeModel.imports(owlFakeProject);
+			ontologyCodeProject.importProject(owlFakeProject);
 			result.add(owlFakeProject);
 		} catch (URISyntaxException e) {
 			// TODO handle
@@ -274,8 +275,6 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 
 		});
 
-		result.add(new OntologyCodeProject(ontologyBaseURI, ontologyCodeModel));
-
 		return result;
 	}
 
@@ -359,13 +358,19 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 	}
 
 	private void visitHierarchyTreeForBeans(OntClass ontClass, OntologyCodeModel ontologyModel) {
-		
+
 		OntologyCodeInterface ontologyInterface = null;
 		try {
-			
-			
-			ontologyInterface = ontologyModel.createOntologyClass(ontClass, BeanOntologyCodeInterface.class);
-		} catch (NotAvailableOntologyCodeEntityException e) {
+			if (ontClass.getOntModel().equals(ontologyModel.asOntModel())) {
+				ontologyInterface = ontologyModel.createOntologyClass(ontClass, BeanOntologyCodeInterface.class);
+			} else {
+				OntologyCodeModel importedCodeModel = new RestOntologyCodeModel(ontClass.getOntModel());
+				OntologyCodeProject ocp = new OntologyCodeProject(new URI(ontClass.getNameSpace()), importedCodeModel);
+				ontologyModel.getOntologyCodeProject().importProject(ocp);
+				ontologyModel = importedCodeModel;
+				ontologyInterface = ontologyModel.createOntologyClass(ontClass, BeanOntologyCodeInterface.class);
+			}
+		} catch (NotAvailableOntologyCodeEntityException | URISyntaxException e) {
 			e.printStackTrace();
 		}
 
@@ -373,7 +378,6 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 
 			createBeanMethods(ontologyInterface, ontologyModel);
 
-			// TODO
 			if (!hasMethod(((JDefinedClass) ontologyInterface.asJDefinedClass()), "setId")) {
 				((JDefinedClass) ontologyInterface.asJDefinedClass()).method(JMod.PUBLIC, ontologyInterface.getJCodeModel().VOID, "setId").param(String.class, "id");
 				((JDefinedClass) ontologyInterface.asJDefinedClass()).method(JMod.PUBLIC, String.class, "getId");

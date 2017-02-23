@@ -2,6 +2,8 @@ package it.cnr.istc.stlab.lizard.commons;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.HashSet;
+import java.util.Set;
 
 import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeModel;
 
@@ -13,9 +15,13 @@ public class OntologyCodeProject {
 	private String srcFolder;
 	private String testFolder;
 	private String mainFolder;
+	private OntologyWorkingSpace ontologyWorkingSpace;
+	private Set<OntologyCodeProject> importedProjects = new HashSet<OntologyCodeProject>();
 
-	public OntologyCodeProject(URI ontologyURI, OntologyCodeModel ontologyCodeModel) {
+	public OntologyCodeProject(URI ontologyURI, OntologyCodeModel ontologyCodeModel, OntologyWorkingSpace ows) {
 		this.ontologyCodeModel = ontologyCodeModel;
+		this.ontologyWorkingSpace = ows;
+		ontologyCodeModel.setOntologyCodeProject(this);
 		groupId = PackageResolver.resolveGroupId(ontologyURI);
 		artifactId = PackageResolver.resolveArtifactId(ontologyURI);
 		this.setMainFolder(this.srcFolder + "/main");
@@ -51,5 +57,21 @@ public class OntologyCodeProject {
 
 	public void setMainFolder(String mainFolder) {
 		this.mainFolder = mainFolder;
+	}
+
+	public void importProject(OntologyCodeProject otherProject) {
+		importedProjects.add(otherProject);
+	}
+	
+	public Set<OntologyCodeProject> getImportedProjects(){
+		return importedProjects;
+	}
+
+	public OntologyWorkingSpace getOntologyWorkingSpace() {
+		return ontologyWorkingSpace;
+	}
+
+	public void setOntologyWorkingSpace(OntologyWorkingSpace ontologyWorkingSpace) {
+		this.ontologyWorkingSpace = ontologyWorkingSpace;
 	}
 }
