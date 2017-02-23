@@ -50,6 +50,7 @@ import org.apache.jena.ontology.Restriction;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.util.iterator.ExtendedIterator;
+import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.OWL2;
 import org.apache.jena.vocabulary.RDFS;
 import org.slf4j.Logger;
@@ -100,46 +101,38 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 	}
 
 	@Override
-	public OntologyCodeProject generate() {
+	public Set<OntologyCodeProject> generate() {
 
-		OntologyCodeProject project = null;
+		Set<OntologyCodeProject> projects = null;
 		try {
-			project = generateBeans();
+			projects = generateBeans();
 		} catch (NotAvailableOntologyCodeEntityException e) {
 			e.printStackTrace();
 		}
-		if (project != null) {
-			OntologyCodeModel beansModel = project.getOntologyCodeModel();
-			project = generateRestProject(beansModel);
+		if (projects != null) {
+			for (OntologyCodeProject project : projects) {
+				OntologyCodeModel beansModel = project.getOntologyCodeModel();
+				logger.debug(project.getArtifactId());
+				project = generateRestProject(beansModel);
+			}
 		}
 
-		return project;
+		return projects;
 
 	}
 
-	private OntologyCodeProject generateBeans() throws NotAvailableOntologyCodeEntityException {
+	private OntologyCodeProject createOwlFakeCodeModel() throws URISyntaxException, NotAvailableOntologyCodeEntityException {
 
-		OntologyCodeModel ontologyCodeModel = new RestOntologyCodeModel(this.ontologyModel.asOntModel());
-		OntModel ontModel = ontologyCodeModel.asOntModel();
+		// OWL fake ontology
+		OntModel owlFakeOnt = ModelFactory.createOntologyModel();
+		owlFakeOnt.createClass(OWL2.getURI());
+		owlFakeOnt.setNsPrefix("owl", OWL2.getURI());
+		owlFakeOnt.setNsPrefix("", OWL2.getURI());
+		RestOntologyCodeModel ontologyCodeModel = new RestOntologyCodeModel(owlFakeOnt);
+		OntologyCodeProject owlProject = new OntologyCodeProject(new URI(OWL2.getURI()), ontologyCodeModel);
 
-		String baseURI = ontModel.getNsPrefixURI("");
-		if (baseURI == null) {
-			ExtendedIterator<Ontology> ontologyIt = ontModel.listOntologies();
-			while (ontologyIt.hasNext())
-				baseURI = ontologyIt.next().getURI();
-			if (baseURI == null)
-				ontModel.setNsPrefix("", ontologyURI.toString());
-			else
-				ontModel.setNsPrefix("", baseURI);
-		}
-
-		URI ontologyBaseURI;
-		try {
-			ontologyBaseURI = new URI(baseURI);
-		} catch (URISyntaxException e) {
-			ontologyBaseURI = ontologyURI;
-		}
-		OntClass owlThing = ontModel.getOntClass(OWL2.Thing.getURI());
+		// creating project for OWL2.Thing
+		OntClass owlThing = owlFakeOnt.getOntClass(OWL2.Thing.getURI());
 
 		/*
 		 * Create interface for owl:Thing
@@ -160,6 +153,43 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 		 */
 		ontologyCodeModel.createOntologyClass(owlThing, BeanOntologyCodeClass.class);
 		ontologyCodeModel.createOntologyClass(owlThing, JenaOntologyCodeClass.class);
+
+		return owlProject;
+	}
+
+	private Set<OntologyCodeProject> generateBeans() throws NotAvailableOntologyCodeEntityException {
+
+		Set<OntologyCodeProject> result = new HashSet<OntologyCodeProject>();
+		OntologyCodeModel ontologyCodeModel = new RestOntologyCodeModel(this.ontologyModel.asOntModel());
+		OntModel ontModel = ontologyCodeModel.asOntModel();
+
+		String baseURI = ontModel.getNsPrefixURI("");
+		if (baseURI == null) {
+			ExtendedIterator<Ontology> ontologyIt = ontModel.listOntologies();
+			while (ontologyIt.hasNext())
+				baseURI = ontologyIt.next().getURI();
+			if (baseURI == null)
+				ontModel.setNsPrefix("", ontologyURI.toString());
+			else
+				ontModel.setNsPrefix("", baseURI);
+		}
+
+		URI ontologyBaseURI;
+		try {
+
+			ontologyBaseURI = new URI(baseURI);
+
+		} catch (URISyntaxException e) {
+			ontologyBaseURI = ontologyURI;
+		}
+
+		try {
+			OntologyCodeProject owlFakeProject = createOwlFakeCodeModel();
+			ontologyCodeModel.imports(owlFakeProject);
+			result.add(owlFakeProject);
+		} catch (URISyntaxException e) {
+			// TODO handle
+		}
 
 		List<OntClass> roots = OntTools.namedHierarchyRoots(ontModel);
 
@@ -244,7 +274,9 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 
 		});
 
-		return new OntologyCodeProject(ontologyBaseURI, ontologyCodeModel);
+		result.add(new OntologyCodeProject(ontologyBaseURI, ontologyCodeModel));
+
+		return result;
 	}
 
 	private OntologyCodeProject generateRestProject(OntologyCodeModel model) {
@@ -327,9 +359,11 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 	}
 
 	private void visitHierarchyTreeForBeans(OntClass ontClass, OntologyCodeModel ontologyModel) {
-
+		
 		OntologyCodeInterface ontologyInterface = null;
 		try {
+			
+			
 			ontologyInterface = ontologyModel.createOntologyClass(ontClass, BeanOntologyCodeInterface.class);
 		} catch (NotAvailableOntologyCodeEntityException e) {
 			e.printStackTrace();
@@ -683,43 +717,60 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 			// uri = new URI("vocabs/foaf.rdf");
 
 			OntologyCodeGenerationRecipe codegen = new LizardCore(uri);
-			OntologyCodeProject ontologyCodeProject = codegen.generate();
+			Set<OntologyCodeProject> ontologyCodeProjects = codegen.generate();
 
-			try {
-				File testFolder = new File("test_out");
-				if (testFolder.exists()) {
-					System.out.println("esists " + testFolder.getClass());
+			File testFolder = new File("test_out");
+			if (testFolder.exists()) {
+				System.out.println("esists " + testFolder.getClass());
+				try {
 					FileUtils.deleteDirectory(testFolder);
-				} else {
-					System.out.println("not esists");
+				} catch (IOException e) {
+					e.printStackTrace();
 				}
-				File src = new File("test_out/src/main/java");
-				File resources = new File("test_out/src/main/resources");
-				File test = new File("test_out/src/test/java");
-				if (!src.exists())
-					src.mkdirs();
-				if (!resources.exists())
-					resources.mkdirs();
-				if (!test.exists())
-					test.mkdirs();
+			} else {
+				System.out.println("not esists");
+			}
 
-				CodeWriter writer = new FileCodeWriter(src, "UTF-8");
-				ontologyCodeProject.getOntologyCodeModel().asJCodeModel().build(writer);
-				((LizardCore) codegen).createServiceAnnotations(new File("test_out"), ontologyCodeProject.getOntologyCodeModel());
+			for (OntologyCodeProject ontologyCodeProject : ontologyCodeProjects) {
+				try {
+					String mainFolder = "test_out/" + ontologyCodeProject.getArtifactId();
+					File projectFileFolder = new File(mainFolder);
+					if (projectFileFolder.exists()) {
+						System.out.println("esists " + mainFolder);
+						FileUtils.deleteDirectory(projectFileFolder);
+					} else {
+						System.out.println("not esists " + mainFolder);
+					}
 
-				/*
-				 * Generate the POM descriptor file and build the project as a Maven project.
-				 */
-				File pom = new File("test_out/pom.xml");
-				Writer pomWriter = new FileWriter(new File("test_out/pom.xml"));
-				Map<String, String> dataModel = new HashMap<String, String>();
-				dataModel.put("artifactId", ontologyCodeProject.getArtifactId());
-				dataModel.put("groupId", ontologyCodeProject.getGroupId());
-				MavenUtils.generatePOM(pomWriter, dataModel);
-				MavenUtils.buildProject(pom);
+					File src = new File(mainFolder + "/src/main/java");
+					File resources = new File(mainFolder + "/src/main/resources");
+					File test = new File(mainFolder + "/src/test/java");
 
-			} catch (IOException e) {
-				e.printStackTrace();
+					if (!src.exists())
+						src.mkdirs();
+					if (!resources.exists())
+						resources.mkdirs();
+					if (!test.exists())
+						test.mkdirs();
+
+					CodeWriter writer = new FileCodeWriter(src, "UTF-8");
+					ontologyCodeProject.getOntologyCodeModel().asJCodeModel().build(writer);
+					// ((LizardCore) codegen).createServiceAnnotations(new File("test_out"), ontologyCodeProject.getOntologyCodeModel());
+
+					/*
+					 * Generate the POM descriptor file and build the project as a Maven project.
+					 */
+					// File pom = new File("test_out/pom.xml");
+					// Writer pomWriter = new FileWriter(new File("test_out/pom.xml"));
+					// Map<String, String> dataModel = new HashMap<String, String>();
+					// dataModel.put("artifactId", ontologyCodeProject.getArtifactId());
+					// dataModel.put("groupId", ontologyCodeProject.getGroupId());
+					// MavenUtils.generatePOM(pomWriter, dataModel);
+					// MavenUtils.buildProject(pom);
+
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			}
 		} catch (URISyntaxException e) {
 			e.printStackTrace();

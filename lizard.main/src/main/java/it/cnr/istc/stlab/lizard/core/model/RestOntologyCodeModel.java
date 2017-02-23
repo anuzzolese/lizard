@@ -1,6 +1,7 @@
 package it.cnr.istc.stlab.lizard.core.model;
 
 import it.cnr.istc.stlab.lizard.commons.AnonClassType;
+import it.cnr.istc.stlab.lizard.commons.OntologyCodeProject;
 import it.cnr.istc.stlab.lizard.commons.exception.ClassAlreadyExistsException;
 import it.cnr.istc.stlab.lizard.commons.exception.NotAvailableOntologyCodeEntityException;
 import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClass;
@@ -38,6 +39,7 @@ public class RestOntologyCodeModel implements OntologyCodeModel {
 	private static Logger logger = LoggerFactory.getLogger(RestOntologyCodeModel.class);
 
 	private OntologyCodeModel apiCodeModel;
+	private Set<OntologyCodeProject> importedProjects = new HashSet<>();
 
 	protected JCodeModel codeModel;
 	protected OntModel ontModel;
@@ -342,8 +344,14 @@ public class RestOntologyCodeModel implements OntologyCodeModel {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends AbstractOntologyCodeClass> T getOntologyClass(OntResource ontResource, Class<T> ontologyClass) {
-		// System.out.println("RestOntologyCodeModel.getOntologyClass() "+ontResource);
-		return (T) entityMap.get(ontologyClass).get(ontResource);
+		if (entityMap.containsKey(ontologyClass)) {
+			return (T) entityMap.get(ontologyClass).get(ontResource);
+		} else {
+			for (OntologyCodeProject ontologyCodeProject : importedProjects) {
+				return ontologyCodeProject.getOntologyCodeModel().getOntologyClass(ontResource, ontologyClass);
+			}
+		}
+		return null;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -373,6 +381,11 @@ public class RestOntologyCodeModel implements OntologyCodeModel {
 	@Override
 	public Map<OntResource, Set<AbstractOntologyCodeMethod>> getMethodMap() {
 		return methodMap;
+	}
+
+	@Override
+	public void imports(OntologyCodeProject project) {
+		importedProjects.add(project);
 	}
 
 }

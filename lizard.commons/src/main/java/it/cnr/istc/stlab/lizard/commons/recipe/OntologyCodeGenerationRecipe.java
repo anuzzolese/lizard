@@ -1,9 +1,11 @@
 package it.cnr.istc.stlab.lizard.commons.recipe;
 
+import java.util.Set;
+
 import it.cnr.istc.stlab.lizard.commons.OntologyCodeProject;
 
 public interface OntologyCodeGenerationRecipe {
 
-	OntologyCodeProject generate();
+	Set<OntologyCodeProject> generate();
 	
 }
