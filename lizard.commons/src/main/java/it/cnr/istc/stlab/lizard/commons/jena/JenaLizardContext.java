@@ -19,8 +19,11 @@ public class JenaLizardContext {
 
 	JenaLizardContext(JenaLizardConfiguration conf) {
 		this.conf = conf;
-		RepositoryType repositoryType = conf.getType();
+		init();
+	}
 
+	private void init() {
+		RepositoryType repositoryType = conf.getType();
 		switch (repositoryType) {
 		case Virtuoso:
 
@@ -31,8 +34,6 @@ public class JenaLizardContext {
 
 			model = new VirtModel(new VirtGraph(conf.getGraph(), url, conf.getVirtuosoUser(), conf.getVirtuosoPassword()));
 
-			// model = new VirtModel(new VirtGraph(url, conf.getVirtuosoUser(),
-			// conf.getVirtuosoPassword()));
 			break;
 
 		case TDB:
@@ -41,14 +42,13 @@ public class JenaLizardContext {
 		case File:
 			System.out.println("Configuration for model file [modelFilePath=" + conf.getModelFilePath() + ",lang=" + conf.getLang() + "]");
 			model = ModelFactory.createDefaultModel();
-			model.register(new JenaLizardModelListener(model, conf.getModelFilePath(), conf.getLang()));
 			RDFDataMgr.read(model, conf.getModelFilePath());
+			model.register(new JenaLizardModelListener(model, conf.getModelFilePath(), conf.getLang()));
 			break;
 		default:
 			model = ModelFactory.createDefaultModel();
 			break;
 		}
-
 	}
 
 	public Model getModel() {
@@ -70,6 +70,5 @@ public class JenaLizardContext {
 		}
 		return null;
 	}
-	
 
 }
