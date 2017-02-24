@@ -42,7 +42,7 @@ import com.sun.codemodel.JType;
 import com.sun.codemodel.JVar;
 
 public class RestOntologyCodeClass extends OntologyCodeClass {
-	
+
 	private static Logger logger = LoggerFactory.getLogger(RestOntologyCodeClass.class);
 
 	private static final String SUBPACKAGE_NAME = "web";
@@ -56,7 +56,6 @@ public class RestOntologyCodeClass extends OntologyCodeClass {
 
 	RestOntologyCodeClass(OntResource resource, RestOntologyCodeModel ontologyModel, JCodeModel codeModel) throws ClassAlreadyExistsException {
 		super(resource, ontologyModel, codeModel);
-		
 
 		String artifactId = packageName + "." + SUBPACKAGE_NAME + ".";
 		logger.debug(artifactId);
@@ -104,15 +103,66 @@ public class RestOntologyCodeClass extends OntologyCodeClass {
 
 		addCreateMethod();
 		addGetAllMethod();
+		addGetByIdMethod();
+	}
+
+	private void addGetByIdMethod() {
+
+		// Method declaration
+		String localName = this.ontResource.getLocalName().substring(0, 1).toUpperCase() + this.ontResource.getLocalName().substring(1);
+		JType responseType = super.jCodeModel.ref(Response.class);
+		String methodName = "get" + Constants.getJavaName(localName) + "ById";
+
+		JMethod tempSet = ((JDefinedClass) this.asJDefinedClass()).getMethod(methodName, new JType[] { jCodeModel.ref(String.class) });
+
+		if (tempSet == null) {
+
+			JMethod jMethod = ((JDefinedClass) this.asJDefinedClass()).method(JMod.PUBLIC, responseType, methodName);
+
+			/*
+			 * Method Body
+			 */
+
+			logger.debug(entityName + " " + path + " " + methodName + " " + this.ontResource.getLocalName());
+
+			JBlock methodBody = jMethod.body();
+
+			jMethod.annotate(GET.class);
+			jMethod.annotate(Path.class).param("value", "/" + methodName);
+			jMethod.annotate(ApiOperation.class).param("value", "Retrieve a " + Constants.getJavaName(localName) + " by id").param("nickname", methodName);
+
+			// Create parameters
+			JVar idParam = jMethod.param(String.class, "id");
+			idParam.annotate(ApiParam.class).param("value", "id").param("required", true);
+			idParam.annotate(QueryParam.class).param("value", "id");
+
+			OntologyCodeInterface javaInterface = ontologyModel.getOntologyClass(ontResource, BeanOntologyCodeInterface.class);
+			JVar entityVar = methodBody.decl(javaInterface.asJDefinedClass(), "entity", javaInterface.asJDefinedClass().staticInvoke("get").arg(idParam));
+
+			// create set response
+			JenaOntologyCodeClass jenaClass = ontologyModel.getOntologyClass(ontResource, JenaOntologyCodeClass.class);
+			JExpression cast = JExpr.cast(jenaClass.asJDefinedClass(), entityVar);
+			JType hashSetType_range_res = super.jCodeModel.ref(HashSet.class).narrow(javaInterface.asJDefinedClass());
+			JType setType_range_res = super.jCodeModel.ref(Set.class).narrow(javaInterface.asJDefinedClass());
+			JVar kbSetVar_res = methodBody.decl(setType_range_res, "response", JExpr._new(hashSetType_range_res));
+			methodBody.add(kbSetVar_res.invoke("add").arg(cast.invoke("asMicroBean")));
+
+
+			JVar responseBuilderVar = methodBody.decl(super.jCodeModel._ref(ResponseBuilder.class), "_responseBuilder", super.jCodeModel.ref(Response.class).staticInvoke("ok").arg(kbSetVar_res));
+			methodBody._return(responseBuilderVar.invoke("build"));
+
+		}
+
 	}
 
 	private void addGetAllMethod() {
+
 		String localName = this.ontResource.getLocalName().substring(0, 1).toUpperCase() + this.ontResource.getLocalName().substring(1);
 		JType responseType = super.jCodeModel.ref(Response.class);
 		String methodName = "getAll" + Constants.getJavaName(localName);
-		
-		JMethod tempSet = ((JDefinedClass) this.asJDefinedClass()).getMethod(methodName, new JType[] { });
-		
+
+		JMethod tempSet = ((JDefinedClass) this.asJDefinedClass()).getMethod(methodName, new JType[] {});
+
 		if (tempSet == null) {
 			JMethod jMethod = ((JDefinedClass) this.asJDefinedClass()).method(JMod.PUBLIC, responseType, methodName);
 
@@ -120,10 +170,10 @@ public class RestOntologyCodeClass extends OntologyCodeClass {
 			 * Method Body
 			 */
 
-			logger.debug(entityName+" "+path+" "+methodName+" "+this.ontResource.getLocalName());
+			logger.debug(entityName + " " + path + " " + methodName + " " + this.ontResource.getLocalName());
 
 			JBlock methodBody = jMethod.body();
-			
+
 			jMethod.annotate(GET.class);
 			jMethod.annotate(Path.class).param("value", "/" + methodName);
 			jMethod.annotate(ApiOperation.class).param("value", "Retrieve all " + Constants.getJavaName(localName)).param("nickname", methodName);
@@ -158,7 +208,7 @@ public class RestOntologyCodeClass extends OntologyCodeClass {
 			methodBody._return(responseBuilderVar.invoke("build"));
 
 		}
-		
+
 	}
 
 	public String getPath() {
@@ -166,7 +216,7 @@ public class RestOntologyCodeClass extends OntologyCodeClass {
 	}
 
 	public void addCreateMethod() {
-		
+
 		String localName = this.ontResource.getLocalName().substring(0, 1).toUpperCase() + this.ontResource.getLocalName().substring(1);
 		JType responseType = super.jCodeModel.ref(Response.class);
 		String methodName = "create" + Constants.getJavaName(localName);
@@ -190,14 +240,14 @@ public class RestOntologyCodeClass extends OntologyCodeClass {
 			/*
 			 * Method Body
 			 */
-			
-			logger.debug(entityName+" "+path+" "+methodName+" "+this.ontResource.getLocalName());
+
+			logger.debug(entityName + " " + path + " " + methodName + " " + this.ontResource.getLocalName());
 
 			JBlock methodBody = jMethod.body();
 
 			// Getting the bean class of the individual
 			AbstractOntologyCodeClass jenaClass = ontologyModel.getOntologyClass(this.getOntResource(), JenaOntologyCodeClass.class);
-			logger.debug("JENA CLASS "+ ((jenaClass==null)?"null":"not null") + " "+this.getOntResource().getURI());
+			logger.debug("JENA CLASS " + ((jenaClass == null) ? "null" : "not null") + " " + this.getOntResource().getURI());
 			methodBody.add(JExpr._new(jenaClass.asJDefinedClass()).arg(jCodeModel.ref(ModelFactory.class).staticInvoke("createDefaultModel").invoke("createResource").arg(idParam)));
 
 			// Respond OK
