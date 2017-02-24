@@ -139,7 +139,10 @@ public class BeanOntologyCodeMethod extends OntologyCodeMethod {
 
 			if (this.methodType == OntologyCodeMethodType.GET) {
 				addClassCentricStaticMethod(jCodeModel, sb.toString());
-				addClassCentricStaticMethodWithParam(jCodeModel, sb.toString());
+				if (this.ontResource.isObjectProperty())
+					addClassCentricStaticMethodWithParamForObjectProperty(jCodeModel, sb.toString());
+				if (this.ontResource.isDatatypeProperty())
+					addClassCentricStaticMethodWithParamForDatatypeProperty(jCodeModel, sb.toString());
 			}
 		}
 
@@ -384,7 +387,7 @@ public class BeanOntologyCodeMethod extends OntologyCodeMethod {
 		}
 	}
 
-	private void addClassCentricStaticMethodWithParam(JCodeModel codeModel, String fieldName) {
+	private void addClassCentricStaticMethodWithParamForObjectProperty(JCodeModel codeModel, String fieldName) {
 		if (this.methodType == OntologyCodeMethodType.GET) {
 			OntologyCodeInterface ontInterface = ontologyModel.getOntologyClass(owner.getOntResource(), BeanOntologyCodeInterface.class);
 
@@ -412,6 +415,69 @@ public class BeanOntologyCodeMethod extends OntologyCodeMethod {
 					JVar modelVar = staticMethodBlock.decl(codeModel.ref(Model.class), "model", codeModel.ref(RuntimeJenaLizardContext.class).staticInvoke("getContext").invoke("getModel"));
 
 					JVar stmtItVar = staticMethodBlock.decl(codeModel.ref(StmtIterator.class), "stmtIt", modelVar.invoke("listStatements").arg(JExpr._null()).arg(predicateVar).arg(inputParam.invoke("getIndividual")));
+					/*
+					 * While loop to iterate StmtIterator statements
+					 */
+					JWhileLoop whileLoop = staticMethodBlock._while(stmtItVar.invoke("hasNext"));
+					JBlock whileLoopBlock = whileLoop.body();
+					JVar stmtVar = whileLoopBlock.decl(codeModel.ref(Statement.class), "stmt", stmtItVar.invoke("next"));
+
+					JVar subjVar = whileLoopBlock.decl(codeModel.ref(Resource.class), "subj", stmtVar.invoke("getSubject"));
+
+					AbstractOntologyCodeClassImpl concreteClass = ontologyModel.getOntologyClass(owner.getOntResource(), JenaOntologyCodeClass.class);
+
+					JVar indVar = whileLoopBlock.decl(ontInterface.asJDefinedClass(), "individual", JExpr._new(concreteClass.asJDefinedClass()).arg(subjVar));
+
+					whileLoopBlock.add(retVar.invoke("add").arg(indVar));
+
+					staticMethodBlock._return(retVar);
+				}
+			}
+		}
+	}
+
+	private void addClassCentricStaticMethodWithParamForDatatypeProperty(JCodeModel codeModel, String fieldName) {
+		if (this.methodType == OntologyCodeMethodType.GET) {
+			OntologyCodeInterface ontInterface = ontologyModel.getOntologyClass(owner.getOntResource(), BeanOntologyCodeInterface.class);
+
+			if (ontInterface != null) {
+				JDefinedClass interfaceClass = (JDefinedClass) ontInterface.asJDefinedClass();
+
+				JFieldVar staticField = interfaceClass.fields().get(fieldName);
+
+				if (staticField != null) {
+					
+					String staticMethodName = fieldName;
+					staticMethodName = "getBy" + entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
+
+					JClass retType = codeModel.ref(Set.class).narrow(interfaceClass);
+					JClass retTypeImpl = codeModel.ref(HashSet.class).narrow(interfaceClass);
+
+					JMethod staticMethod = interfaceClass.method(JMod.PUBLIC | JMod.STATIC, retType, staticMethodName);
+
+					// JVar inputParam = staticMethod.param(LizardInterface.class, "value");
+
+					if (domain != null) {
+						for (AbstractOntologyCodeClass domainClass : domain) {
+							logger.trace("DOMAIN: " + domainClass.getOntResource().getURI());
+							String name = domainClass.getEntityName();
+							name = name.substring(name.lastIndexOf(".") + 1);
+							name = name.substring(0, 1).toLowerCase() + name.substring(1);
+							staticMethod.param(domainClass.asJDefinedClass(), name);
+						}
+					} else {
+						staticMethod.param(range.asJDefinedClass(), entityName);
+					}
+
+					JBlock staticMethodBlock = staticMethod.body();
+
+					JVar retVar = staticMethodBlock.decl(retType, "ret", JExpr._new(retTypeImpl));
+
+					JVar predicateVar = staticMethodBlock.decl(codeModel.ref(Property.class), "predicate", codeModel.ref(ModelFactory.class).staticInvoke("createDefaultModel").invoke("createProperty").arg(staticField));
+
+					JVar modelVar = staticMethodBlock.decl(codeModel.ref(Model.class), "model", codeModel.ref(RuntimeJenaLizardContext.class).staticInvoke("getContext").invoke("getModel"));
+
+					JVar stmtItVar = staticMethodBlock.decl(codeModel.ref(StmtIterator.class), "stmtIt", modelVar.invoke("listStatements").arg(JExpr._null()).arg(predicateVar).arg(modelVar.invoke("createLiteral").arg(staticMethod.params().get(0))));
 					/*
 					 * While loop to iterate StmtIterator statements
 					 */

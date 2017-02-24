@@ -3,6 +3,7 @@ package it.cnr.istc.stlab.lizard.core.model;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import it.cnr.istc.stlab.lizard.commons.Constants;
+import it.cnr.istc.stlab.lizard.commons.LizardInterface;
 import it.cnr.istc.stlab.lizard.commons.PrefixRegistry;
 import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClass;
 import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeClass;
@@ -133,10 +134,39 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 				JBlock methodBody = jMethod.body();
 
 				JVar responseBuilderVar = methodBody.decl(jCodeModel._ref(ResponseBuilder.class), "_responseBuilder", JExpr._null());
+				JVar kbSetVar = methodBody.decl(setType, "_kbSet", JExpr._null());
 
+				JConditional ifConstraint = methodBody._if(param.ne(JExpr._null()));
+				JBlock thenIfConstraint = ifConstraint._then();
+				logger.debug("Method name: " + methodName);
+
+				// Restrict using constraint
+				JVar obj = null;
 				JType hashSetType = jCodeModel.ref(HashSet.class).narrow(javaInterface.asJDefinedClass());
+				if (ontResource.isObjectProperty()) {
+					AbstractOntologyCodeClass rangeJenaClass = ontologyModel.getOntologyClass(ModelFactory.createOntologyModel().getOntResource(OWL.Thing), JenaOntologyCodeClass.class);
+					obj = thenIfConstraint.decl(jCodeModel._ref(LizardInterface.class), "obj", JExpr._new(rangeJenaClass.asJDefinedClass()).arg(jCodeModel.ref(ModelFactory.class).staticInvoke("createDefaultModel").invoke("getResource").arg(param)));
+					thenIfConstraint.assign(kbSetVar, javaInterface.asJDefinedClass().staticInvoke(methodName).arg(obj));
+				} else {
+					Class<?> rangeClass = null;
+					if (range == null) {
+						rangeClass = String.class;
+					} else if (LizardCore.hasTypeMapper(range.getOntResource().getURI())) {
+						logger.trace("Range of the datatype property: " + this.ontResource.getURI() + " " + range.getOntResource().getURI());
+						rangeClass = TypeMapper.getInstance().getTypeByName(range.getOntResource().getURI()).getJavaClass();
+					} else {
+						rangeClass = String.class;
+					}
 
-				JVar kbSetVar = methodBody.decl(setType, "_kbSet", javaInterface.asJDefinedClass().staticInvoke(methodName));
+					JVar value = thenIfConstraint.decl(jCodeModel.ref(rangeClass), "datatypeValue", JExpr.cast(jCodeModel.ref(rangeClass), jCodeModel.ref(TypeMapper.class).staticInvoke("getInstance").invoke("getTypeByClass").arg(jCodeModel.ref(rangeClass).dotclass()).invoke("parse").arg(param)));
+					thenIfConstraint.assign(kbSetVar, javaInterface.asJDefinedClass().staticInvoke(methodName).arg(value));
+				}
+
+				// Constraint null
+				JBlock elseBlock = ifConstraint._else();
+				elseBlock.assign(kbSetVar, javaInterface.asJDefinedClass().staticInvoke(methodName));
+
+				// JVar kbSetVar = methodBody.decl(setType, "_kbSet", javaInterface.asJDefinedClass().staticInvoke(methodName));
 				JVar retSetVar = methodBody.decl(setType, "_retSet", JExpr._new(hashSetType));
 
 				JConditional ifBlock = methodBody._if(kbSetVar.ne(JExpr._null()));
@@ -220,18 +250,9 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 				entityBeanSetType = methRetType;
 				entityBeanHashSetType = super.jCodeModel.ref(HashSet.class).narrow(methRetNarrowedType);
 
-				/*
-				 * if(beanClass != null && methodResource.isObjectProperty()){ if(methodResource.isDatatypeProperty()){ entityBeanSetType = codeModel.ref(Set.class).narrow(beanClass .asJDefinedClass()); entityBeanHashSetType = codeModel .ref(HashSet.class).narrow(beanClass.asJDefinedClass ()); }
-				 * else{ entityBeanSetType = codeModel.ref(Set.class ).narrow(beanClass.asJDefinedClass()); entityBeanHashSetType = codeModel.ref(HashSet.class).narrow (beanClass.asJDefinedClass()); } } else{ entityBeanSetType = codeModel.ref(Set.class).narrow(rangeJClass); entityBeanHashSetType =
-				 * codeModel.ref(HashSet.class).narrow(rangeJClass); }
-				 */
-
 				JVar entityVar = entityMethodBody.decl(o.asJDefinedClass(), "_entity", o.asJDefinedClass().staticInvoke("get").arg(idVar));
 
 				JVar entitykbSetVar = entityMethodBody.decl(entitySetType, "_kbSet", entityVar.invoke(getMethodName));
-				// JVar entitykbSetVar =
-				// entityMethodBody.decl(entitySetType, "_kbSet",
-				// entityVar.invoke(entityName));
 				JVar entityRetSetVar = entityMethodBody.decl(entityBeanSetType, "_retSet", JExpr._new(entityBeanHashSetType));
 
 				JConditional entityIfBlock = entityMethodBody._if(kbSetVar.ne(JExpr._null()));

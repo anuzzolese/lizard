@@ -139,16 +139,24 @@ public class RestOntologyCodeClass extends OntologyCodeClass {
 			OntologyCodeInterface javaInterface = ontologyModel.getOntologyClass(ontResource, BeanOntologyCodeInterface.class);
 			JVar entityVar = methodBody.decl(javaInterface.asJDefinedClass(), "entity", javaInterface.asJDefinedClass().staticInvoke("get").arg(idParam));
 
+			JVar responseBuilderVar = methodBody.decl(jCodeModel._ref(ResponseBuilder.class), "_responseBuilder", JExpr._null());
+
+			JConditional ifBlock = methodBody._if(entityVar.ne(JExpr._null()));
+			// then
+			JBlock then = ifBlock._then();
 			// create set response
 			JenaOntologyCodeClass jenaClass = ontologyModel.getOntologyClass(ontResource, JenaOntologyCodeClass.class);
 			JExpression cast = JExpr.cast(jenaClass.asJDefinedClass(), entityVar);
 			JType hashSetType_range_res = super.jCodeModel.ref(HashSet.class).narrow(javaInterface.asJDefinedClass());
 			JType setType_range_res = super.jCodeModel.ref(Set.class).narrow(javaInterface.asJDefinedClass());
-			JVar kbSetVar_res = methodBody.decl(setType_range_res, "response", JExpr._new(hashSetType_range_res));
-			methodBody.add(kbSetVar_res.invoke("add").arg(cast.invoke("asMicroBean")));
+			JVar kbSetVar_res = then.decl(setType_range_res, "response", JExpr._new(hashSetType_range_res));
+			then.add(kbSetVar_res.invoke("add").arg(cast.invoke("asMicroBean")));
+			then.assign(responseBuilderVar, super.jCodeModel.ref(Response.class).staticInvoke("ok").arg(kbSetVar_res));
 
+			// else
+			JBlock entityIfElseBlock = ifBlock._else();
+			entityIfElseBlock.assign(responseBuilderVar, jCodeModel.ref(Response.class).staticInvoke("status").arg(jCodeModel.ref(Status.class).staticRef("NOT_FOUND")));
 
-			JVar responseBuilderVar = methodBody.decl(super.jCodeModel._ref(ResponseBuilder.class), "_responseBuilder", super.jCodeModel.ref(Response.class).staticInvoke("ok").arg(kbSetVar_res));
 			methodBody._return(responseBuilderVar.invoke("build"));
 
 		}

@@ -53,7 +53,7 @@ public class SetBodyWriter implements MessageBodyWriter<HashSet<?>> {
 				String jsonInString = mapper.writeValueAsString(bean);
 				JSONObject obj = new JSONObject(jsonInString);
 				setArray.put(obj);
-				System.out.println("Returning "+jsonInString);
+//				System.out.println("Returning "+jsonInString);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
