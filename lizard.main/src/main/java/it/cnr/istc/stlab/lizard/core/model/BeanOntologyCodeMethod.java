@@ -139,10 +139,10 @@ public class BeanOntologyCodeMethod extends OntologyCodeMethod {
 
 			if (this.methodType == OntologyCodeMethodType.GET) {
 				addClassCentricStaticMethod(jCodeModel, sb.toString());
-				if (this.ontResource.isObjectProperty())
-					addClassCentricStaticMethodWithParamForObjectProperty(jCodeModel, sb.toString());
-				if (this.ontResource.isDatatypeProperty())
+				if (this.ontResource.isDatatypeProperty() || this.ontResource.isAnnotationProperty())
 					addClassCentricStaticMethodWithParamForDatatypeProperty(jCodeModel, sb.toString());
+				else
+					addClassCentricStaticMethodWithParamForObjectProperty(jCodeModel, sb.toString());
 			}
 		}
 
@@ -446,7 +446,7 @@ public class BeanOntologyCodeMethod extends OntologyCodeMethod {
 				JFieldVar staticField = interfaceClass.fields().get(fieldName);
 
 				if (staticField != null) {
-					
+
 					String staticMethodName = fieldName;
 					staticMethodName = "getBy" + entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
 
@@ -455,10 +455,9 @@ public class BeanOntologyCodeMethod extends OntologyCodeMethod {
 
 					JMethod staticMethod = interfaceClass.method(JMod.PUBLIC | JMod.STATIC, retType, staticMethodName);
 
-					// JVar inputParam = staticMethod.param(LizardInterface.class, "value");
-
 					if (domain != null) {
 						for (AbstractOntologyCodeClass domainClass : domain) {
+
 							logger.trace("DOMAIN: " + domainClass.getOntResource().getURI());
 							String name = domainClass.getEntityName();
 							name = name.substring(name.lastIndexOf(".") + 1);
@@ -466,7 +465,11 @@ public class BeanOntologyCodeMethod extends OntologyCodeMethod {
 							staticMethod.param(domainClass.asJDefinedClass(), name);
 						}
 					} else {
-						staticMethod.param(range.asJDefinedClass(), entityName);
+						if (this.ontResource.isAnnotationProperty()) {
+							staticMethod.param(jCodeModel._ref(String.class), entityName);
+						} else {
+							staticMethod.param(range.asJDefinedClass(), entityName);
+						}
 					}
 
 					JBlock staticMethodBlock = staticMethod.body();
@@ -477,7 +480,7 @@ public class BeanOntologyCodeMethod extends OntologyCodeMethod {
 
 					JVar modelVar = staticMethodBlock.decl(codeModel.ref(Model.class), "model", codeModel.ref(RuntimeJenaLizardContext.class).staticInvoke("getContext").invoke("getModel"));
 
-					JVar stmtItVar = staticMethodBlock.decl(codeModel.ref(StmtIterator.class), "stmtIt", modelVar.invoke("listStatements").arg(JExpr._null()).arg(predicateVar).arg(modelVar.invoke("createLiteral").arg(staticMethod.params().get(0))));
+					JVar stmtItVar = staticMethodBlock.decl(codeModel.ref(StmtIterator.class), "stmtIt", modelVar.invoke("listStatements").arg(JExpr._null()).arg(predicateVar).arg(modelVar.invoke("createTypedLiteral").arg(staticMethod.params().get(0))));
 					/*
 					 * While loop to iterate StmtIterator statements
 					 */
