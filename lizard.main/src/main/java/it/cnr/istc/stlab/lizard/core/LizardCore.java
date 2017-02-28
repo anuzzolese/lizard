@@ -1,24 +1,5 @@
 package it.cnr.istc.stlab.lizard.core;
 
-import it.cnr.istc.stlab.lizard.commons.MavenUtils;
-import it.cnr.istc.stlab.lizard.commons.OntologyCodeProject;
-import it.cnr.istc.stlab.lizard.commons.exception.NotAvailableOntologyCodeEntityException;
-import it.cnr.istc.stlab.lizard.commons.inmemory.RestInterface;
-import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClass;
-import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClassImpl;
-import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeClass;
-import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeInterface;
-import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeModel;
-import it.cnr.istc.stlab.lizard.commons.model.anon.BooleanAnonClass;
-import it.cnr.istc.stlab.lizard.commons.model.datatype.DatatypeCodeInterface;
-import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeMethodType;
-import it.cnr.istc.stlab.lizard.commons.recipe.OntologyCodeGenerationRecipe;
-import it.cnr.istc.stlab.lizard.core.model.BeanOntologyCodeClass;
-import it.cnr.istc.stlab.lizard.core.model.BeanOntologyCodeInterface;
-import it.cnr.istc.stlab.lizard.core.model.JenaOntologyCodeClass;
-import it.cnr.istc.stlab.lizard.core.model.RestOntologyCodeClass;
-import it.cnr.istc.stlab.lizard.core.model.RestOntologyCodeModel;
-
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -49,6 +30,8 @@ import org.apache.jena.ontology.Ontology;
 import org.apache.jena.ontology.Restriction;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.reasoner.ValidityReport;
+import org.apache.jena.reasoner.ValidityReport.Report;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.apache.jena.vocabulary.OWL2;
 import org.apache.jena.vocabulary.RDFS;
@@ -61,17 +44,51 @@ import com.sun.codemodel.JMethod;
 import com.sun.codemodel.JMod;
 import com.sun.codemodel.writer.FileCodeWriter;
 
+import it.cnr.istc.stlab.lizard.commons.MavenUtils;
+import it.cnr.istc.stlab.lizard.commons.OntologyCodeProject;
+import it.cnr.istc.stlab.lizard.commons.exception.NotAvailableOntologyCodeEntityException;
+import it.cnr.istc.stlab.lizard.commons.exception.OntologyNotValidException;
+import it.cnr.istc.stlab.lizard.commons.inmemory.RestInterface;
+import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClass;
+import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClassImpl;
+import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeClass;
+import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeInterface;
+import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeModel;
+import it.cnr.istc.stlab.lizard.commons.model.anon.BooleanAnonClass;
+import it.cnr.istc.stlab.lizard.commons.model.datatype.DatatypeCodeInterface;
+import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeMethodType;
+import it.cnr.istc.stlab.lizard.commons.recipe.OntologyCodeGenerationRecipe;
+import it.cnr.istc.stlab.lizard.core.model.BeanOntologyCodeClass;
+import it.cnr.istc.stlab.lizard.core.model.BeanOntologyCodeInterface;
+import it.cnr.istc.stlab.lizard.core.model.JenaOntologyCodeClass;
+import it.cnr.istc.stlab.lizard.core.model.RestOntologyCodeClass;
+import it.cnr.istc.stlab.lizard.core.model.RestOntologyCodeModel;
+
 public class LizardCore implements OntologyCodeGenerationRecipe {
 
 	private static Logger logger = LoggerFactory.getLogger(LizardCore.class);
 
-	private URI ontologyURI;
+	private URI ontologyURIBase;
 	private RestOntologyCodeModel restOntologyModel;
 	private OntologyCodeModel ontologyModel;
 
-	public LizardCore(URI ontologyURI) {
-		this.ontologyURI = ontologyURI;
+	public LizardCore(URI ontologyURI, URI[] others) {
+		this.ontologyURIBase = ontologyURI;
+		OntModel ontModel = ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM);
+		ontModel.read(ontologyURI.toString());
 
+		for (URI uri : others) {
+			ontModel.read(uri.toString());
+		}
+
+		validateOntology(ontModel);
+
+		this.ontologyModel = new RestOntologyCodeModel(ontModel);
+	}
+
+	public LizardCore(URI ontologyURI) {
+		this.ontologyURIBase = ontologyURI;
+		// OntModel ontModel = ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM_RDFS_INF);
 		OntModel ontModel = ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM);
 		ontModel.read(ontologyURI.toString());
 
@@ -82,20 +99,20 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 
 	private void validateOntology(OntModel ontModel) {
 
-		// TODO JENA resasoner takes so long, use another reasoner
-
-		// logger.trace("Validating inf model");
-		// ValidityReport validity = ontModel.validate();
-		// if (!validity.isValid()) {
-		// for (Iterator<Report> in = validity.getReports(); in.hasNext();) {
-		// logger.error(" - " + in.next());
-		// }
-		// throw new OntologyNotValidException("Ontology not valid!");
-		// } else {
-		// logger.trace("Ontology valid!");
-		// }
-
-		logger.warn("Validation of the ontology not performed!");
+		logger.trace("Validating inf model");
+		ValidityReport validity = ontModel.validate();
+		if (validity != null) {
+			if (!validity.isValid()) {
+				for (Iterator<Report> in = validity.getReports(); in.hasNext();) {
+					logger.error(" - " + in.next());
+				}
+				throw new OntologyNotValidException("Ontology not valid!");
+			} else {
+				logger.trace("Ontology valid!");
+			}
+		} else {
+			logger.warn("Validation of the ontology not performed!");
+		}
 
 	}
 
@@ -128,7 +145,7 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 			while (ontologyIt.hasNext())
 				baseURI = ontologyIt.next().getURI();
 			if (baseURI == null)
-				ontModel.setNsPrefix("", ontologyURI.toString());
+				ontModel.setNsPrefix("", ontologyURIBase.toString());
 			else
 				ontModel.setNsPrefix("", baseURI);
 		}
@@ -137,7 +154,7 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 		try {
 			ontologyBaseURI = new URI(baseURI);
 		} catch (URISyntaxException e) {
-			ontologyBaseURI = ontologyURI;
+			ontologyBaseURI = ontologyURIBase;
 		}
 		OntClass owlThing = ontModel.getOntClass(OWL2.Thing.getURI());
 
@@ -259,7 +276,7 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 			while (ontologyIt.hasNext())
 				baseURI = ontologyIt.next().getURI();
 			if (baseURI == null)
-				ontModel.setNsPrefix("", ontologyURI.toString());
+				ontModel.setNsPrefix("", ontologyURIBase.toString());
 			else
 				ontModel.setNsPrefix("", baseURI);
 		}
@@ -268,7 +285,7 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 		try {
 			ontologyBaseURI = new URI(baseURI);
 		} catch (URISyntaxException e) {
-			ontologyBaseURI = ontologyURI;
+			ontologyBaseURI = ontologyURIBase;
 		}
 
 		List<OntClass> roots = OntTools.namedHierarchyRoots(ontModel);
@@ -678,12 +695,12 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 			// uri = new URI("http://www.ontologydesignpatterns.org/ont/mario/music.owl");
 			// uri = new URI("http://www.ontologydesignpatterns.org/ont/mario/cga.owl");
 			// uri = new URI("/Users/lgu/Dropbox/stlab/ontologies/paraphrase/ppdb.owl");
-			uri = new URI("http://www.ontologydesignpatterns.org/ont/mario/healthrole.owl");
+			uri = new URI("http://www.ontologydesignpatterns.org/ont/mario/tagging.owl");
 			// uri = new URI("/Users/lgu/Desktop/prova.owl");
 			// uri = new URI("/Users/lgu/Desktop/cga.owl");
 			// uri = new URI("vocabs/foaf.rdf");
 
-			OntologyCodeGenerationRecipe codegen = new LizardCore(uri);
+			OntologyCodeGenerationRecipe codegen = new LizardCore(uri, new URI[] { new URI("http://www.ontologydesignpatterns.org/ont/mario/healthrole.owl") });
 			OntologyCodeProject ontologyCodeProject = codegen.generate();
 
 			try {
