@@ -2,6 +2,8 @@ package it.cnr.istc.stlab.lizard.core;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
@@ -922,26 +924,27 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 		registerDatatypes();
 
 		URI uri = null;
+		URI[] uris = {};
 
 		try {
 			// uri = new URI("/Users/lgu/Dropbox/stlab/ontologies/paraphrase/ppdb.owl");
 			uri = new URI("http://www.ontologydesignpatterns.org/ont/mario/tagging.owl");
 			// uri = new URI("/Users/lgu/Desktop/ont.owl");
-			// OntologyCodeGenerationRecipe codegen = new LizardCore(uri);
 			OntologyCodeGenerationRecipe codegen = new LizardCore(uri);
 			OntologyCodeProject ontologyCodeProject = codegen.generate();
 
 			try {
-				File testFolder = new File("test_out");
+				String outFolder = "test_out";
+				File testFolder = new File(outFolder);
 				if (testFolder.exists()) {
 					System.out.println("esists " + testFolder.getClass());
 					FileUtils.deleteDirectory(testFolder);
 				} else {
 					System.out.println("not esists");
 				}
-				File src = new File("test_out/src/main/java");
-				File resources = new File("test_out/src/main/resources");
-				File test = new File("test_out/src/test/java");
+				File src = new File(outFolder+"/src/main/java");
+				File resources = new File(outFolder+"/src/main/resources");
+				File test = new File(outFolder+"/src/test/java");
 				if (!src.exists())
 					src.mkdirs();
 				if (!resources.exists())
@@ -951,18 +954,30 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 
 				CodeWriter writer = new FileCodeWriter(src, "UTF-8");
 				ontologyCodeProject.getOntologyCodeModel().asJCodeModel().build(writer);
-				((LizardCore) codegen).createServiceAnnotations(new File("test_out"), ontologyCodeProject.getOntologyCodeModel());
-
+				((LizardCore) codegen).createServiceAnnotations(new File(outFolder), ontologyCodeProject.getOntologyCodeModel());
 				/*
 				 * Generate the POM descriptor file and build the project as a Maven project.
 				 */
-				File pom = new File("test_out/pom.xml");
-				Writer pomWriter = new FileWriter(new File("test_out/pom.xml"));
+				File pom = new File(outFolder+"/pom.xml");
+				Writer pomWriter = new FileWriter(new File(outFolder+"/pom.xml"));
 				Map<String, String> dataModel = new HashMap<String, String>();
 				dataModel.put("artifactId", ontologyCodeProject.getArtifactId());
 				dataModel.put("groupId", ontologyCodeProject.getGroupId());
 				MavenUtils.generatePOM(pomWriter, dataModel);
 				MavenUtils.buildProject(pom);
+
+				/*
+				 * Generate Lizard file
+				 */
+
+				OntModel om = ModelFactory.createOntologyModel(INF_PROFILE);
+				om.read(uri.toString());
+
+				for (URI u : uris) {
+					om.read(u.toString());
+				}
+
+				writeGeneratedOntologies(om, outFolder);
 
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -971,6 +986,35 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 			e.printStackTrace();
 		}
 
+	}
+
+	public static final String ontologiesFileName = "ontologies";
+
+	private static void writeGeneratedOntologies(OntModel ontModel, String folder) throws IOException {
+		FileOutputStream fos = new FileOutputStream(new File(folder + "/" + ontologiesFileName));
+
+		String ontModelBase = ontModel.getNsPrefixURI("");
+		if (ontModelBase.endsWith("#")) {
+			ontModelBase = ontModelBase.substring(0, ontModelBase.length() - 1);
+		}
+		ontModelBase += "\n";
+
+		fos.write(ontModelBase.getBytes());
+
+		ontModel.listSubModels(true).forEachRemaining(om -> {
+			String toPrint = om.getNsPrefixURI("");
+			if (toPrint.endsWith("#")) {
+				toPrint = toPrint.substring(0, toPrint.length() - 1);
+			}
+			toPrint += "\n";
+			try {
+				fos.write(toPrint.getBytes());
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		});
+
+		fos.close();
 	}
 
 	private static boolean hasMethod(JDefinedClass jdefClass, String methodName) {
