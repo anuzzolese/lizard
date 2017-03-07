@@ -79,17 +79,18 @@ public abstract class BooleanAnonClass extends OntologyCodeClass {
 			unionConstructor.body().invoke("super").arg(ind).arg(expression);
 			unionConstructor.body().assign(JExpr._this().ref(idVar), ind.invoke("asResource").invoke("getURI"));
 
-			JMethod asUnionMethod = ((JDefinedClass) super.jClass).method(JMod.PUBLIC, super.jClass, "asIndividualOf");
+			JMethod asUnionMethod = ((JDefinedClass) super.jClass).method(JMod.PUBLIC|JMod.STATIC, super.jClass, "asIndividualOf");
 
 			asUnionMethod = asUnionMethod._throws(NotAMemberException.class);
 
 			JVar unionMethodParam = asUnionMethod.param(LizardInterface.class, "individual");
 			JBlock unionMethodBody = asUnionMethod.body();
+			
 
 			/*
 			 * Declare a variable that allows to access the UnionOf annotation of the class.
 			 */
-			JVar booleanAnnotationVar = unionMethodBody.decl(codeModel._ref(UnionOf.class), "unionOfAnnotation", JExpr.invoke("getClass").invoke("getAnnotation").arg(codeModel.ref(booleanClass).dotclass()));
+			JVar booleanAnnotationVar = unionMethodBody.decl(codeModel._ref(UnionOf.class), "unionOfAnnotation", super.jClass.dotclass().invoke("getAnnotation").arg(codeModel.ref(booleanClass).dotclass()));
 
 			/*
 			 * Fetch the list of valid members of the union from class annotation. The list is provided as an array of Class<? extends LizardInterface>.
