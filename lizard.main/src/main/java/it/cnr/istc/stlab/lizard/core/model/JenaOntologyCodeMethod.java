@@ -1,24 +1,10 @@
 package it.cnr.istc.stlab.lizard.core.model;
 
-import it.cnr.istc.stlab.lizard.commons.Constants;
-import it.cnr.istc.stlab.lizard.commons.PrefixRegistry;
-import it.cnr.istc.stlab.lizard.commons.annotations.ObjectPropertyAnnotation;
-import it.cnr.istc.stlab.lizard.commons.exception.NotAvailableOntologyCodeEntityException;
-import it.cnr.istc.stlab.lizard.commons.jena.RuntimeJenaLizardContext;
-import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClass;
-import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClassImpl;
-import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeClass;
-import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeInterface;
-import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeMethod;
-import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeModel;
-import it.cnr.istc.stlab.lizard.commons.model.anon.BooleanAnonClass;
-import it.cnr.istc.stlab.lizard.commons.model.datatype.DatatypeCodeInterface;
-import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeMethodType;
-
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.ontology.OntResource;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
@@ -49,6 +35,21 @@ import com.sun.codemodel.JMod;
 import com.sun.codemodel.JType;
 import com.sun.codemodel.JVar;
 import com.sun.codemodel.JWhileLoop;
+
+import it.cnr.istc.stlab.lizard.commons.Constants;
+import it.cnr.istc.stlab.lizard.commons.PrefixRegistry;
+import it.cnr.istc.stlab.lizard.commons.annotations.ObjectPropertyAnnotation;
+import it.cnr.istc.stlab.lizard.commons.exception.NotAvailableOntologyCodeEntityException;
+import it.cnr.istc.stlab.lizard.commons.jena.RuntimeJenaLizardContext;
+import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClass;
+import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClassImpl;
+import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeClass;
+import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeInterface;
+import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeMethod;
+import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeModel;
+import it.cnr.istc.stlab.lizard.commons.model.anon.BooleanAnonClass;
+import it.cnr.istc.stlab.lizard.commons.model.datatype.DatatypeCodeInterface;
+import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeMethodType;
 
 public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 
@@ -88,23 +89,23 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 
 			annotateMethod();
 
-		}
+			/*
+			 * Add the body to the method.
+			 */
+			if (owner instanceof OntologyCodeClass) {
 
-		/*
-		 * Add the body to the method.
-		 */
-		if (owner instanceof OntologyCodeClass) {
-
-			if (methodType == OntologyCodeMethodType.GET) {
-				addGetBody();
-			} else if (methodType == OntologyCodeMethodType.SET) {
-				addSetBody();
-			} else if (methodType == OntologyCodeMethodType.REMOVE_ALL) {
-				addDeleteBody();
-			} else if (methodType == OntologyCodeMethodType.ADD_ALL) {
-				addAddAllBody();
+				if (methodType == OntologyCodeMethodType.GET) {
+					addGetBody();
+				} else if (methodType == OntologyCodeMethodType.SET) {
+					addSetBody();
+				} else if (methodType == OntologyCodeMethodType.REMOVE_ALL) {
+					addDeleteBody();
+				} else if (methodType == OntologyCodeMethodType.ADD_ALL) {
+					addAddAllBody();
+				}
 			}
 		}
+
 	}
 
 	private void addAddAllBody() {
@@ -211,15 +212,27 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 		String methodName = entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
 		jMethod = domainJClass.method(1, void.class, "removeAll" + methodName);
 
+		logger.trace("Create sig " + methodName);
 		if (domain != null) {
+			logger.trace("Domain not null");
 			for (AbstractOntologyCodeClass domainClass : domain) {
+
+				// if (owner.getOntResource().getURI().equals("http://www.ontologydesignpatterns.org/ont/mario/tagging.owl#ImageTagging") && ontResource.getURI().equals("http://www.ontologydesignpatterns.org/ont/mario/tagging.owl#forEntity") &&
+				// domainClass.getOntResource().getURI().equals(OWL2.Thing.getURI())) {
+				// // System.out.println(range.getOntResource().getURI());
+				// throw new RuntimeException("");
+				//
+				// }
+
 				String name = domainClass.getEntityName();
 				name = name.substring(name.lastIndexOf(".") + 1);
 				name = name.substring(0, 1).toLowerCase() + name.substring(1);
+				logger.trace("Domain " + name);
 				JType setClass = super.jCodeModel.ref(Set.class).narrow(domainClass.asJDefinedClass());
 				jMethod.param(setClass, name);
 			}
 		} else {
+			logger.trace("Domain not null RANGE: " + range.getOntResource().getURI());
 			JType setClass = super.jCodeModel.ref(Set.class).narrow(range.asJDefinedClass());
 			jMethod.param(setClass, entityName);
 		}
@@ -370,7 +383,6 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 
 									if (!ontResource.isDatatypeProperty()) {
 										rangeConcreteClass = ontologyModel.createOntologyClass(range.getOntResource(), JenaOntologyCodeClass.class);
-										// rangeConcreteClassBean = ontologyModel.createOntologyClass(range.getOntResource(), BeanOntologyCodeClass.class);
 										ontologyModel.createClassImplements((AbstractOntologyCodeClassImpl) rangeConcreteClass, rangeInterface);
 									}
 
@@ -395,7 +407,8 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 						JVar retObj = null;
 						if (range instanceof DatatypeCodeInterface) {
 							JVar objectLiteralVar = stmtItHasNextWhileBlock.decl(jCodeModel.ref(Literal.class), "objectLiteral", JExpr.cast(jCodeModel.ref(Literal.class), stmtObjectVar));
-							retObj = stmtItHasNextWhileBlock.decl(rangeClass, "obj", JExpr.cast(rangeClass, objectLiteralVar.invoke("getValue")));
+							JInvocation typeMapperInvocation = jCodeModel.ref(TypeMapper.class).staticInvoke("getInstance").invoke("getTypeByName").arg(range.getOntResource().getURI()).invoke("parse");
+							retObj = stmtItHasNextWhileBlock.decl(rangeClass, "obj", JExpr.cast(rangeClass, typeMapperInvocation.arg(objectLiteralVar.invoke("getString"))));
 						} else {
 							// TODO manage problem with AnonClasses
 							retObj = stmtItHasNextWhileBlock.decl(rangeClass, "obj", JExpr._new(rangeConcreteClass.asJDefinedClass()).arg(stmtObjectVar));
@@ -489,7 +502,6 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 						AbstractOntologyCodeClass rangeConcreteClassBean = null;
 
 						if (rangeRes.isURIResource()) {
-
 							rangeConcreteClass = ontologyModel.getOntologyClass(range.getOntResource(), JenaOntologyCodeClass.class);
 							rangeConcreteClassBean = ontologyModel.getOntologyClass(range.getOntResource(), BeanOntologyCodeClass.class);
 						} else {
@@ -636,7 +648,6 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 							} else {
 								rangeConcreteClass = ontologyModel.getOntologyClass(range.getOntResource(), BooleanAnonClass.class);
 							}
-
 							if (rangeConcreteClass == null) {
 								rangeConcreteClass = ontologyModel.createAnonClass(range.getOntResource().asClass());
 							}
@@ -646,14 +657,13 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 						e.printStackTrace();
 					}
 
-					// ontologyModel.getClassMap().put(range.getOntResource(),
-					// (OntologyCodeClass)rangeConcreteClass);
 				}
 
 				JVar retObj = null;
 				if (range instanceof DatatypeCodeInterface) {
+					JInvocation typeMapperInvocation = jCodeModel.ref(TypeMapper.class).staticInvoke("getInstance").invoke("getTypeByName").arg(range.getOntResource().getURI()).invoke("parse");
 					JVar objectLiteralVar = stmtItHasNextWhileBlock.decl(jCodeModel.ref(Literal.class), "objectLiteral", JExpr.cast(jCodeModel.ref(Literal.class), stmtObjectVar));
-					retObj = stmtItHasNextWhileBlock.decl(rangeClass, "obj", JExpr.cast(rangeClass, objectLiteralVar.invoke("getValue")));
+					retObj = stmtItHasNextWhileBlock.decl(rangeClass, "obj", JExpr.cast(rangeClass, typeMapperInvocation.arg(objectLiteralVar.invoke("getString"))));
 				} else {
 					retObj = stmtItHasNextWhileBlock.decl(rangeClass, "obj", JExpr._new(rangeConcreteClass.asJDefinedClass()).arg(stmtObjectVar));
 				}
@@ -674,8 +684,6 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 			 */
 			JVar ontPropertyVar = methodBody.decl(jCodeModel._ref(Property.class), "predicate", jCodeModel.ref(ModelFactory.class).staticInvoke("createDefaultModel").invoke("createProperty").arg(ontResource.toString()));
 			JVar jenaModelVar = methodBody.decl(jCodeModel._ref(Model.class), "model", jCodeModel.ref(RuntimeJenaLizardContext.class).staticInvoke("getContext").invoke("getModel"));
-
-			// methodBody.add(JExpr._super().ref("individual").invoke("asResource").invoke("removeAll").arg(ontPropertyVar));
 
 			methodBody.add(jenaModelVar.invoke("getResource").arg(JExpr._super().ref("individual").invoke("asResource").invoke("getURI")).invoke("removeAll").arg(ontPropertyVar));
 

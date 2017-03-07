@@ -1,21 +1,13 @@
 package it.cnr.istc.stlab.lizard.core.model;
 
-import it.cnr.istc.stlab.lizard.commons.Constants;
-import it.cnr.istc.stlab.lizard.commons.LizardClass;
-import it.cnr.istc.stlab.lizard.commons.annotations.OntologyClass;
-import it.cnr.istc.stlab.lizard.commons.exception.ClassAlreadyExistsException;
-import it.cnr.istc.stlab.lizard.commons.inmemory.InMemoryLizardClass;
-import it.cnr.istc.stlab.lizard.commons.jena.RuntimeJenaLizardContext;
-import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClass;
-import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeClass;
-import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeModel;
-import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeClassType;
-
 import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntResource;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
@@ -40,6 +32,17 @@ import com.sun.codemodel.JMod;
 import com.sun.codemodel.JType;
 import com.sun.codemodel.JVar;
 import com.sun.codemodel.JWhileLoop;
+
+import it.cnr.istc.stlab.lizard.commons.Constants;
+import it.cnr.istc.stlab.lizard.commons.LizardClass;
+import it.cnr.istc.stlab.lizard.commons.annotations.OntologyClass;
+import it.cnr.istc.stlab.lizard.commons.exception.ClassAlreadyExistsException;
+import it.cnr.istc.stlab.lizard.commons.inmemory.InMemoryLizardClass;
+import it.cnr.istc.stlab.lizard.commons.jena.RuntimeJenaLizardContext;
+import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClass;
+import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeClass;
+import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeModel;
+import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeClassType;
 
 public class JenaOntologyCodeClass extends OntologyCodeClass {
 
@@ -136,6 +139,7 @@ public class JenaOntologyCodeClass extends OntologyCodeClass {
 			}
 		}
 		createBodyConstructors();
+		createBeanMethod();
 	}
 
 	private void addStaticReferencerMethodInInterface() {
@@ -200,6 +204,56 @@ public class JenaOntologyCodeClass extends OntologyCodeClass {
 		ifThenBlock.assign(retEntity, JExpr._new(super.jClass).arg(resourceExpr));
 
 		methodBlock._return(retEntity);
+	}
+	
+	private void createBeanMethod() {
+		JMethod asBeanMethod = ((JDefinedClass) super.jClass).getMethod("asBean", new JType[] {});
+		JMethod asMicroBeanMethod = ((JDefinedClass) super.jClass).getMethod("asMicroBean", new JType[] {});
+
+		JVar beanVar = null;
+		JVar beanVarMB = null;
+
+		String name = ((JDefinedClass) super.jClass).name();
+		name = name.substring(0, 1).toLowerCase() + name.substring(1);
+
+		if (asBeanMethod == null) {
+
+			JClass beanClass = ontologyModel.getOntologyClass(getOntResource(), BeanOntologyCodeClass.class).asJDefinedClass();
+
+			asBeanMethod = ((JDefinedClass) super.jClass).method(JMod.PUBLIC, beanClass, "asBean");
+			asMicroBeanMethod = ((JDefinedClass) super.jClass).method(JMod.PUBLIC, beanClass, "asMicroBean");
+
+			JBlock asBeanMethodBody = asBeanMethod.body();
+			JBlock asMicroBeanMethodBody = asMicroBeanMethod.body();
+
+			JVar jenaModelVar = asBeanMethodBody.decl(jCodeModel._ref(Model.class), "model", jCodeModel.ref(RuntimeJenaLizardContext.class).staticInvoke("getContext").invoke("getModel"));
+			JVar jenaModelVarMB = asMicroBeanMethodBody.decl(jCodeModel._ref(Model.class), "model", jCodeModel.ref(RuntimeJenaLizardContext.class).staticInvoke("getContext").invoke("getModel"));
+
+			JVar queryVar = asBeanMethodBody.decl(jCodeModel._ref(Query.class), "query", jCodeModel.ref(QueryFactory.class).staticInvoke("create").arg(JExpr.lit("DESCRIBE <").plus(JExpr._super().ref("individual").invoke("asResource").invoke("getURI").plus(JExpr.lit(">")))));
+			JVar queryVarMB = asMicroBeanMethodBody.decl(jCodeModel._ref(Query.class), "query", jCodeModel.ref(QueryFactory.class).staticInvoke("create").arg(JExpr.lit("DESCRIBE <").plus(JExpr._super().ref("individual").invoke("asResource").invoke("getURI").plus(JExpr.lit(">")))));
+
+			JVar qexecVar = asBeanMethodBody.decl(jCodeModel._ref(QueryExecution.class), "qexec", jCodeModel.ref(RuntimeJenaLizardContext.class).staticInvoke("getContext").invoke("createQueryExecution").arg(queryVar).arg(jenaModelVar));
+			JVar qexecVarMB = asMicroBeanMethodBody.decl(jCodeModel._ref(QueryExecution.class), "qexec", jCodeModel.ref(RuntimeJenaLizardContext.class).staticInvoke("getContext").invoke("createQueryExecution").arg(queryVarMB).arg(jenaModelVarMB));
+
+			asBeanMethodBody.decl(jCodeModel._ref(Model.class), "m", qexecVar.invoke("execDescribe"));
+			asMicroBeanMethodBody.decl(jCodeModel._ref(Model.class), "m", qexecVarMB.invoke("execDescribe"));
+
+			beanVar = asBeanMethodBody.decl(beanClass, name, JExpr._new(beanClass));
+			asBeanMethodBody.directStatement(name + ".setId(super.individual.asResource().getURI());");
+			asBeanMethodBody.directStatement(name + ".setIsCompleted(true);");
+
+			beanVarMB = asMicroBeanMethodBody.decl(beanClass, name, JExpr._new(beanClass));
+			asMicroBeanMethodBody.directStatement(name + ".setId(super.individual.asResource().getURI());");
+			asMicroBeanMethodBody.directStatement(name + ".setIsCompleted(true);");
+
+			asBeanMethodBody._return(beanVar);
+			asMicroBeanMethodBody._return(beanVarMB);
+
+			asBeanMethodBody.pos(asBeanMethodBody.pos() - 1);
+			asMicroBeanMethodBody.pos(asMicroBeanMethodBody.pos() - 1);
+
+		}
+
 	}
 
 }

@@ -1,20 +1,5 @@
 package it.cnr.istc.stlab.lizard.core.model;
 
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import it.cnr.istc.stlab.lizard.commons.Constants;
-import it.cnr.istc.stlab.lizard.commons.LizardInterface;
-import it.cnr.istc.stlab.lizard.commons.PrefixRegistry;
-import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClass;
-import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeClass;
-import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeInterface;
-import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeMethod;
-import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeModel;
-import it.cnr.istc.stlab.lizard.commons.model.anon.BooleanAnonClass;
-import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeMethodType;
-import it.cnr.istc.stlab.lizard.core.LizardCore;
-
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -45,6 +30,20 @@ import com.sun.codemodel.JMethod;
 import com.sun.codemodel.JMod;
 import com.sun.codemodel.JType;
 import com.sun.codemodel.JVar;
+
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import it.cnr.istc.stlab.lizard.commons.Constants;
+import it.cnr.istc.stlab.lizard.commons.LizardInterface;
+import it.cnr.istc.stlab.lizard.commons.PrefixRegistry;
+import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClass;
+import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeClass;
+import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeInterface;
+import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeMethod;
+import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeModel;
+import it.cnr.istc.stlab.lizard.commons.model.anon.BooleanAnonClass;
+import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeMethodType;
+import it.cnr.istc.stlab.lizard.core.LizardCore;
 
 public class RestOntologyCodeMethod extends OntologyCodeMethod {
 
@@ -113,6 +112,7 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 
 		String methodName = "getBy" + entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
 
+
 		JMethod temp = ((JDefinedClass) owner.asJDefinedClass()).getMethod(methodName, new JType[] { jCodeModel._ref(String.class) });
 
 		if (temp == null) {
@@ -138,12 +138,12 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 
 				JConditional ifConstraint = methodBody._if(param.ne(JExpr._null()));
 				JBlock thenIfConstraint = ifConstraint._then();
-				logger.debug("Method name: " + methodName);
+				logger.debug("Method name: " + methodName + " OWNER: " + this.owner.getOntResource().getURI());
 
 				// Restrict using constraint
 				JVar obj = null;
 				JType hashSetType = jCodeModel.ref(HashSet.class).narrow(javaInterface.asJDefinedClass());
-				if (ontResource.isObjectProperty()) {
+				if (ontResource.isObjectProperty() && !ontResource.isDatatypeProperty()) {
 					AbstractOntologyCodeClass rangeJenaClass = ontologyModel.getOntologyClass(ModelFactory.createOntologyModel().getOntResource(OWL.Thing), JenaOntologyCodeClass.class);
 					obj = thenIfConstraint.decl(jCodeModel._ref(LizardInterface.class), "obj", JExpr._new(rangeJenaClass.asJDefinedClass()).arg(jCodeModel.ref(ModelFactory.class).staticInvoke("createDefaultModel").invoke("getResource").arg(param)));
 					thenIfConstraint.assign(kbSetVar, javaInterface.asJDefinedClass().staticInvoke(methodName).arg(obj));
@@ -213,7 +213,9 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 
 				JVar entityResponseBuilderVar = entityMethodBody.decl(jCodeModel._ref(ResponseBuilder.class), "_responseBuilder", JExpr._null());
 
-				AbstractOntologyCodeClass r = ((ArrayList<AbstractOntologyCodeClass>) domain).get(0);
+				logger.debug("METHOD res " + this.ontResource + " OWNER res " + owner.getOntResource().getURI());
+				
+				AbstractOntologyCodeClass r = domain.iterator().next();
 				AbstractOntologyCodeClass o = ontologyModel.getOntologyClass(owner.getOntResource(), BeanOntologyCodeInterface.class);
 
 				OntResource rOntRes = r.getOntResource();

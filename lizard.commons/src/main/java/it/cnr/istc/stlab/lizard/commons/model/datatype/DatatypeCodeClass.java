@@ -14,8 +14,8 @@ import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClass;
 import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeModel;
 import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeClassType;
 
+
 public class DatatypeCodeClass extends AbstractOntologyCodeClass {
-	
 	
 	public DatatypeCodeClass() {
 		super();

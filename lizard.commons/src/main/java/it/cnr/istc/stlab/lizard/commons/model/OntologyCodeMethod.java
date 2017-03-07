@@ -9,6 +9,7 @@ import org.apache.jena.ontology.OntResource;
 import com.sun.codemodel.JCodeModel;
 
 public abstract class OntologyCodeMethod extends AbstractOntologyCodeMethod {
+	
 
 	protected OntologyCodeMethod(){
 		super();
