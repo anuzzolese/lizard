@@ -112,7 +112,6 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 
 		String methodName = "getBy" + entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
 
-
 		JMethod temp = ((JDefinedClass) owner.asJDefinedClass()).getMethod(methodName, new JType[] { jCodeModel._ref(String.class) });
 
 		if (temp == null) {
@@ -214,7 +213,7 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 				JVar entityResponseBuilderVar = entityMethodBody.decl(jCodeModel._ref(ResponseBuilder.class), "_responseBuilder", JExpr._null());
 
 				logger.debug("METHOD res " + this.ontResource + " OWNER res " + owner.getOntResource().getURI());
-				
+
 				AbstractOntologyCodeClass r = domain.iterator().next();
 				AbstractOntologyCodeClass o = ontologyModel.getOntologyClass(owner.getOntResource(), BeanOntologyCodeInterface.class);
 
@@ -237,9 +236,9 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 
 				String getMethodName = "get" + entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
 
+				logger.debug("Method name: " + getMethodName + " class " + owner.getOntResource().getURI());
+				
 				JDefinedClass jdc = (JDefinedClass) ontologyModel.getOntologyClass(owner.getOntResource(), BeanOntologyCodeInterface.class).asJDefinedClass();
-
-				logger.debug("Method name: " + getMethodName);
 
 				JMethod meth = jdc.getMethod(getMethodName, new JType[] {});
 

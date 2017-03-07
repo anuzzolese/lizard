@@ -37,7 +37,6 @@ import org.apache.jena.reasoner.ValidityReport;
 import org.apache.jena.reasoner.ValidityReport.Report;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.apache.jena.vocabulary.OWL2;
-import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.vocabulary.RDFS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -152,8 +151,7 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 		}
 		if (project != null) {
 			logger_high_level.info("Create REST Project");
-			// TODO
-			// project = generateRestProject(project.getOntologyCodeModel());
+			project = generateRestProject(project.getOntologyCodeModel());
 		}
 		return project;
 
@@ -346,36 +344,38 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 
 			logger.debug("Creating REST method for class " + owner.getOntResource().getURI() + " and method " + ontProperty.getURI());
 
-			Restriction restriction = hasRestrictionOnProperty(ontClass, ontProperty);
+			OntClass mostSpecificDomain = getMostSpecificDomain(ontProperty);
 
-			if (restriction != null) {
-				createRESTMethodsForRestriction(restriction, owner, ontologyModel);
-			} else {
-				OntClass range = getMostSpecificRange(ontProperty);
-				if (range != null) {
-
-					logger.debug("OWNER: " + owner.getOntResource().getLocalName() + " method: " + ontProperty.getLocalName() + " RANGE " + range.getLocalName());
-
-					if (range.isURIResource()) {
-						if (range.isClass()) {
-							createRESTMethodsForRangeClasses(ontProperty, range.asClass(), owner, ontologyModel);
-						}
-					} else {
-						createRESTMethodsForAnonClasses(ontProperty, range, owner, ontologyModel);
-					}
-				} else {
-					createRESTMethodsForPropertyWithoutRange(ontProperty, owner, ontologyModel);
-				}
+			if (!mostSpecificDomain.hasEquivalentClass(ontClass) && mostSpecificDomain.hasSuperClass(ontClass)) {
+				continue;
 			}
 
-		}
+			if (ontologyModel.asOntModel().getOntProperty(ontProperty.getURI()) == null) {
+				// The ont property has been introduced by the JENA reasoner
+				logger_high_level.trace(ontProperty + "has been introduced by the reasoner!");
+				continue;
+			}
 
-		ExtendedIterator<OntClass> superClassesIt = ontClass.listSuperClasses();
-
-		while (superClassesIt.hasNext()) {
-			OntClass superClass = superClassesIt.next();
-			if (superClass.isRestriction())
-				createRESTMethodsForRestriction(superClass.asRestriction(), owner, ontologyModel);
+			if (!causesNameClash(ontClass, ontProperty, ontologyModel)) {
+				Restriction restriction = hasRestrictionOnProperty(ontClass, ontProperty);
+				if (restriction != null) {
+					createRESTMethodsForRestriction(restriction, owner, ontologyModel);
+				} else {
+					OntResource range = getMostSpecificRange(ontProperty);
+					if (range != null) {
+						if (range.isURIResource()) {
+							logger_high_level.trace("RANGE " + range.getURI());
+							if (range.isClass()) {
+								createRESTMethodsForRangeClasses(ontProperty, range.asClass(), owner, ontologyModel);
+							}
+						} else {
+							createRESTMethodsForAnonClasses(ontProperty, range, owner, ontologyModel);
+						}
+					} else {
+						createRESTMethodsForPropertyWithoutRange(ontProperty, owner, ontologyModel);
+					}
+				}
+			}
 		}
 	}
 
@@ -951,8 +951,7 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 
 				CodeWriter writer = new FileCodeWriter(src, "UTF-8");
 				ontologyCodeProject.getOntologyCodeModel().asJCodeModel().build(writer);
-				// TODO
-				// ((LizardCore) codegen).createServiceAnnotations(new File("test_out"), ontologyCodeProject.getOntologyCodeModel());
+				((LizardCore) codegen).createServiceAnnotations(new File("test_out"), ontologyCodeProject.getOntologyCodeModel());
 
 				/*
 				 * Generate the POM descriptor file and build the project as a Maven project.
