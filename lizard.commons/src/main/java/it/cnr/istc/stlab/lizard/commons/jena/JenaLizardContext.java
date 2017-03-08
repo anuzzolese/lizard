@@ -1,10 +1,21 @@
 package it.cnr.istc.stlab.lizard.commons.jena;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.jena.ontology.OntModel;
+import org.apache.jena.ontology.OntModelSpec;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.rdf.model.InfModel;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.reasoner.Reasoner;
+import org.apache.jena.reasoner.ReasonerRegistry;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.tdb.TDBFactory;
 
@@ -40,9 +51,38 @@ public class JenaLizardContext {
 			model = TDBFactory.createDataset(conf.getTdbLocation()).getDefaultModel();
 			break;
 		case File:
-			System.out.println("Configuration for model file [modelFilePath=" + conf.getModelFilePath() + ",lang=" + conf.getLang() + "]");
-			model = ModelFactory.createDefaultModel();
-			RDFDataMgr.read(model, conf.getModelFilePath());
+			System.out.println("Configuration for model file [modelFilePath=" + conf.getModelFilePath() + ",lang=" + conf.getLang() + ",inference=" + conf.getInference() + ",ontologiesFile=" + conf.getOntologies_file() + "]");
+			if (!conf.getInference()) {
+				model = ModelFactory.createDefaultModel();
+				RDFDataMgr.read(model, conf.getModelFilePath());
+			} else {
+				OntModelSpec oms = OntModelSpec.OWL_MEM;
+				OntModel om = ModelFactory.createOntologyModel(oms);
+				System.out.println("Loading ontologies with language " + oms.getLanguage()+" ");
+
+				List<String> files;
+				try {
+					files = getLines(conf.getOntologies_file());
+					for (String file : files) {
+						System.out.println("Loading ontology "+file);
+						om.read(file);
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				System.out.println("Ontology loaded ");
+
+				Model data = ModelFactory.createDefaultModel();
+				RDFDataMgr.read(data, conf.getModelFilePath());
+
+				System.out.println("Model loaded");
+
+				Reasoner resasoner = ReasonerRegistry.getRDFSSimpleReasoner();
+				InfModel infModel = ModelFactory.createInfModel(resasoner, om, data);
+				System.out.println("Inf model created, Reasoner: "+resasoner.getClass().getSimpleName());
+
+				model = infModel;
+			}
 			model.register(new JenaLizardModelListener(model, conf.getModelFilePath(), conf.getLang()));
 			break;
 		default:
@@ -69,6 +109,17 @@ public class JenaLizardContext {
 			break;
 		}
 		return null;
+	}
+
+	private static List<String> getLines(String filename) throws IOException {
+		List<String> result = new ArrayList<>();
+		BufferedReader br = new BufferedReader(new FileReader(filename));
+		String line = br.readLine();
+		while (line != null) {
+			result.add(line);
+		}
+		br.close();
+		return result;
 	}
 
 }

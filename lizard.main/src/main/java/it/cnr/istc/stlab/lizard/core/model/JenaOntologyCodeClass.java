@@ -60,6 +60,16 @@ public class JenaOntologyCodeClass extends OntologyCodeClass {
 
 	}
 
+	private void addIndividuals() {
+		StmtIterator iterator = super.ontologyModel.asOntModel().listStatements(null, RDF.type, ontResource);
+		BeanOntologyCodeInterface beanInterfaceClass = super.ontologyModel.getOntologyClass(ontResource, BeanOntologyCodeInterface.class);
+		while (iterator.hasNext()) {
+			Statement statement = (Statement) iterator.next();
+			String field_id = statement.getSubject().getLocalName().replaceAll("\\W", "_").toUpperCase();
+			((JDefinedClass) beanInterfaceClass.asJDefinedClass()).field(JMod.PUBLIC | JMod.FINAL | JMod.STATIC, beanInterfaceClass.asJDefinedClass(), field_id, JExpr._new(jClass).arg(jCodeModel.ref(ModelFactory.class).staticInvoke("createDefaultModel").invoke("createResource").arg(getOntResource().getURI())));
+		}
+	}
+
 	private void createBodyConstructors() {
 
 		((JDefinedClass) super.jClass)._extends(InMemoryLizardClass.class);
@@ -140,6 +150,7 @@ public class JenaOntologyCodeClass extends OntologyCodeClass {
 		}
 		createBodyConstructors();
 		createBeanMethod();
+		addIndividuals();
 	}
 
 	private void addStaticReferencerMethodInInterface() {
@@ -205,7 +216,7 @@ public class JenaOntologyCodeClass extends OntologyCodeClass {
 
 		methodBlock._return(retEntity);
 	}
-	
+
 	private void createBeanMethod() {
 		JMethod asBeanMethod = ((JDefinedClass) super.jClass).getMethod("asBean", new JType[] {});
 		JMethod asMicroBeanMethod = ((JDefinedClass) super.jClass).getMethod("asMicroBean", new JType[] {});

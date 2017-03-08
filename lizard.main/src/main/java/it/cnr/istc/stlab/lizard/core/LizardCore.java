@@ -705,6 +705,11 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 			}
 			return this.ontologyModel.asOntModel().getOntClass(most_specific.getURI());
 		} else {
+			
+			if(op.getRange()!=null){
+				return op.getRange().asClass();
+			}
+			
 			boolean foundSomething = false;
 			OntClass most_specific = this.ontologyModel.getInfOntModel().getOntClass(RDFS.Resource.getURI());
 			Set<OntClass> r = new HashSet<OntClass>();
@@ -942,9 +947,9 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 				} else {
 					System.out.println("not esists");
 				}
-				File src = new File(outFolder+"/src/main/java");
-				File resources = new File(outFolder+"/src/main/resources");
-				File test = new File(outFolder+"/src/test/java");
+				File src = new File(outFolder + "/src/main/java");
+				File resources = new File(outFolder + "/src/main/resources");
+				File test = new File(outFolder + "/src/test/java");
 				if (!src.exists())
 					src.mkdirs();
 				if (!resources.exists())
@@ -958,8 +963,8 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 				/*
 				 * Generate the POM descriptor file and build the project as a Maven project.
 				 */
-				File pom = new File(outFolder+"/pom.xml");
-				Writer pomWriter = new FileWriter(new File(outFolder+"/pom.xml"));
+				File pom = new File(outFolder + "/pom.xml");
+				Writer pomWriter = new FileWriter(new File(outFolder + "/pom.xml"));
 				Map<String, String> dataModel = new HashMap<String, String>();
 				dataModel.put("artifactId", ontologyCodeProject.getArtifactId());
 				dataModel.put("groupId", ontologyCodeProject.getGroupId());

@@ -105,8 +105,9 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 				}
 			}
 		}
-
 	}
+	
+	
 
 	private void addAddAllBody() {
 		if (owner instanceof OntologyCodeClass) {

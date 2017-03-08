@@ -13,6 +13,8 @@ public class JenaLizardConfiguration {
 	public static final String VIRTUOSO_HOST = "host";
 	public static final String VIRTUOSO_PORT = "port";
 	public static final String GRAPH = "graph";
+	public static final String INFERENCE_ON_DATA = "inference_on_data";
+	public static final String ONTOLOGIES_FILE = "ontologies_file";
 
 	private String tdbLocation;
 	private String modelFilePath;
@@ -23,6 +25,8 @@ public class JenaLizardConfiguration {
 	private String virtuosoPort;
 	private String graph;
 	private String lang;
+	private boolean inference;
+	private String ontologies_file;
 
 	public JenaLizardConfiguration() {
 
@@ -34,6 +38,8 @@ public class JenaLizardConfiguration {
 		String typeString = props.getProperty(TYPE);
 		if (typeString != null) {
 			typeString = typeString.toLowerCase().trim();
+			this.inference = Boolean.parseBoolean(props.getProperty(INFERENCE_ON_DATA));
+			this.ontologies_file = props.getProperty(ONTOLOGIES_FILE);
 			if (typeString.equals("virtuoso")) {
 				type = RepositoryType.Virtuoso;
 				setType(type);
@@ -156,6 +162,22 @@ public class JenaLizardConfiguration {
 
 	public void setLang(String lang) {
 		this.lang = lang;
+	}
+
+	public boolean getInference() {
+		return inference;
+	}
+
+	public void setInference(boolean inference) {
+		this.inference = inference;
+	}
+
+	public String getOntologies_file() {
+		return ontologies_file;
+	}
+
+	public void setOntologies_file(String ontologies_file) {
+		this.ontologies_file = ontologies_file;
 	}
 
 }
