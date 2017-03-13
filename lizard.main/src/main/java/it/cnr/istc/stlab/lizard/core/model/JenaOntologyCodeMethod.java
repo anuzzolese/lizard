@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import com.sun.codemodel.JAnnotationUse;
 import com.sun.codemodel.JBlock;
+import com.sun.codemodel.JCatchBlock;
 import com.sun.codemodel.JClass;
 import com.sun.codemodel.JCodeModel;
 import com.sun.codemodel.JConditional;
@@ -32,6 +33,7 @@ import com.sun.codemodel.JForEach;
 import com.sun.codemodel.JInvocation;
 import com.sun.codemodel.JMethod;
 import com.sun.codemodel.JMod;
+import com.sun.codemodel.JTryBlock;
 import com.sun.codemodel.JType;
 import com.sun.codemodel.JVar;
 import com.sun.codemodel.JWhileLoop;
@@ -106,8 +108,6 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 			}
 		}
 	}
-	
-	
 
 	private void addAddAllBody() {
 		if (owner instanceof OntologyCodeClass) {
@@ -217,13 +217,6 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 		if (domain != null) {
 			logger.trace("Domain not null");
 			for (AbstractOntologyCodeClass domainClass : domain) {
-
-				// if (owner.getOntResource().getURI().equals("http://www.ontologydesignpatterns.org/ont/mario/tagging.owl#ImageTagging") && ontResource.getURI().equals("http://www.ontologydesignpatterns.org/ont/mario/tagging.owl#forEntity") &&
-				// domainClass.getOntResource().getURI().equals(OWL2.Thing.getURI())) {
-				// // System.out.println(range.getOntResource().getURI());
-				// throw new RuntimeException("");
-				//
-				// }
 
 				String name = domainClass.getEntityName();
 				name = name.substring(name.lastIndexOf(".") + 1);
@@ -407,17 +400,27 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 
 						JVar retObj = null;
 						if (range instanceof DatatypeCodeInterface) {
-							JVar objectLiteralVar = stmtItHasNextWhileBlock.decl(jCodeModel.ref(Literal.class), "objectLiteral", JExpr.cast(jCodeModel.ref(Literal.class), stmtObjectVar));
-							JInvocation typeMapperInvocation = jCodeModel.ref(TypeMapper.class).staticInvoke("getInstance").invoke("getTypeByName").arg(range.getOntResource().getURI()).invoke("parse");
-							retObj = stmtItHasNextWhileBlock.decl(rangeClass, "obj", JExpr.cast(rangeClass, typeMapperInvocation.arg(objectLiteralVar.invoke("getString"))));
+							if (range.getOntResource().getURI().equals("http://www.w3.org/2001/XMLSchema#anyURI")) {
+								// Fixing bug on mapping datatype xsd:anyURI
+								JVar objectLiteralVar = stmtItHasNextWhileBlock.decl(jCodeModel.ref(Literal.class), "objectLiteral", JExpr.cast(jCodeModel.ref(Literal.class), stmtObjectVar));
+								JTryBlock tryBlock = stmtItHasNextWhileBlock._try();
+								retObj = tryBlock.body().decl(rangeClass, "obj", JExpr._new(rangeClass).arg(objectLiteralVar.invoke("getString")));
+								tryBlock.body().add(returnVar.invoke("add").arg(retObj));
+								JCatchBlock catchBlock = tryBlock._catch(jCodeModel.ref("java.net.URISyntaxException"));
+								catchBlock.body().directStatement("// The URI violates the expected syntax!");
+								catchBlock.body().add(jCodeModel.ref(System.class).staticRef("err").invoke("println").arg(objectLiteralVar.invoke("getString").plus(JExpr.lit(" violates the expected URI syntax!"))));
+							} else {
+								JInvocation typeMapperInvocation = jCodeModel.ref(TypeMapper.class).staticInvoke("getInstance").invoke("getTypeByName").arg(range.getOntResource().getURI()).invoke("parse");
+								JVar objectLiteralVar = stmtItHasNextWhileBlock.decl(jCodeModel.ref(Literal.class), "objectLiteral", JExpr.cast(jCodeModel.ref(Literal.class), stmtObjectVar));
+								retObj = stmtItHasNextWhileBlock.decl(rangeClass, "obj", JExpr.cast(rangeClass, typeMapperInvocation.arg(objectLiteralVar.invoke("getString"))));
+								stmtItHasNextWhileBlock.add(returnVar.invoke("add").arg(retObj));
+							}
 						} else {
-							// TODO manage problem with AnonClasses
 							retObj = stmtItHasNextWhileBlock.decl(rangeClass, "obj", JExpr._new(rangeConcreteClass.asJDefinedClass()).arg(stmtObjectVar));
-							stmtItHasNextWhileBlock.directStatement("obj.setIsCompleted(false);");
+							stmtItHasNextWhileBlock.add(returnVar.invoke("add").arg(retObj));
 						}
-						stmtItHasNextWhileBlock.add(returnVar.invoke("add").arg(retObj));
-
 						methodBody._return(returnVar);
+
 					}
 				}
 			} else {
@@ -662,14 +665,25 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 
 				JVar retObj = null;
 				if (range instanceof DatatypeCodeInterface) {
-					JInvocation typeMapperInvocation = jCodeModel.ref(TypeMapper.class).staticInvoke("getInstance").invoke("getTypeByName").arg(range.getOntResource().getURI()).invoke("parse");
-					JVar objectLiteralVar = stmtItHasNextWhileBlock.decl(jCodeModel.ref(Literal.class), "objectLiteral", JExpr.cast(jCodeModel.ref(Literal.class), stmtObjectVar));
-					retObj = stmtItHasNextWhileBlock.decl(rangeClass, "obj", JExpr.cast(rangeClass, typeMapperInvocation.arg(objectLiteralVar.invoke("getString"))));
+					if (range.getOntResource().getURI().equals("http://www.w3.org/2001/XMLSchema#anyURI")) {
+						// Fixing bug on mapping datatype xsd:anyURI
+						JVar objectLiteralVar = stmtItHasNextWhileBlock.decl(jCodeModel.ref(Literal.class), "objectLiteral", JExpr.cast(jCodeModel.ref(Literal.class), stmtObjectVar));
+						JTryBlock tryBlock = stmtItHasNextWhileBlock._try();
+						retObj = tryBlock.body().decl(rangeClass, "obj", JExpr._new(rangeClass).arg(objectLiteralVar.invoke("getString")));
+						tryBlock.body().add(returnVar.invoke("add").arg(retObj));
+						JCatchBlock catchBlock = tryBlock._catch(jCodeModel.ref("java.net.URISyntaxException"));
+						catchBlock.body().directStatement("// The URI violates the expected syntax!");
+						catchBlock.body().add(jCodeModel.ref(System.class).staticRef("err").invoke("println").arg(objectLiteralVar.invoke("getString").plus(JExpr.lit(" violates the expected URI syntax!"))));
+					} else {
+						JInvocation typeMapperInvocation = jCodeModel.ref(TypeMapper.class).staticInvoke("getInstance").invoke("getTypeByName").arg(range.getOntResource().getURI()).invoke("parse");
+						JVar objectLiteralVar = stmtItHasNextWhileBlock.decl(jCodeModel.ref(Literal.class), "objectLiteral", JExpr.cast(jCodeModel.ref(Literal.class), stmtObjectVar));
+						retObj = stmtItHasNextWhileBlock.decl(rangeClass, "obj", JExpr.cast(rangeClass, typeMapperInvocation.arg(objectLiteralVar.invoke("getString"))));
+						stmtItHasNextWhileBlock.add(returnVar.invoke("add").arg(retObj));
+					}
 				} else {
 					retObj = stmtItHasNextWhileBlock.decl(rangeClass, "obj", JExpr._new(rangeConcreteClass.asJDefinedClass()).arg(stmtObjectVar));
+					stmtItHasNextWhileBlock.add(returnVar.invoke("add").arg(retObj));
 				}
-				stmtItHasNextWhileBlock.add(returnVar.invoke("add").arg(retObj));
-
 				methodBody._return(returnVar);
 			}
 		}

@@ -931,14 +931,14 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 		URI[] uris = {};
 
 		try {
-			uri = new URI("/Users/lgu/Dropbox/stlab/ontologies/paraphrase/ppdb.owl");
-			// uri = new URI("http://www.ontologydesignpatterns.org/ont/mario/tagging.owl");
+//			uri = new URI("/Users/lgu/Dropbox/stlab/ontologies/paraphrase/ppdb.owl");
+			 uri = new URI("http://www.ontologydesignpatterns.org/ont/mario/tagging.owl");
 			// uri = new URI("/Users/lgu/Desktop/ont.owl");
 			OntologyCodeGenerationRecipe codegen = new LizardCore(uri);
 			OntologyCodeProject ontologyCodeProject = codegen.generate();
 
 			try {
-				String outFolder = "/Users/lgu/Desktop/Lizard/generated-projects/ppdb";
+				String outFolder = "/Users/lgu/Desktop/Lizard/generated-projects/tagging";
 				File testFolder = new File(outFolder);
 				if (testFolder.exists()) {
 					System.out.println("esists " + testFolder.getClass());
