@@ -25,23 +25,17 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 public class SetBodyWriter implements MessageBodyWriter<HashSet<?>> {
 
 	@Override
-	public boolean isWriteable(Class<?> type, Type genericType,
-			Annotation[] annotations, MediaType mediaType) {
+	public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
 		return true;
 	}
 
 	@Override
-	public long getSize(HashSet<?> t, Class<?> type, Type genericType,
-			Annotation[] annotations, MediaType mediaType) {
+	public long getSize(HashSet<?> t, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
 		return 0;
 	}
 
 	@Override
-	public void writeTo(HashSet<?> t, Class<?> type, Type genericType,
-			Annotation[] annotations, MediaType mediaType,
-			MultivaluedMap<String, Object> httpHeaders,
-			OutputStream entityStream) throws IOException,
-			WebApplicationException {
+	public void writeTo(HashSet<?> t, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
 
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
@@ -53,18 +47,16 @@ public class SetBodyWriter implements MessageBodyWriter<HashSet<?>> {
 				String jsonInString = mapper.writeValueAsString(bean);
 				JSONObject obj = new JSONObject(jsonInString);
 				setArray.put(obj);
-//				System.out.println("Returning "+jsonInString);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		});
-		
+
 		try {
 			entityStream.write(setArray.toString(4).getBytes());
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
-		
 	}
 
 }

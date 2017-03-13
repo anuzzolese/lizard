@@ -2,7 +2,6 @@ package it.cnr.istc.stlab.lizard.core;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -705,11 +704,11 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 			}
 			return this.ontologyModel.asOntModel().getOntClass(most_specific.getURI());
 		} else {
-			
-			if(op.getRange()!=null){
+
+			if (op.getRange() != null) {
 				return op.getRange().asClass();
 			}
-			
+
 			boolean foundSomething = false;
 			OntClass most_specific = this.ontologyModel.getInfOntModel().getOntClass(RDFS.Resource.getURI());
 			Set<OntClass> r = new HashSet<OntClass>();
@@ -932,14 +931,14 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 		URI[] uris = {};
 
 		try {
-			// uri = new URI("/Users/lgu/Dropbox/stlab/ontologies/paraphrase/ppdb.owl");
-			uri = new URI("http://www.ontologydesignpatterns.org/ont/mario/tagging.owl");
+			uri = new URI("/Users/lgu/Dropbox/stlab/ontologies/paraphrase/ppdb.owl");
+			// uri = new URI("http://www.ontologydesignpatterns.org/ont/mario/tagging.owl");
 			// uri = new URI("/Users/lgu/Desktop/ont.owl");
 			OntologyCodeGenerationRecipe codegen = new LizardCore(uri);
 			OntologyCodeProject ontologyCodeProject = codegen.generate();
 
 			try {
-				String outFolder = "test_out";
+				String outFolder = "/Users/lgu/Desktop/Lizard/generated-projects/ppdb";
 				File testFolder = new File(outFolder);
 				if (testFolder.exists()) {
 					System.out.println("esists " + testFolder.getClass());

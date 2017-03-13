@@ -60,8 +60,6 @@ public class RestOntologyCodeClass extends OntologyCodeClass {
 		String artifactId = packageName + "." + SUBPACKAGE_NAME + ".";
 		logger.debug(artifactId);
 
-		// String packagePath = packageName.replaceAll("\\.", "_");
-
 		String localName = Constants.getJavaName(resource.getLocalName());
 
 		super.entityName = artifactId + localName;
@@ -118,6 +116,7 @@ public class RestOntologyCodeClass extends OntologyCodeClass {
 		if (tempSet == null) {
 
 			JMethod jMethod = ((JDefinedClass) this.asJDefinedClass()).method(JMod.PUBLIC, responseType, methodName);
+			OntologyCodeInterface javaInterface = ontologyModel.getOntologyClass(ontResource, BeanOntologyCodeInterface.class);
 
 			/*
 			 * Method Body
@@ -129,14 +128,13 @@ public class RestOntologyCodeClass extends OntologyCodeClass {
 
 			jMethod.annotate(GET.class);
 			jMethod.annotate(Path.class).param("value", "/" + methodName);
-			jMethod.annotate(ApiOperation.class).param("value", "Retrieve a " + Constants.getJavaName(localName) + " by id").param("nickname", methodName);
+			jMethod.annotate(ApiOperation.class).param("value", "Retrieve a " + Constants.getJavaName(localName) + " by id").param("nickname", methodName).param("response", javaInterface.asJDefinedClass().dotclass()).param("responseContainer", "List");
 
 			// Create parameters
 			JVar idParam = jMethod.param(String.class, "id");
 			idParam.annotate(ApiParam.class).param("value", "id").param("required", true);
 			idParam.annotate(QueryParam.class).param("value", "id");
 
-			OntologyCodeInterface javaInterface = ontologyModel.getOntologyClass(ontResource, BeanOntologyCodeInterface.class);
 			JVar entityVar = methodBody.decl(javaInterface.asJDefinedClass(), "entity", javaInterface.asJDefinedClass().staticInvoke("get").arg(idParam));
 
 			JVar responseBuilderVar = methodBody.decl(jCodeModel._ref(ResponseBuilder.class), "_responseBuilder", JExpr._null());
@@ -151,7 +149,10 @@ public class RestOntologyCodeClass extends OntologyCodeClass {
 			JType setType_range_res = super.jCodeModel.ref(Set.class).narrow(javaInterface.asJDefinedClass());
 			JVar kbSetVar_res = then.decl(setType_range_res, "response", JExpr._new(hashSetType_range_res));
 			then.add(kbSetVar_res.invoke("add").arg(cast.invoke("asMicroBean")));
-			then.assign(responseBuilderVar, super.jCodeModel.ref(Response.class).staticInvoke("ok").arg(kbSetVar_res));
+
+			JExpression toList = kbSetVar_res.invoke("toArray").arg(JExpr.newArray(javaInterface.asJDefinedClass(), kbSetVar_res.invoke("size")));
+
+			then.assign(responseBuilderVar, super.jCodeModel.ref(Response.class).staticInvoke("ok").arg(toList));
 
 			// else
 			JBlock entityIfElseBlock = ifBlock._else();
@@ -172,6 +173,7 @@ public class RestOntologyCodeClass extends OntologyCodeClass {
 		JMethod tempSet = ((JDefinedClass) this.asJDefinedClass()).getMethod(methodName, new JType[] {});
 
 		if (tempSet == null) {
+			OntologyCodeInterface javaInterface = ontologyModel.getOntologyClass(ontResource, BeanOntologyCodeInterface.class);
 			JMethod jMethod = ((JDefinedClass) this.asJDefinedClass()).method(JMod.PUBLIC, responseType, methodName);
 
 			/*
@@ -184,10 +186,9 @@ public class RestOntologyCodeClass extends OntologyCodeClass {
 
 			jMethod.annotate(GET.class);
 			jMethod.annotate(Path.class).param("value", "/" + methodName);
-			jMethod.annotate(ApiOperation.class).param("value", "Retrieve all " + Constants.getJavaName(localName)).param("nickname", methodName);
+			jMethod.annotate(ApiOperation.class).param("value", "Retrieve all " + Constants.getJavaName(localName)).param("nickname", methodName).param("response", javaInterface.asJDefinedClass().dotclass()).param("responseContainer", "List");
 
 			JVar responseBuilderVar = methodBody.decl(jCodeModel._ref(ResponseBuilder.class), "_responseBuilder", JExpr._null());
-			OntologyCodeInterface javaInterface = ontologyModel.getOntologyClass(ontResource, BeanOntologyCodeInterface.class);
 			JType setType = jCodeModel.ref(Set.class).narrow(javaInterface.asJDefinedClass());
 			JType hashSetType = jCodeModel.ref(HashSet.class).narrow(javaInterface.asJDefinedClass());
 
@@ -205,7 +206,9 @@ public class RestOntologyCodeClass extends OntologyCodeClass {
 			JExpression castExpression = JExpr.cast(ontologyModel.getOntologyClass(ontResource, JenaOntologyCodeClass.class).asJDefinedClass(), forEach.var());
 			forEachBlock.add(retSetVar.invoke("add").arg(castExpression.invoke("asMicroBean")));
 
-			ifThenBlock.assign(responseBuilderVar, jCodeModel.ref(Response.class).staticInvoke("ok").arg(retSetVar));
+			JExpression toList = retSetVar.invoke("toArray").arg(JExpr.newArray(javaInterface.asJDefinedClass(), retSetVar.invoke("size")));
+
+			ifThenBlock.assign(responseBuilderVar, jCodeModel.ref(Response.class).staticInvoke("ok").arg(toList));
 
 			/*
 			 * Else

@@ -12,6 +12,9 @@
 	</properties>
 
 	<dependencies>
+
+		
+
 		<!-- Apache Jena -->
 		<dependency>
 			<groupId>org.apache.jena</groupId>

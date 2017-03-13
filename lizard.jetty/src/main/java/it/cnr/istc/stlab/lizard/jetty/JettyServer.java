@@ -48,10 +48,11 @@ public class JettyServer {
 
 		// Lizard servlets
 		ServletHolder servletHolder = servletContextHandler.addServlet(org.glassfish.jersey.servlet.ServletContainer.class, "/lizard/*");
-		System.out.println("Lizard service will be available at " + "localhost:" + port + "/lizard/*");
+		System.out.println("Lizard service will be available at " + "htto://localhost:" + port + "/lizard/*");
 		servletHolder.setInitOrder(1);
 		servletHolder.setInitParameter("jersey.config.server.provider.packages", "io.swagger.jaxrs.listing," + FileUtils.getNamePackage(Lizard.class));
 		servletHolder.setInitParameter("jersey.config.server.wadl.disableWadl", "true");
+		servletHolder.setInitParameter("jersey.config.server.provider.classnames", "org.glassfish.jersey.jackson.JacksonFeature");
 		servletHolder.setInitParameter("swagger.scanner.id", Lizard.class.getName());
 		servletHolder.setInitParameter("swagger.context.id", Lizard.class.getName());
 		servletHolder.setInitParameter("swagger.config.id", Lizard.class.getName());
@@ -62,7 +63,6 @@ public class JettyServer {
 		lizardRestHolder.setInitParameter("swagger.scanner.id", Lizard.class.getName());
 		lizardRestHolder.setInitParameter("swagger.context.id", Lizard.class.getName());
 		lizardRestHolder.setInitParameter("swagger.config.id", Lizard.class.getName());
-		// lizardRestHolder.setInitParameter("swagger.use.path.based.config","true");
 		lizardRestHolder.setInitParameter(Bootstrap.TITLE, "Lizard");
 		lizardRestHolder.setInitParameter(Bootstrap.PACKAGE, FileUtils.getNamePackage(Lizard.class));
 		lizardRestHolder.setInitParameter(Bootstrap.BASE_PATH, "/lizard");
@@ -86,6 +86,7 @@ public class JettyServer {
 				servletHolderRestOntology.setInitOrder(1);
 				servletHolderRestOntology.setInitParameter("jersey.config.server.provider.packages", "io.swagger.jaxrs.listing," + FileUtils.getNamePackage(SetBodyWriter.class) + "," + packageJavaName);
 				servletHolderRestOntology.setInitParameter("jersey.config.server.wadl.disableWadl", "true");
+				servletHolderRestOntology.setInitParameter("jersey.config.server.provider.classnames", "org.glassfish.jersey.jackson.JacksonFeature");
 				servletHolderRestOntology.setInitParameter("swagger.scanner.id", packageJavaName);
 				servletHolderRestOntology.setInitParameter("swagger.context.id", packageJavaName);
 				servletHolderRestOntology.setInitParameter("swagger.config.id", packageJavaName);
@@ -95,7 +96,6 @@ public class JettyServer {
 				ontologySwaggerHolder.setInitParameter("swagger.scanner.id", packageJavaName);
 				ontologySwaggerHolder.setInitParameter("swagger.context.id", packageJavaName);
 				ontologySwaggerHolder.setInitParameter("swagger.config.id", packageJavaName);
-				// lizardRestHolder.setInitParameter("swagger.use.path.based.config","true");
 				ontologySwaggerHolder.setInitParameter(Bootstrap.TITLE, packageJavaName);
 				ontologySwaggerHolder.setInitParameter(Bootstrap.PACKAGE, packageJavaName);
 				ontologySwaggerHolder.setInitParameter(Bootstrap.BASE_PATH, "/" + basePathResources);
@@ -103,7 +103,6 @@ public class JettyServer {
 				ontologySwaggerHolder.setInitParameter(Bootstrap.HOST, "localhost:" + serverPort);
 				ontologySwaggerHolder.setInitParameter(Bootstrap.VERSION, "0.99"); // TODO
 				aaPackages.add(packageJavaName);
-
 			}
 		});
 
@@ -117,7 +116,11 @@ public class JettyServer {
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
-			jettyServer.destroy();
+			try {
+				jettyServer.destroy();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 	}
 }
