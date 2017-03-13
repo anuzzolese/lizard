@@ -66,7 +66,7 @@ public class JenaOntologyCodeClass extends OntologyCodeClass {
 		while (iterator.hasNext()) {
 			Statement statement = (Statement) iterator.next();
 			String field_id = statement.getSubject().getLocalName().replaceAll("\\W", "_").toUpperCase();
-			((JDefinedClass) beanInterfaceClass.asJDefinedClass()).field(JMod.PUBLIC | JMod.FINAL | JMod.STATIC, beanInterfaceClass.asJDefinedClass(), field_id, JExpr._new(jClass).arg(jCodeModel.ref(ModelFactory.class).staticInvoke("createDefaultModel").invoke("createResource").arg(getOntResource().getURI())));
+			((JDefinedClass) beanInterfaceClass.asJDefinedClass()).field(JMod.PUBLIC | JMod.FINAL | JMod.STATIC, beanInterfaceClass.asJDefinedClass(), field_id, JExpr._new(jClass).arg(jCodeModel.ref(ModelFactory.class).staticInvoke("createDefaultModel").invoke("createResource").arg(statement.getSubject().asResource().getURI())));
 		}
 	}
 
