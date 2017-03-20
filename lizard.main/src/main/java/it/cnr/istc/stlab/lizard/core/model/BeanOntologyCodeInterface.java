@@ -27,6 +27,10 @@ public class BeanOntologyCodeInterface extends OntologyCodeInterface {
 		intefacesToExtend.add(interfaceToExtend);
 		((JDefinedClass) super.jClass)._extends((JDefinedClass) interfaceToExtend.jClass);
 	}
+	
+	public Set<BeanOntologyCodeInterface> listSuperInterfaces() {
+		return intefacesToExtend;
+	}
 
 	protected void extendsClasses(AbstractOntologyCodeClass oClass) {
 		if (oClass != null && oClass instanceof BeanOntologyCodeInterface)
@@ -38,9 +42,5 @@ public class BeanOntologyCodeInterface extends OntologyCodeInterface {
 		superClasses.add(extendedClass);
 		return superClasses;
 	}
-	
-	
-	
-	
 
 }

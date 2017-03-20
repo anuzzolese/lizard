@@ -21,7 +21,7 @@ public interface OntologyCodeModel {
 	<T extends AbstractOntologyCodeClass> T createOntologyClass(OntResource resource, Class<T> ontologyClass) throws NotAvailableOntologyCodeEntityException;
 
 	<T extends AbstractOntologyCodeClass> T getOntologyClass(OntResource ontResource, Class<T> ontologyClass);
-
+	
 	<T extends AbstractOntologyCodeClass> Map<OntResource, T> getOntologyClasses(Class<T> ontologyEntityClass);
 
 	AbstractOntologyCodeMethod createMethod(OntologyCodeMethodType methodType, OntResource methodResource, AbstractOntologyCodeClass owner, Collection<AbstractOntologyCodeClass> domain, AbstractOntologyCodeClass range);

@@ -52,6 +52,7 @@ import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeModel;
 import it.cnr.istc.stlab.lizard.commons.model.anon.BooleanAnonClass;
 import it.cnr.istc.stlab.lizard.commons.model.datatype.DatatypeCodeInterface;
 import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeMethodType;
+import it.cnr.istc.stlab.lizard.core.LizardCore;
 
 public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 
@@ -361,11 +362,9 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 						OntResource rangeRes = range.getOntResource();
 
 						AbstractOntologyCodeClass rangeConcreteClass = null;
-						// AbstractOntologyCodeClass rangeConcreteClassBean = null;
 
 						if (rangeRes.isURIResource()) {
 							rangeConcreteClass = ontologyModel.getOntologyClass(range.getOntResource(), JenaOntologyCodeClass.class);
-							// rangeConcreteClassBean = ontologyModel.getOntologyClass(range.getOntResource(), BeanOntologyCodeClass.class);
 						} else {
 							rangeConcreteClass = ontologyModel.getOntologyClass(range.getOntResource(), BooleanAnonClass.class);
 						}
@@ -410,10 +409,15 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 								catchBlock.body().directStatement("// The URI violates the expected syntax!");
 								catchBlock.body().add(jCodeModel.ref(System.class).staticRef("err").invoke("println").arg(objectLiteralVar.invoke("getString").plus(JExpr.lit(" violates the expected URI syntax!"))));
 							} else {
-								JInvocation typeMapperInvocation = jCodeModel.ref(TypeMapper.class).staticInvoke("getInstance").invoke("getTypeByName").arg(range.getOntResource().getURI()).invoke("parse");
-								JVar objectLiteralVar = stmtItHasNextWhileBlock.decl(jCodeModel.ref(Literal.class), "objectLiteral", JExpr.cast(jCodeModel.ref(Literal.class), stmtObjectVar));
-								retObj = stmtItHasNextWhileBlock.decl(rangeClass, "obj", JExpr.cast(rangeClass, typeMapperInvocation.arg(objectLiteralVar.invoke("getString"))));
-								stmtItHasNextWhileBlock.add(returnVar.invoke("add").arg(retObj));
+								if (LizardCore.hasTypeMapper(range.getOntResource().getURI())) {
+									JInvocation typeMapperInvocation = jCodeModel.ref(TypeMapper.class).staticInvoke("getInstance").invoke("getTypeByName").arg(range.getOntResource().getURI()).invoke("parse");
+									JVar objectLiteralVar = stmtItHasNextWhileBlock.decl(jCodeModel.ref(Literal.class), "objectLiteral", JExpr.cast(jCodeModel.ref(Literal.class), stmtObjectVar));
+									retObj = stmtItHasNextWhileBlock.decl(rangeClass, "obj", JExpr.cast(rangeClass, typeMapperInvocation.arg(objectLiteralVar.invoke("getString"))));
+									stmtItHasNextWhileBlock.add(returnVar.invoke("add").arg(retObj));
+								} else {
+									JVar objectLiteralVar = stmtItHasNextWhileBlock.decl(jCodeModel.ref(Literal.class), "objectLiteral", JExpr.cast(jCodeModel.ref(Literal.class), stmtObjectVar));
+									stmtItHasNextWhileBlock.add(returnVar.invoke("add").arg(objectLiteralVar.invoke("getString")));
+								}
 							}
 						} else {
 							retObj = stmtItHasNextWhileBlock.decl(rangeClass, "obj", JExpr._new(rangeConcreteClass.asJDefinedClass()).arg(stmtObjectVar));

@@ -5,8 +5,7 @@ import java.util.Properties;
 
 public class RuntimeJenaLizardContext {
 
-	private static final String CONF_FILE = "lizard.conf";
-
+	private static String configurationFilePath = "lizard.conf";
 	private static JenaLizardContext context;
 
 	public static JenaLizardContext getContext() {
@@ -15,10 +14,8 @@ public class RuntimeJenaLizardContext {
 
 			try {
 
-				InputStream is = RuntimeJenaLizardContext.class
-						.getClassLoader().getResourceAsStream(CONF_FILE);
+				InputStream is = RuntimeJenaLizardContext.class.getClassLoader().getResourceAsStream(configurationFilePath);
 				props.load(is);
-				
 
 			} catch (Exception e) {
 				props.setProperty("type", "virtuoso");
@@ -30,11 +27,15 @@ public class RuntimeJenaLizardContext {
 				System.out.println("Starting with properties for localhost");
 			}
 
-			context = JenaLizardContextManager.getInstance()
-					.getJenaLizardContext(new JenaLizardConfiguration(props));
+			context = JenaLizardContextManager.getInstance().getJenaLizardContext(new JenaLizardConfiguration(props));
 		}
 
 		return context;
+	}
+
+	public void switchContext(String lizardConfFilepath) {
+		context = null;
+		configurationFilePath = lizardConfFilepath;
 	}
 
 	public static void main(String[] args) {

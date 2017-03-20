@@ -76,7 +76,7 @@ public class JenaLizardContext {
 				RDFDataMgr.read(data, conf.getModelFilePath());
 
 				System.out.println("Model loaded");
-
+				
 				Reasoner resasoner = ReasonerRegistry.getRDFSSimpleReasoner();
 				InfModel infModel = ModelFactory.createInfModel(resasoner, om, data);
 				System.out.println("Inf model created, Reasoner: "+resasoner.getClass().getSimpleName());
@@ -94,6 +94,9 @@ public class JenaLizardContext {
 	public Model getModel() {
 		return model;
 	}
+	
+	
+	
 
 	public QueryExecution createQueryExecution(Query q, Model m) {
 		switch (conf.getType()) {

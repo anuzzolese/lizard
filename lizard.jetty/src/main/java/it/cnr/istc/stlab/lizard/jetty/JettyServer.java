@@ -48,7 +48,7 @@ public class JettyServer {
 
 		// Lizard servlets
 		ServletHolder servletHolder = servletContextHandler.addServlet(org.glassfish.jersey.servlet.ServletContainer.class, "/lizard/*");
-		System.out.println("Lizard service will be available at " + "htto://localhost:" + port + "/lizard/*");
+		System.out.println("Lizard service will be available at " + "http://localhost:" + port + "/lizard/*");
 		servletHolder.setInitOrder(1);
 		servletHolder.setInitParameter("jersey.config.server.provider.packages", "io.swagger.jaxrs.listing," + FileUtils.getNamePackage(Lizard.class));
 		servletHolder.setInitParameter("jersey.config.server.wadl.disableWadl", "true");

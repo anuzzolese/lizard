@@ -1,6 +1,7 @@
 package it.cnr.istc.stlab.lizard.commons.model;
 
 import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeClassType;
+import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeMethodType;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -33,6 +34,15 @@ public abstract class AbstractOntologyCodeClass extends AbstractOntologyCodeEnti
 
 	public Set<AbstractOntologyCodeMethod> getMethods(OntResource property) {
 		return methodMap.get(property);
+	}
+
+	public AbstractOntologyCodeMethod getMethod(OntResource property, OntologyCodeMethodType type) {
+		for (AbstractOntologyCodeMethod m : methodMap.get(property)) {
+			if (m.getMethodType().equals(type)) {
+				return m;
+			}
+		}
+		return null;
 	}
 
 	protected abstract void extendsClasses(AbstractOntologyCodeClass oClass);

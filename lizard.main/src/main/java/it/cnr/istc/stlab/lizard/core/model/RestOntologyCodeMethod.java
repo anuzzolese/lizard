@@ -12,6 +12,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 
+import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.ontology.OntResource;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -37,6 +38,7 @@ import it.cnr.istc.stlab.lizard.commons.Constants;
 import it.cnr.istc.stlab.lizard.commons.LizardInterface;
 import it.cnr.istc.stlab.lizard.commons.PrefixRegistry;
 import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClass;
+import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeMethod;
 import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeClass;
 import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeInterface;
 import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeMethod;
@@ -147,31 +149,19 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 
 		JVar entityResponseBuilderVar = entityMethodBody.decl(jCodeModel._ref(ResponseBuilder.class), "_responseBuilder", JExpr._null());
 
-		AbstractOntologyCodeClass r = domain.iterator().next();
-		AbstractOntologyCodeClass o = ontologyModel.getOntologyClass(owner.getOntResource(), BeanOntologyCodeInterface.class);
-
-		OntResource rOntRes = r.getOntResource();
-		OntologyCodeClass beanClass = null;
-
-		boolean anon = false;
-		if (rOntRes.isURIResource()) {
-			beanClass = ontologyModel.getOntologyClass(rOntRes, BeanOntologyCodeClass.class);
-		} else {
-			anon = true;
-			beanClass = ontologyModel.getOntologyClass(rOntRes, BooleanAnonClass.class);
-			if (beanClass == null) {
-				beanClass = ontologyModel.createAnonClass(rOntRes.asClass());
-			}
-		}
+		AbstractOntologyCodeClass beanOwner = ontologyModel.getOntologyClass(owner.getOntResource(), BeanOntologyCodeClass.class);
+		AbstractOntologyCodeMethod getMethodBeanClass = beanOwner.getMethod(ontResource, methodType);
+		AbstractOntologyCodeClass beanClassRange = getMethodBeanClass.getRange();
+		AbstractOntologyCodeClass interfaceOwner = ontologyModel.getOntologyClass(owner.getOntResource(), BeanOntologyCodeInterface.class);
 
 		JType entityBeanSetType = null;
 		JType entityBeanHashSetType = null;
 
 		String getMethodName = "get" + entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
 
-		logger.debug("Method name: " + getMethodName + " class " + owner.getOntResource().getURI());
+		logger.debug("Searching for " + getMethodName + " on class " + beanOwner.getEntityName());
 
-		JDefinedClass jdc = (JDefinedClass) ontologyModel.getOntologyClass(owner.getOntResource(), BeanOntologyCodeInterface.class).asJDefinedClass();
+		JDefinedClass jdc = (JDefinedClass) beanOwner.asJDefinedClass();
 
 		JMethod meth = jdc.getMethod(getMethodName, new JType[] {});
 
@@ -184,7 +174,7 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 		entityBeanSetType = methRetType;
 		entityBeanHashSetType = super.jCodeModel.ref(HashSet.class).narrow(methRetNarrowedType);
 
-		JVar entityVar = entityMethodBody.decl(o.asJDefinedClass(), "_entity", o.asJDefinedClass().staticInvoke("get").arg(idVar));
+		JVar entityVar = entityMethodBody.decl(interfaceOwner.asJDefinedClass(), "_entity", interfaceOwner.asJDefinedClass().staticInvoke("get").arg(idVar));
 
 		JVar entitykbSetVar = entityMethodBody.decl(entitySetType, "_kbSet", entityVar.invoke(getMethodName));
 		JVar entityRetSetVar = entityMethodBody.decl(entityBeanSetType, "_retSet", JExpr._new(entityBeanHashSetType));
@@ -201,11 +191,11 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 		JExpression castExpression = JExpr.cast(ontologyModel.getOntologyClass(owner.getOntResource(), JenaOntologyCodeClass.class).asJDefinedClass(), entityForEach.var());
 		if (super.ontResource.isDatatypeProperty()) {
 			entityForEachBlock.add(entityRetSetVar.invoke("add").arg(entityForEach.var()));
-		} else if (!anon) {
-			castExpression = JExpr.cast(ontologyModel.getOntologyClass(beanClass.getOntResource(), JenaOntologyCodeClass.class).asJDefinedClass(), entityForEach.var());
+		} else if (beanClassRange.getClass().equals(BooleanAnonClass.class)) {
+			castExpression = JExpr.cast(beanClassRange.asJDefinedClass(), entityForEach.var());
 			entityForEachBlock.add(entityRetSetVar.invoke("add").arg(castExpression.invoke("asMicroBean")));
 		} else {
-			castExpression = JExpr.cast(ontologyModel.getOntologyClass(beanClass.getOntResource(), BooleanAnonClass.class).asJDefinedClass(), entityForEach.var());
+			castExpression = JExpr.cast(beanClassRange.asJDefinedClass(), entityForEach.var());
 			entityForEachBlock.add(entityRetSetVar.invoke("add").arg(castExpression));
 		}
 
@@ -225,7 +215,7 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 
 	private void createGetMethod() {
 
-		OntologyCodeInterface javaInterface = ontologyModel.getOntologyClass(owner.getOntResource(), BeanOntologyCodeInterface.class);
+		BeanOntologyCodeInterface javaInterface = ontologyModel.getOntologyClass(owner.getOntResource(), BeanOntologyCodeInterface.class);
 		JType setType = jCodeModel.ref(Set.class).narrow(javaInterface.asJDefinedClass());
 		String methodName = "getBy" + entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
 
@@ -245,18 +235,48 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 		JVar responseBuilderVar = methodBody.decl(jCodeModel._ref(ResponseBuilder.class), "_responseBuilder", JExpr._null());
 		JVar kbSetVar = methodBody.decl(setType, "_kbSet", JExpr._null());
 
+		/* Check if constraint is null */
 		JConditional ifConstraint = methodBody._if(param.ne(JExpr._null()));
 		JBlock thenIfConstraint = ifConstraint._then();
 		logger.debug("Method name: " + methodName + " OWNER: " + this.owner.getOntResource().getURI());
-
 		// Restrict using constraint
 		JVar obj = null;
 		JType hashSetType = jCodeModel.ref(HashSet.class).narrow(javaInterface.asJDefinedClass());
 		if (ontResource.isObjectProperty() && !ontResource.isDatatypeProperty()) {
 			AbstractOntologyCodeClass rangeJenaClass = ontologyModel.getOntologyClass(ModelFactory.createOntologyModel().getOntResource(OWL.Thing), JenaOntologyCodeClass.class);
 			obj = thenIfConstraint.decl(jCodeModel._ref(LizardInterface.class), "obj", JExpr._new(rangeJenaClass.asJDefinedClass()).arg(jCodeModel.ref(ModelFactory.class).staticInvoke("createDefaultModel").invoke("getResource").arg(param)));
-			thenIfConstraint.assign(kbSetVar, javaInterface.asJDefinedClass().staticInvoke(methodName).arg(obj));
+			JDefinedClass classHoldingGetByStaticMethod = null;
+			JMethod methodToCall = null;
+			if ((methodToCall = ((JDefinedClass) javaInterface.asJDefinedClass()).getMethod(methodName, new JType[] { jCodeModel._ref(LizardInterface.class) })) == null) {
+				logger.debug(javaInterface.getEntityName() + " does not contain " + methodName + "(LizardInterface)");
+				for (AbstractOntologyCodeClass superclass : javaInterface.listSuperInterfaces()) {
+					methodToCall = ((JDefinedClass) superclass.asJDefinedClass()).getMethod(methodName, new JType[] { jCodeModel._ref(LizardInterface.class) });
+					classHoldingGetByStaticMethod = ((JDefinedClass) superclass.asJDefinedClass());
+					if (methodToCall != null) {
+						break;
+					}
+				}
+				thenIfConstraint.assign(kbSetVar, JExpr._new(hashSetType));
+				JForEach forEach = thenIfConstraint.forEach(methodToCall.type().boxify().getTypeParameters().iterator().next(), "i", classHoldingGetByStaticMethod.staticInvoke(methodToCall).arg(obj));
+				forEach.body().add(kbSetVar.invoke("add").arg(javaInterface.asJDefinedClass().staticInvoke("get").arg(forEach.var().invoke("getId"))));
+			} else {
+				thenIfConstraint.assign(kbSetVar, ((JDefinedClass) javaInterface.asJDefinedClass()).staticInvoke(methodName).arg(obj));
+			}
+
+			// Constraint null
+			JBlock elseBlock = ifConstraint._else();
+			if (classHoldingGetByStaticMethod == null) {
+				elseBlock.assign(kbSetVar, javaInterface.asJDefinedClass().staticInvoke(methodName));
+			} else {
+				elseBlock.assign(kbSetVar, JExpr._new(hashSetType));
+				JForEach forEach = elseBlock.forEach(methodToCall.type().boxify().getTypeParameters().iterator().next(), "i", classHoldingGetByStaticMethod.staticInvoke(methodToCall));
+				forEach.body().add(kbSetVar.invoke("add").arg(javaInterface.asJDefinedClass().staticInvoke("get").arg(forEach.var().invoke("getId"))));
+			}
+			/**/
+
 		} else {
+			// Get for datatytype
+
 			Class<?> rangeClass = null;
 			if (range == null) {
 				rangeClass = String.class;
@@ -267,16 +287,38 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 				rangeClass = String.class;
 			}
 
-			JVar value = thenIfConstraint.decl(jCodeModel.ref(rangeClass), "datatypeValue", JExpr.cast(jCodeModel.ref(rangeClass), jCodeModel.ref(TypeMapper.class).staticInvoke("getInstance").invoke("getTypeByClass").arg(jCodeModel.ref(rangeClass).dotclass()).invoke("parse").arg(param)));
-			thenIfConstraint.assign(kbSetVar, javaInterface.asJDefinedClass().staticInvoke(methodName).arg(value));
+			JDefinedClass classHoldingGetByStaticMethod = null;
+			JMethod methodToCall = null;
+			if ((methodToCall = ((JDefinedClass) javaInterface.asJDefinedClass()).getMethod(methodName, new JType[] { jCodeModel._ref(rangeClass) })) == null) {
+				for (AbstractOntologyCodeClass superclass : javaInterface.listSuperInterfaces()) {
+					methodToCall = ((JDefinedClass) superclass.asJDefinedClass()).getMethod(methodName, new JType[] { jCodeModel._ref(rangeClass) });
+					classHoldingGetByStaticMethod = ((JDefinedClass) superclass.asJDefinedClass());
+					if (methodToCall != null) {
+						break;
+					}
+				}
+			} else {
+				classHoldingGetByStaticMethod = (JDefinedClass) javaInterface.asJDefinedClass();
+			}
+
+			{
+				// Constraint not null
+				JVar value = thenIfConstraint.decl(jCodeModel.ref(rangeClass), "datatypeValue", JExpr.cast(jCodeModel.ref(rangeClass), jCodeModel.ref(TypeMapper.class).staticInvoke("getInstance").invoke("getTypeByClass").arg(jCodeModel.ref(rangeClass).dotclass()).invoke("parse").arg(param)));
+				thenIfConstraint.assign(kbSetVar, JExpr._new(hashSetType));
+				JForEach forEach = thenIfConstraint.forEach(methodToCall.type().boxify().getTypeParameters().iterator().next(), "i", classHoldingGetByStaticMethod.staticInvoke(methodToCall).arg(value));
+				forEach.body().add(kbSetVar.invoke("add").arg(javaInterface.asJDefinedClass().staticInvoke("get").arg(forEach.var().invoke("getId"))));
+			}
+
+			{
+				// Constraint null
+				JBlock elseBlock = ifConstraint._else();
+				elseBlock.assign(kbSetVar, JExpr._new(hashSetType));
+				JForEach forEachElse = elseBlock.forEach(methodToCall.type().boxify().getTypeParameters().iterator().next(), "i", classHoldingGetByStaticMethod.staticInvoke(methodToCall));
+				forEachElse.body().add(kbSetVar.invoke("add").arg(javaInterface.asJDefinedClass().staticInvoke("get").arg(forEachElse.var().invoke("getId"))));
+			}
 		}
 
-		// Constraint null
-		JBlock elseBlock = ifConstraint._else();
-		elseBlock.assign(kbSetVar, javaInterface.asJDefinedClass().staticInvoke(methodName));
-
 		JVar retSetVar = methodBody.decl(setType, "_retSet", JExpr._new(hashSetType));
-
 		JConditional ifBlock = methodBody._if(kbSetVar.ne(JExpr._null()));
 		/*
 		 * Then
@@ -337,20 +379,21 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 				// Getting the target individual where the property will be
 				// added
 				AbstractOntologyCodeClass ownerInterface = ontologyModel.getOntologyClass(owner.getOntResource(), BeanOntologyCodeInterface.class);
-				AbstractOntologyCodeClass rangeJenaClass = null;
-				AbstractOntologyCodeClass rangeJenaInterface = null;
-				if (range == null) {
-					rangeJenaClass = ontologyModel.getOntologyClass(ModelFactory.createOntologyModel().getOntResource(OWL.Thing), JenaOntologyCodeClass.class);
-					rangeJenaInterface = ontologyModel.getOntologyClass(ModelFactory.createOntologyModel().getOntResource(OWL.Thing), BeanOntologyCodeInterface.class);
-				} else {
-					rangeJenaClass = ontologyModel.getOntologyClass(range.getOntResource(), JenaOntologyCodeClass.class);
-					rangeJenaInterface = ontologyModel.getOntologyClass(range.getOntResource(), BeanOntologyCodeInterface.class);
-					if (rangeJenaClass == null) {
-						// The range is a boolean class
-						rangeJenaClass = ontologyModel.getOntologyClass(range.getOntResource(), BooleanAnonClass.class);
-						rangeJenaInterface = ontologyModel.getOntologyClass(range.getOntResource(), BooleanAnonClass.class);
-					}
-				}
+				AbstractOntologyCodeClass rangeJenaClass = ontologyModel.getOntologyClass(domain.iterator().next().getOntResource(), JenaOntologyCodeClass.class);
+				AbstractOntologyCodeClass rangeJenaInterface = ontologyModel.getOntologyClass(domain.iterator().next().getOntResource(), BeanOntologyCodeInterface.class);
+
+				// if (range == null) {
+				// rangeJenaClass = ontologyModel.getOntologyClass(ModelFactory.createOntologyModel().getOntResource(OWL.Thing), JenaOntologyCodeClass.class);
+				// rangeJenaInterface = ontologyModel.getOntologyClass(ModelFactory.createOntologyModel().getOntResource(OWL.Thing), BeanOntologyCodeInterface.class);
+				// } else {
+				// rangeJenaClass = ontologyModel.getOntologyClass(range.getOntResource(), JenaOntologyCodeClass.class);
+				// rangeJenaInterface = ontologyModel.getOntologyClass(range.getOntResource(), BeanOntologyCodeInterface.class);
+				// if (rangeJenaClass == null) {
+				// // The range is a boolean class
+				// rangeJenaClass = ontologyModel.getOntologyClass(range.getOntResource(), BooleanAnonClass.class);
+				// rangeJenaInterface = ontologyModel.getOntologyClass(range.getOntResource(), BooleanAnonClass.class);
+				// }
+				// }
 
 				// Creting set to be added
 				JType hashSetType_range = super.jCodeModel.ref(HashSet.class).narrow(rangeJenaInterface.asJDefinedClass());
@@ -400,33 +443,30 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 				 * Method Body
 				 */
 				JBlock methodBody = jMethod.body();
-
-				// Getting the target individual where the property will be
-				// added
+				AbstractOntologyCodeClass methodDomainClass = domain.iterator().next();
 				AbstractOntologyCodeClass ownerInterface = ontologyModel.getOntologyClass(owner.getOntResource(), BeanOntologyCodeInterface.class);
 
-				// Getting range class
+				logger.debug("OWNER " + owner.getEntityName() + " " + this.ontResource.getURI() + " " + methodDomainClass.getOntResource().getURI());
 
-				logger.debug("OWNER " + owner.getEntityName() + " " + this.ontResource.getLocalName());
+				// Class<?> rangeClass = null;
+				// if (methodDomainClass == null) {
+				// rangeClass = String.class;
+				// } else if (LizardCore.hasTypeMapper(range.getOntResource().getURI())) {
+				// logger.trace("Range of the datatype property: " + this.ontResource.getURI() + " " + range.getOntResource().getURI());
+				// rangeClass = TypeMapper.getInstance().getTypeByName(range.getOntResource().getURI()).getJavaClass();
+				// } else {
+				// rangeClass = String.class;
+				// }
 
-				Class<?> rangeClass = null;
-				if (range == null) {
-					rangeClass = String.class;
-				} else if (LizardCore.hasTypeMapper(range.getOntResource().getURI())) {
-					logger.trace("Range of the datatype property: " + this.ontResource.getURI() + " " + range.getOntResource().getURI());
-					rangeClass = TypeMapper.getInstance().getTypeByName(range.getOntResource().getURI()).getJavaClass();
-				} else {
-					rangeClass = String.class;
-				}
+				JType hashSetType_range = super.jCodeModel.ref(HashSet.class).narrow(methodDomainClass.asJDefinedClass());
+				JType setType_range = super.jCodeModel.ref(Set.class).narrow(methodDomainClass.asJDefinedClass());
 
-				// Creting set to be added
-				JType hashSetType_range = super.jCodeModel.ref(HashSet.class).narrow(rangeClass);
-				JType setType_range = super.jCodeModel.ref(Set.class).narrow(rangeClass);
-
+				// JType setParameter = methodToCall.type();
 				JVar kbSetVar = methodBody.decl(setType_range, "toDelete", JExpr._new(hashSetType_range));
 
-				JVar value = methodBody.decl(jCodeModel.ref(rangeClass), "datatype", JExpr.cast(jCodeModel.ref(rangeClass), jCodeModel.ref(TypeMapper.class).staticInvoke("getInstance").invoke("getTypeByClass").arg(jCodeModel.ref(rangeClass).dotclass()).invoke("parse").arg(rangeValueParam)));
+				JVar value = methodBody.decl(methodDomainClass.asJDefinedClass(), "datatype", JExpr.cast(methodDomainClass.asJDefinedClass(), jCodeModel.ref(TypeMapper.class).staticInvoke("getInstance").invoke("getTypeByClass").arg(methodDomainClass.asJDefinedClass().dotclass()).invoke("parse").arg(rangeValueParam)));
 				methodBody.add(kbSetVar.invoke("add").arg(value));
+
 				// Add set to the individual
 				JVar entityVar = methodBody.decl(ownerInterface.asJDefinedClass(), "_entity", ownerInterface.asJDefinedClass().staticInvoke("get").arg(idParam));
 				methodBody.add(entityVar.invoke(methodName).arg(kbSetVar));
@@ -440,6 +480,10 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 	}
 
 	private void createSetMethodForObjectProperty() {
+		logger.debug("Create SET method for " + ontResource.getURI());
+		logger.debug("DOMAIN NULL? " + (domain == null));
+		logger.debug("RANGE NULL? " + (range == null));
+
 		JType responseType = super.jCodeModel.ref(Response.class);
 		String methodName = "set" + entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
 
@@ -473,21 +517,22 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 				// Getting the target individual where the property will be
 				// added
 				AbstractOntologyCodeClass ownerInterface = ontologyModel.getOntologyClass(owner.getOntResource(), BeanOntologyCodeInterface.class);
-				AbstractOntologyCodeClass rangeJenaClass = null;
-				AbstractOntologyCodeClass rangeJenaInterface = null;
+				AbstractOntologyCodeClass rangeJenaClass = ontologyModel.getOntologyClass(domain.iterator().next().getOntResource(), JenaOntologyCodeClass.class);
+				AbstractOntologyCodeClass rangeJenaInterface = ontologyModel.getOntologyClass(domain.iterator().next().getOntResource(), BeanOntologyCodeInterface.class);
+				;
 
-				if (range == null) {
-					rangeJenaClass = ontologyModel.getOntologyClass(ModelFactory.createOntologyModel().getOntResource(OWL.Thing), JenaOntologyCodeClass.class);
-					rangeJenaInterface = ontologyModel.getOntologyClass(ModelFactory.createOntologyModel().getOntResource(OWL.Thing), BeanOntologyCodeInterface.class);
-				} else {
-					rangeJenaClass = ontologyModel.getOntologyClass(range.getOntResource(), JenaOntologyCodeClass.class);
-					rangeJenaInterface = ontologyModel.getOntologyClass(range.getOntResource(), BeanOntologyCodeInterface.class);
-					if (rangeJenaClass == null) {
-						// The range is a boolean class
-						rangeJenaClass = ontologyModel.getOntologyClass(range.getOntResource(), BooleanAnonClass.class);
-						rangeJenaInterface = ontologyModel.getOntologyClass(range.getOntResource(), BooleanAnonClass.class);
-					}
-				}
+				// if (range == null) {
+				// rangeJenaClass = ontologyModel.getOntologyClass(ModelFactory.createOntologyModel().getOntResource(OWL.Thing), JenaOntologyCodeClass.class);
+				// rangeJenaInterface = ontologyModel.getOntologyClass(ModelFactory.createOntologyModel().getOntResource(OWL.Thing), BeanOntologyCodeInterface.class);
+				// } else {
+				// rangeJenaClass = ontologyModel.getOntologyClass(range.getOntResource(), JenaOntologyCodeClass.class);
+				// rangeJenaInterface = ontologyModel.getOntologyClass(range.getOntResource(), BeanOntologyCodeInterface.class);
+				// if (rangeJenaClass == null) {
+				// // The range is a boolean class
+				// rangeJenaClass = ontologyModel.getOntologyClass(range.getOntResource(), BooleanAnonClass.class);
+				// rangeJenaInterface = ontologyModel.getOntologyClass(range.getOntResource(), BooleanAnonClass.class);
+				// }
+				// }
 
 				// Creting set to be added
 				JType hashSetType_range = super.jCodeModel.ref(HashSet.class).narrow(rangeJenaInterface.asJDefinedClass());
@@ -547,34 +592,24 @@ public class RestOntologyCodeMethod extends OntologyCodeMethod {
 
 				// Getting the target individual where the property will be
 				// added
-				AbstractOntologyCodeClass ownerInterface = ontologyModel.getOntologyClass(owner.getOntResource(), BeanOntologyCodeInterface.class);
-
-				// Getting range class
-				Class<?> rangeClass = null;
-
 				logger.debug("OWNER " + owner.getEntityName() + ",ont resource: " + this.ontResource.getURI());
-
-				if (range == null) {
-					rangeClass = String.class;
-				} else if (LizardCore.hasTypeMapper(range.getOntResource().getURI())) {
-					logger.trace("Range of the datatype property: " + this.ontResource.getURI() + " " + range.getOntResource().getURI());
-					rangeClass = TypeMapper.getInstance().getTypeByName(range.getOntResource().getURI()).getJavaClass();
-				} else {
-					rangeClass = String.class;
-				}
+				AbstractOntologyCodeClass ownerInterface = ontologyModel.getOntologyClass(owner.getOntResource(), BeanOntologyCodeInterface.class);
+				AbstractOntologyCodeClass methodDomainClass = domain.iterator().next();
 
 				// Creting set to be added
-				JType hashSetType_range = super.jCodeModel.ref(HashSet.class).narrow(rangeClass);
-				JType setType_range = super.jCodeModel.ref(Set.class).narrow(rangeClass);
+				JType hashSetType_range = super.jCodeModel.ref(HashSet.class).narrow(methodDomainClass.asJDefinedClass());
+				JType setType_range = super.jCodeModel.ref(Set.class).narrow(methodDomainClass.asJDefinedClass());
 				JVar kbSetVar = methodBody.decl(setType_range, "toAdd", JExpr._new(hashSetType_range));
 
-				// Adding value to the set that will be added
-				if (range == null || rangeClass.equals(String.class)) {
+				RDFDatatype dClass = TypeMapper.getInstance().getTypeByName(methodDomainClass.getOntResource().getURI());
+
+				if (dClass==null || dClass.getJavaClass().equals(String.class)) {
 					methodBody.add(kbSetVar.invoke("add").arg(rangeValueParam));
 				} else {
-					JVar value = methodBody.decl(jCodeModel.ref(rangeClass), "datatype", JExpr.cast(jCodeModel.ref(rangeClass), jCodeModel.ref(TypeMapper.class).staticInvoke("getInstance").invoke("getTypeByClass").arg(jCodeModel.ref(rangeClass).dotclass()).invoke("parse").arg(rangeValueParam)));
+					JVar value = methodBody.decl(methodDomainClass.asJDefinedClass(), "datatype", JExpr.cast(methodDomainClass.asJDefinedClass(), jCodeModel.ref(TypeMapper.class).staticInvoke("getInstance").invoke("getTypeByClass").arg(methodDomainClass.asJDefinedClass().dotclass()).invoke("parse").arg(rangeValueParam)));
 					methodBody.add(kbSetVar.invoke("add").arg(value));
 				}
+
 				// Add set to the individual
 				JVar entityVar = methodBody.decl(ownerInterface.asJDefinedClass(), "_entity", ownerInterface.asJDefinedClass().staticInvoke("get").arg(idParam));
 				methodBody.add(entityVar.invoke(methodName).arg(kbSetVar));

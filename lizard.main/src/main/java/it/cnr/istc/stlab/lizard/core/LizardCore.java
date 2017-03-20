@@ -2,7 +2,6 @@ package it.cnr.istc.stlab.lizard.core;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
@@ -55,6 +54,7 @@ import it.cnr.istc.stlab.lizard.commons.exception.OntologyNotValidException;
 import it.cnr.istc.stlab.lizard.commons.inmemory.RestInterface;
 import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClass;
 import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClassImpl;
+import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeMethod;
 import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeClass;
 import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeInterface;
 import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeModel;
@@ -73,6 +73,8 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 	private static final OntModelSpec INF_PROFILE = OntModelSpec.OWL_MEM_MINI_RULE_INF;
 	private static Logger logger = LoggerFactory.getLogger(LizardCore.class);
 	private static Logger logger_getProperties = LoggerFactory.getLogger(LizardCore.class.getCanonicalName() + ".getProperties");
+	private static Logger logger_create_bean_methods = LoggerFactory.getLogger(LizardCore.class.getCanonicalName() + ".createBeanMethods");
+	private static Logger logger_createRESTMethods = LoggerFactory.getLogger(LizardCore.class.getCanonicalName() + ".createRESTMethods");
 	private static Logger logger_high_level = LoggerFactory.getLogger("HIGH_LEVEL");
 
 	private static Logger logger_inspect = LoggerFactory.getLogger(LizardCore.class.getCanonicalName() + ".inspect");
@@ -145,12 +147,14 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 
 		OntologyCodeProject project = null;
 		try {
+			logger.info("Create Bean Project");
 			logger_high_level.info("Create Bean Project");
 			project = generateBeans();
 		} catch (NotAvailableOntologyCodeEntityException e) {
 			e.printStackTrace();
 		}
 		if (project != null) {
+			logger.info("Create REST Project");
 			logger_high_level.info("Create REST Project");
 			project = generateRestProject(project.getOntologyCodeModel());
 		}
@@ -190,13 +194,13 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 	private void createBeanMethods(AbstractOntologyCodeClass owner, OntologyCodeModel ontologyModel) {
 		OntClass ontClass = ontologyModel.asOntModel().getOntClass(owner.getOntResource().getURI());
 
-		logger_high_level.info("Create bean methods for: " + owner.getOntResource().getLocalName());
+		logger_create_bean_methods.trace("Create bean methods for: " + owner.getOntResource().getLocalName());
 
 		for (OntProperty ontProperty : getPropertiesOfClass(ontClass)) {
 
 			OntClass mostSpecificDomain = getMostSpecificDomain(ontProperty);
 
-			logger_high_level.info("Create bean methods for: " + ontProperty.getLocalName() + " most specific domain " + mostSpecificDomain.getLocalName());
+			logger_create_bean_methods.trace("Create bean methods for: " + ontProperty.getLocalName() + " most specific domain " + mostSpecificDomain.getLocalName());
 
 			if (!mostSpecificDomain.hasEquivalentClass(ontClass) && mostSpecificDomain.hasSuperClass(ontClass)) {
 				continue;
@@ -204,7 +208,7 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 
 			if (ontologyModel.asOntModel().getOntProperty(ontProperty.getURI()) == null) {
 				// The ont property has been introduced by the JENA reasoner
-				logger_high_level.trace(ontProperty + "has been introduced by the reasoner!");
+				logger_create_bean_methods.trace(ontProperty + "has been introduced by the reasoner!");
 				continue;
 			}
 
@@ -216,7 +220,7 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 					OntResource range = getMostSpecificRange(ontProperty);
 					if (range != null) {
 						if (range.isURIResource()) {
-							logger_high_level.trace("RANGE " + range.getURI());
+							logger_create_bean_methods.trace("RANGE " + range.getURI());
 							if (range.isClass()) {
 								createBeanMethodsForClassRange(ontProperty, range.asClass(), owner, ontologyModel);
 							}
@@ -338,132 +342,18 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 
 		logger_high_level.trace("Creating REST methods for class " + owner.getOntResource().getURI());
 
-		OntClass ontClass = ontologyModel.asOntModel().getOntClass(owner.getOntResource().getURI());
-		logger.debug("Create methods for class " + ontClass.getURI());
+		OntClass ontClass = ontologyModel.getInfOntModel().getOntClass(owner.getOntResource().getURI());
+		logger_createRESTMethods.debug("Create methods for class " + ontClass.getURI());
 
-		for (OntProperty ontProperty : getPropertiesOfClass(ontClass)) {
-
-			logger.debug("Creating REST method for class " + owner.getOntResource().getURI() + " and method " + ontProperty.getURI());
-
-			OntClass mostSpecificDomain = getMostSpecificDomain(ontProperty);
-
-			if (!mostSpecificDomain.hasEquivalentClass(ontClass) && mostSpecificDomain.hasSuperClass(ontClass)) {
-				continue;
-			}
-
-			if (ontologyModel.asOntModel().getOntProperty(ontProperty.getURI()) == null) {
-				// The ont property has been introduced by the JENA reasoner
-				logger_high_level.trace(ontProperty + "has been introduced by the reasoner!");
-				continue;
-			}
-
-			if (!causesNameClash(ontClass, ontProperty, ontologyModel)) {
-				Restriction restriction = hasRestrictionOnProperty(ontClass, ontProperty);
-				if (restriction != null) {
-					createRESTMethodsForRestriction(restriction, owner, ontologyModel);
-				} else {
-					OntResource range = getMostSpecificRange(ontProperty);
-					if (range != null) {
-						if (range.isURIResource()) {
-							logger_high_level.trace("RANGE " + range.getURI());
-							if (range.isClass()) {
-								createRESTMethodsForRangeClasses(ontProperty, range.asClass(), owner, ontologyModel);
-							}
-						} else {
-							createRESTMethodsForAnonClasses(ontProperty, range, owner, ontologyModel);
-						}
-					} else {
-						createRESTMethodsForPropertyWithoutRange(ontProperty, owner, ontologyModel);
-					}
-				}
-			}
+		AbstractOntologyCodeClass beanClass = ontologyModel.getOntologyClass(ontClass, BeanOntologyCodeClass.class);
+		for (AbstractOntologyCodeMethod beanMethod : beanClass.getMethods()) {
+			createRESTMethod(ontologyModel, owner, beanMethod.getOntResource().asProperty(), beanMethod.getDomain(), beanMethod.getRange(), beanMethod.getMethodType());
 		}
-	}
-
-	private void createRESTMethodsForAnonClasses(OntProperty ontProperty, OntResource range, AbstractOntologyCodeClass owner, OntologyCodeModel ontologyModel) {
-		BooleanAnonClass anonClass = manageAnonClasses(range.asClass(), ontologyModel);
-
-		Collection<AbstractOntologyCodeClass> domain = new ArrayList<AbstractOntologyCodeClass>();
-		domain.add(anonClass);
-
-		ontologyModel.createMethod(OntologyCodeMethodType.GET, ontProperty, owner, domain, anonClass);
-		ontologyModel.createMethod(OntologyCodeMethodType.SET, ontProperty, owner, domain, anonClass);
-		ontologyModel.createMethod(OntologyCodeMethodType.ADD_ALL, ontProperty, owner, domain, anonClass);
-		ontologyModel.createMethod(OntologyCodeMethodType.REMOVE_ALL, ontProperty, owner, domain, anonClass);
-	}
-
-	private void createRESTMethodsForPropertyWithoutRange(OntProperty ontProperty, AbstractOntologyCodeClass owner, OntologyCodeModel ontologyModel) {
-		OntResource thing = ontologyModel.asOntModel().createOntResource(OWL2.Thing.getURI());
-
-		Collection<AbstractOntologyCodeClass> domain = new ArrayList<AbstractOntologyCodeClass>();
-		domain.add(ontologyModel.getOntologyClass(thing, BeanOntologyCodeInterface.class));
-
-		ontologyModel.createMethod(OntologyCodeMethodType.GET, ontProperty, owner, domain, ontologyModel.getOntologyClass(thing, RestOntologyCodeClass.class));
-		ontologyModel.createMethod(OntologyCodeMethodType.SET, ontProperty, owner, domain, ontologyModel.getOntologyClass(thing, RestOntologyCodeClass.class));
-		ontologyModel.createMethod(OntologyCodeMethodType.ADD_ALL, ontProperty, owner, domain, ontologyModel.getOntologyClass(thing, RestOntologyCodeClass.class));
-		ontologyModel.createMethod(OntologyCodeMethodType.REMOVE_ALL, ontProperty, owner, domain, ontologyModel.getOntologyClass(thing, RestOntologyCodeClass.class));
-	}
-
-	private void createRESTMethodsForRangeClasses(OntProperty ontProperty, OntClass range, AbstractOntologyCodeClass owner, OntologyCodeModel ontologyModel) {
-
-		OntologyCodeInterface rangeClass = null;
-		/*
-		 * The property is a datatype property. In this case we use Jena to map the range to the appropriate Java type. E.g. xsd:string -> java.lang.String
-		 */
-
-		OntClass rangeOntClass = ModelFactory.createOntologyModel().createClass(range.getURI());
-		if (ontProperty.isDatatypeProperty()) {
-			try {
-				rangeClass = ontologyModel.createOntologyClass(rangeOntClass, DatatypeCodeInterface.class);
-			} catch (NotAvailableOntologyCodeEntityException e) {
-				e.printStackTrace();
-			}
-		} else {
-			try {
-				rangeClass = ontologyModel.createOntologyClass(rangeOntClass, BeanOntologyCodeInterface.class);
-			} catch (NotAvailableOntologyCodeEntityException e) {
-				e.printStackTrace();
-			}
-		}
-
-		Collection<AbstractOntologyCodeClass> domain = new ArrayList<AbstractOntologyCodeClass>();
-		domain.add(rangeClass);
-
-		logger.trace("Create method for ont " + ontProperty.getLocalName() + " RANGE " + range.getLocalName() + " in class " + owner.getOntResource().getLocalName());
-
-		ontologyModel.createMethod(OntologyCodeMethodType.GET, ontProperty, owner, domain, rangeClass);
-		ontologyModel.createMethod(OntologyCodeMethodType.SET, ontProperty, owner, domain, rangeClass);
-		ontologyModel.createMethod(OntologyCodeMethodType.ADD_ALL, ontProperty, owner, domain, rangeClass);
-		ontologyModel.createMethod(OntologyCodeMethodType.REMOVE_ALL, ontProperty, owner, domain, rangeClass);
 
 	}
 
-	private void createRESTMethodsForRestriction(Restriction restriction, AbstractOntologyCodeClass owner, OntologyCodeModel ontologyModel) {
-		OntProperty onProperty = restriction.getOnProperty();
-		Resource onClass = null;
-		if (restriction.isSomeValuesFromRestriction()) {
-			onClass = restriction.asSomeValuesFromRestriction().getSomeValuesFrom();
-		} else if (restriction.isAllValuesFromRestriction()) {
-			onClass = restriction.asAllValuesFromRestriction().getAllValuesFrom();
-		}
-
-		if (onClass != null && !onProperty.isDatatypeProperty()) {
-
-			try {
-				OntologyCodeClass rangeClass = ontologyModel.createOntologyClass(ontologyModel.asOntModel().getOntResource(onClass), RestOntologyCodeClass.class);
-
-				Collection<AbstractOntologyCodeClass> domain = new ArrayList<AbstractOntologyCodeClass>();
-				domain.add(rangeClass);
-
-				ontologyModel.createMethod(OntologyCodeMethodType.GET, onProperty, owner, domain, rangeClass);
-				ontologyModel.createMethod(OntologyCodeMethodType.SET, onProperty, owner, domain, rangeClass);
-				ontologyModel.createMethod(OntologyCodeMethodType.ADD_ALL, onProperty, owner, domain, rangeClass);
-				ontologyModel.createMethod(OntologyCodeMethodType.REMOVE_ALL, onProperty, owner, domain, rangeClass);
-
-			} catch (NotAvailableOntologyCodeEntityException e) {
-				e.printStackTrace();
-			}
-		}
+	private void createRESTMethod(OntologyCodeModel ontologyModel, AbstractOntologyCodeClass owner, OntProperty ontProperty, Collection<AbstractOntologyCodeClass> domain, AbstractOntologyCodeClass rangeClass, OntologyCodeMethodType type) {
+		ontologyModel.createMethod(type, ontProperty, owner, domain, rangeClass);
 	}
 
 	private OntologyCodeProject generateBeans() throws NotAvailableOntologyCodeEntityException {
@@ -519,6 +409,7 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 		}
 
 		// Extends for interfaces
+		logger.info("Creating bean classes");
 		Map<OntResource, BeanOntologyCodeInterface> interfaceClassMap = ontologyCodeModel.getOntologyClasses(BeanOntologyCodeInterface.class);
 		interfaceClassMap.values().forEach(_interface -> {
 			OntClass interfaceOntClass = ontologyCodeModel.getInfOntModel().getOntClass(_interface.getOntResource().getURI());
@@ -536,6 +427,7 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 		/*
 		 * Create class implementations for java beans
 		 */
+
 		Map<OntResource, BeanOntologyCodeClass> beanClassMap = ontologyCodeModel.getOntologyClasses(BeanOntologyCodeClass.class);
 
 		Set<OntResource> ontResources = beanClassMap.keySet();
@@ -576,6 +468,7 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 		/*
 		 * Create class implementations for Jena-based classes
 		 */
+		logger.info("Creating jena classes");
 		Map<OntResource, JenaOntologyCodeClass> jenaClassMap = ontologyCodeModel.getOntologyClasses(JenaOntologyCodeClass.class);
 		ontResources = jenaClassMap.keySet();
 		final Set<AbstractOntologyCodeClassImpl> jenaClasses = new HashSet<AbstractOntologyCodeClassImpl>();
@@ -764,10 +657,10 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 
 		for (OntProperty opInf : ontProperties) {
 
-			logger.debug("Checking add D: " + c.getLocalName() + ", P:" + opInf.getLocalName());
+			logger_getProperties.debug("Checking add D: " + c.getLocalName() + ", P:" + opInf.getLocalName());
 
 			if (!opInf.isURIResource()) {
-				logger.warn("Property chain ignored!");
+				logger_getProperties.warn("Property chain ignored!");
 				continue;
 			}
 
@@ -785,18 +678,27 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 							OntClass member = members.next();
 							if (member.getURI().equals(c.getURI()) || member.hasSubClass(c)) {
 								r.add(opInf);
-								logger.trace("Adding inf " + opInf.getURI());
 								logger_getProperties.trace("Adding inf " + opInf.getURI());
 							}
 						}
 					} else if (dom.isURIResource() && !dom.asClass().isRestriction()) {
-
-						if (dom.getURI().equals(c.getURI()) || dom.asClass().hasSubClass(c)) {
-							// The domain domain is a class
+						logger_getProperties.trace("Property domain of " + opInf.getURI() + " " + dom.getURI());
+						if (dom.asClass().hasEquivalentClass(c)) {
 							r.add(opInf);
-							logger.debug("Adding " + opInf.getURI() + " ");
 							logger_getProperties.debug("Adding not inf " + opInf.getURI() + " ");
+						} else {
+							OntClass mostspecific_domain = getMostSpecificDomain(opInf);
+							logger_getProperties.trace("Most specific domain: " + mostspecific_domain.getURI());
+							if (mostspecific_domain != null && mostspecific_domain.hasSubClass(c)) {
+								r.add(opInf);
+								logger_getProperties.debug("Adding not inf " + opInf.getURI() + " ");
+							}
 						}
+						// if (dom.getURI().equals(c.getURI()) || dom.asClass().hasSubClass(c)) {
+						// // The domain domain is a class
+						// r.add(opInf);
+						// logger_getProperties.debug("Adding not inf " + opInf.getURI() + " ");
+						// }
 
 					}
 				}
@@ -824,7 +726,7 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 
 	private void validateOntology(OntModel ontModel) {
 
-		logger.trace("Validating inf model");
+		logger.info("Validating inf model");
 		ValidityReport validity = ontModel.validate();
 		if (validity != null) {
 			if (!validity.isValid()) {
@@ -931,14 +833,18 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 		URI[] uris = {};
 
 		try {
-//			uri = new URI("/Users/lgu/Dropbox/stlab/ontologies/paraphrase/ppdb.owl");
-			 uri = new URI("http://www.ontologydesignpatterns.org/ont/mario/tagging.owl");
+			// uri = new URI("/Users/lgu/Dropbox/stlab/ontologies/paraphrase/ppdb.owl");
+			uri = new URI("http://www.ontologydesignpatterns.org/ont/mario/cga.owl");
 			// uri = new URI("/Users/lgu/Desktop/ont.owl");
-			OntologyCodeGenerationRecipe codegen = new LizardCore(uri);
+			OntologyCodeGenerationRecipe codegen = new LizardCore(uri, new URI[] { new URI("/Users/lgu/Dropbox/stlab/ontologies/paraphrase/ppdb.owl") });
+			// OntologyCodeGenerationRecipe codegen = new LizardCore(uri);
+			long t1 = System.currentTimeMillis();
 			OntologyCodeProject ontologyCodeProject = codegen.generate();
+			long t2 = System.currentTimeMillis();
+			System.out.println("API generated in " + (t2 - t1) + "ms");
 
 			try {
-				String outFolder = "/Users/lgu/Desktop/Lizard/generated-projects/tagging";
+				String outFolder = "/Users/lgu/Desktop/Lizard/generated-projects/cga";
 				File testFolder = new File(outFolder);
 				if (testFolder.exists()) {
 					System.out.println("esists " + testFolder.getClass());
@@ -981,7 +887,7 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 					om.read(u.toString());
 				}
 
-				writeGeneratedOntologies(om, outFolder);
+				// writeGeneratedOntologies(om, outFolder);
 
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -994,32 +900,32 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 
 	public static final String ontologiesFileName = "ontologies";
 
-	private static void writeGeneratedOntologies(OntModel ontModel, String folder) throws IOException {
-		FileOutputStream fos = new FileOutputStream(new File(folder + "/" + ontologiesFileName));
-
-		String ontModelBase = ontModel.getNsPrefixURI("");
-		if (ontModelBase.endsWith("#")) {
-			ontModelBase = ontModelBase.substring(0, ontModelBase.length() - 1);
-		}
-		ontModelBase += "\n";
-
-		fos.write(ontModelBase.getBytes());
-
-		ontModel.listSubModels(true).forEachRemaining(om -> {
-			String toPrint = om.getNsPrefixURI("");
-			if (toPrint.endsWith("#")) {
-				toPrint = toPrint.substring(0, toPrint.length() - 1);
-			}
-			toPrint += "\n";
-			try {
-				fos.write(toPrint.getBytes());
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		});
-
-		fos.close();
-	}
+	// private static void writeGeneratedOntologies(OntModel ontModel, String folder) throws IOException {
+	// FileOutputStream fos = new FileOutputStream(new File(folder + "/" + ontologiesFileName));
+	//
+	// String ontModelBase = ontModel.getNsPrefixURI("");
+	// if (ontModelBase.endsWith("#")) {
+	// ontModelBase = ontModelBase.substring(0, ontModelBase.length() - 1);
+	// }
+	// ontModelBase += "\n";
+	//
+	// fos.write(ontModelBase.getBytes());
+	//
+	// ontModel.listSubModels(true).forEachRemaining(om -> {
+	// String toPrint = om.getNsPrefixURI("");
+	// if (toPrint.endsWith("#")) {
+	// toPrint = toPrint.substring(0, toPrint.length() - 1);
+	// }
+	// toPrint += "\n";
+	// try {
+	// fos.write(toPrint.getBytes());
+	// } catch (IOException e) {
+	// e.printStackTrace();
+	// }
+	// });
+	//
+	// fos.close();
+	// }
 
 	private static boolean hasMethod(JDefinedClass jdefClass, String methodName) {
 		for (JMethod m : jdefClass.methods()) {
