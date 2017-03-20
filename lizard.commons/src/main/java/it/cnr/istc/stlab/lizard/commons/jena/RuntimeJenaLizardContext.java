@@ -33,7 +33,7 @@ public class RuntimeJenaLizardContext {
 		return context;
 	}
 
-	public void switchContext(String lizardConfFilepath) {
+	public static void switchContext(String lizardConfFilepath) {
 		context = null;
 		configurationFilePath = lizardConfFilepath;
 	}
