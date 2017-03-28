@@ -7,6 +7,8 @@ import org.apache.jena.ontology.OntResource;
 
 import com.sun.codemodel.JCodeModel;
 import com.sun.codemodel.JDefinedClass;
+import com.sun.codemodel.JExpr;
+import com.sun.codemodel.JMod;
 
 import it.cnr.istc.stlab.lizard.commons.exception.ClassAlreadyExistsException;
 import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClass;
@@ -21,13 +23,18 @@ public class BeanOntologyCodeInterface extends OntologyCodeInterface {
 
 	BeanOntologyCodeInterface(OntResource resource, OntologyCodeModel ontologyModel, JCodeModel codeModel) throws ClassAlreadyExistsException {
 		super(resource, ontologyModel, codeModel);
+		init();
+	}
+
+	private void init() {
+		((JDefinedClass) super.jClass).field(JMod.FINAL | JMod.PUBLIC | JMod.STATIC, super.jCodeModel.ref(String.class), "CLASS_IRI", JExpr.lit(ontResource.getURI()));
 	}
 
 	public void addInterfaceToExtend(BeanOntologyCodeInterface interfaceToExtend) {
 		intefacesToExtend.add(interfaceToExtend);
 		((JDefinedClass) super.jClass)._extends((JDefinedClass) interfaceToExtend.jClass);
 	}
-	
+
 	public Set<BeanOntologyCodeInterface> listSuperInterfaces() {
 		return intefacesToExtend;
 	}
