@@ -772,7 +772,6 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 			ExtendedIterator<OntClass> subClasses = ontClass.listSubClasses();
 			while (subClasses.hasNext()) {
 				OntClass subClass = subClasses.next();
-
 				if (subClass.isURIResource()) {
 					visitHierarchyTreeForBeans(subClass, ontologyModel);
 				} else {

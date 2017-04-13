@@ -19,6 +19,52 @@
 		<jetty.version>9.3.12.v20160915</jetty.version>
 	</properties>
 
+
+
+
+	<build>
+		<!-- download source code in Eclipse, best practice -->
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-eclipse-plugin</artifactId>
+				<version>2.9</version>
+				<configuration>
+					<downloadSources>true</downloadSources>
+					<downloadJavadocs>false</downloadJavadocs>
+				</configuration>
+			</plugin>
+
+			<!-- Set a JDK compiler level -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>2.3.2</version>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+				</configuration>
+			</plugin>
+
+			<!-- Make this jar executable -->
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<configuration>
+					<!-- DO NOT include log4j.properties file in your Jar -->
+					<archive>
+						<manifest>
+							<!-- Jar file entry point -->
+							<mainClass>it.cnr.istc.stlab.lizard.jetty.JettyServer</mainClass>
+						</manifest>
+					</archive>
+					<descriptorRefs>
+						<descriptorRef>jar-with-dependencies</descriptorRef>
+					</descriptorRefs>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
 	<dependencies>
 
 		<!-- Ontologies -->
@@ -27,14 +73,7 @@
 			<groupId>org.w3id</groupId>
 			<artifactId>ppdb.ontology</artifactId>
 			<version>0.9-SNAPSHOT</version>
-		</dependency> 
-		<!--
-		<dependency> 
-			<groupId>org.ontologydesignpatterns</groupId>
-			<artifactId>ont.mario.cga_owl</artifactId>
-			<version>0.9-SNAPSHOT</version>
-		</dependency> -->
-	
+		</dependency>
 
 		<!-- JUNIT -->
 		<dependency>

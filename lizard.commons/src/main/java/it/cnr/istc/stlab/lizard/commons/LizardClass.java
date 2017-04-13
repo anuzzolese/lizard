@@ -9,7 +9,7 @@ import org.apache.jena.rdf.model.RDFNode;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-@JsonIgnoreProperties({ "individual", "classResource","propertyMap","extentionalClasses" })
+@JsonIgnoreProperties({ "individual", "classResource", "propertyMap", "extentionalClasses" })
 public class LizardClass implements LizardInterface {
 	@JsonIgnore
 	protected RDFNode individual;
@@ -34,8 +34,7 @@ public class LizardClass implements LizardInterface {
 	}
 
 	@JsonIgnore
-	protected LizardClass(RDFNode individual, OntResource classResource,
-			PropertyMap propertyMap) {
+	protected LizardClass(RDFNode individual, OntResource classResource, PropertyMap propertyMap) {
 		this();
 		this.individual = individual;
 		this.classResource = classResource;
@@ -73,8 +72,7 @@ public class LizardClass implements LizardInterface {
 	}
 
 	@JsonIgnore
-	public Object getPropertyValue(OntResource ontResource,
-			Class<? extends Object> objectClass) {
+	public Object getPropertyValue(OntResource ontResource, Class<? extends Object> objectClass) {
 		return propertyMap.get(ontResource, objectClass);
 	}
 
@@ -82,10 +80,5 @@ public class LizardClass implements LizardInterface {
 	public void setPropertyValue(OntResource ontResource, Object object) {
 		propertyMap.put(ontResource, object);
 	}
-	
-//	public static void prova(){
-//		
-//	}
-
 
 }

@@ -13,7 +13,7 @@ public class Bootstrap extends HttpServlet {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	
+
 	public static final String TITLE = "title";
 	public static final String VERSION = "version";
 	public static final String BASE_PATH = "basepath";
@@ -31,9 +31,9 @@ public class Bootstrap extends HttpServlet {
 		// info
 		beanConfig.setTitle(config.getInitParameter(TITLE));
 		beanConfig.setDescription(config.getInitParameter(DESCRIPTION));
-		beanConfig.setSchemes(new String[] {"http"});
+		beanConfig.setSchemes(new String[] { "http" });
 		beanConfig.setHost(config.getInitParameter(HOST));
-		//beanConfig.setUsePathBasedConfig(true);
+		// beanConfig.setUsePathBasedConfig(true);
 		beanConfig.setBasePath(config.getInitParameter(BASE_PATH));
 		beanConfig.setContact("stlab@cnr.it");
 		beanConfig.setLicense("Apache 2.0");
@@ -45,14 +45,14 @@ public class Bootstrap extends HttpServlet {
 		beanConfig.setVersion(config.getInitParameter(VERSION));
 
 		// Resource package
-		System.err.println("BEAN CONFIG SCAN FOR " + config.getInitParameter(PACKAGE));
+		System.out.println("BEAN CONFIG SCAN FOR " + config.getInitParameter(PACKAGE));
 		beanConfig.setResourcePackage(config.getInitParameter(PACKAGE));
 		beanConfig.setScan();
-		//beanConfig.setScan(true);
-		
+		// beanConfig.setScan(true);
+
 		Swagger swagger = new Swagger();
 		new SwaggerContextService().withSwaggerConfig(beanConfig).updateSwagger(swagger);
-		
+
 	}
 
 }

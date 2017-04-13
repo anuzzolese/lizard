@@ -10,6 +10,7 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 
 import it.cnr.istc.stlab.lizard.commons.inmemory.RestInterface;
+import it.cnr.istc.stlab.lizard.commons.jena.RuntimeJenaLizardContext;
 import it.cnr.istc.stlab.lizard.commons.jersey.SetBodyWriter;
 import it.cnr.istc.stlab.lizard.jetty.resources.Lizard;
 import it.cnr.istc.stlab.lizard.jetty.utils.FileUtils;
@@ -17,6 +18,8 @@ import it.cnr.istc.stlab.lizard.jetty.utils.FileUtils;
 public class JettyServer {
 
 	public static void main(String[] args) {
+
+		boolean swagger = RuntimeJenaLizardContext.getContext().getConf().isSwagger();
 
 		Logger log = Logger.getLogger(JettyServer.class);
 
@@ -27,16 +30,16 @@ public class JettyServer {
 			String portString = args[0];
 
 			if (portString == null) {
-				port = 8080;
+				port = 8585;
 			} else {
 				try {
 					port = Integer.valueOf(portString);
 				} catch (NumberFormatException e) {
-					port = 8080;
+					port = 8585;
 				}
 			}
 		} else {
-			port = 8080;
+			port = 8585;
 		}
 
 		// Jetty server
@@ -50,25 +53,32 @@ public class JettyServer {
 		ServletHolder servletHolder = servletContextHandler.addServlet(org.glassfish.jersey.servlet.ServletContainer.class, "/lizard/*");
 		System.out.println("Lizard service will be available at " + "http://localhost:" + port + "/lizard/*");
 		servletHolder.setInitOrder(1);
-		servletHolder.setInitParameter("jersey.config.server.provider.packages", "io.swagger.jaxrs.listing," + FileUtils.getNamePackage(Lizard.class));
+		if (swagger)
+			servletHolder.setInitParameter("jersey.config.server.provider.packages", "io.swagger.jaxrs.listing," + FileUtils.getNamePackage(Lizard.class));
+		else
+			servletHolder.setInitParameter("jersey.config.server.provider.packages", FileUtils.getNamePackage(Lizard.class));
 		servletHolder.setInitParameter("jersey.config.server.wadl.disableWadl", "true");
 		servletHolder.setInitParameter("jersey.config.server.provider.classnames", "org.glassfish.jersey.jackson.JacksonFeature");
-		servletHolder.setInitParameter("swagger.scanner.id", Lizard.class.getName());
-		servletHolder.setInitParameter("swagger.context.id", Lizard.class.getName());
-		servletHolder.setInitParameter("swagger.config.id", Lizard.class.getName());
-		// servletHolder.setInitParameter("swagger.use.path.based.config","true");
+		if (swagger) {
+			servletHolder.setInitParameter("swagger.scanner.id", Lizard.class.getName());
+			servletHolder.setInitParameter("swagger.context.id", Lizard.class.getName());
+			servletHolder.setInitParameter("swagger.config.id", Lizard.class.getName());
+			// servletHolder.setInitParameter("swagger.use.path.based.config","true");
+		}
 
-		ServletHolder lizardRestHolder = servletContextHandler.addServlet(Bootstrap.class, "/" + Lizard.class.getName());
-		lizardRestHolder.setInitOrder(2);
-		lizardRestHolder.setInitParameter("swagger.scanner.id", Lizard.class.getName());
-		lizardRestHolder.setInitParameter("swagger.context.id", Lizard.class.getName());
-		lizardRestHolder.setInitParameter("swagger.config.id", Lizard.class.getName());
-		lizardRestHolder.setInitParameter(Bootstrap.TITLE, "Lizard");
-		lizardRestHolder.setInitParameter(Bootstrap.PACKAGE, FileUtils.getNamePackage(Lizard.class));
-		lizardRestHolder.setInitParameter(Bootstrap.BASE_PATH, "/lizard");
-		lizardRestHolder.setInitParameter(Bootstrap.DESCRIPTION, "Lizard automatically generates Rest APIs for managing ontologies");
-		lizardRestHolder.setInitParameter(Bootstrap.HOST, "localhost:" + port);
-		lizardRestHolder.setInitParameter(Bootstrap.VERSION, "0.1");
+		if (swagger) {
+			ServletHolder lizardRestHolder = servletContextHandler.addServlet(Bootstrap.class, "/" + Lizard.class.getName());
+			lizardRestHolder.setInitOrder(2);
+			lizardRestHolder.setInitParameter("swagger.scanner.id", Lizard.class.getName());
+			lizardRestHolder.setInitParameter("swagger.context.id", Lizard.class.getName());
+			lizardRestHolder.setInitParameter("swagger.config.id", Lizard.class.getName());
+			lizardRestHolder.setInitParameter(Bootstrap.TITLE, "Lizard");
+			lizardRestHolder.setInitParameter(Bootstrap.PACKAGE, FileUtils.getNamePackage(Lizard.class));
+			lizardRestHolder.setInitParameter(Bootstrap.BASE_PATH, "/lizard");
+			lizardRestHolder.setInitParameter(Bootstrap.DESCRIPTION, "Lizard automatically generates Rest APIs for managing ontologies");
+			lizardRestHolder.setInitParameter(Bootstrap.HOST, "localhost:" + port);
+			lizardRestHolder.setInitParameter(Bootstrap.VERSION, "0.1");
+		}
 
 		// Other servlets
 		ServiceLoader<RestInterface> restInterfaceLoader = ServiceLoader.load(RestInterface.class);
@@ -84,24 +94,30 @@ public class JettyServer {
 				ServletHolder servletHolderRestOntology = servletContextHandler.addServlet(org.glassfish.jersey.servlet.ServletContainer.class, "/" + basePathResources + "/*");
 				System.out.println("Package " + packageJavaName + " - Service will be available at " + "http://localhost:" + serverPort + "/" + basePathResources + "/*");
 				servletHolderRestOntology.setInitOrder(1);
-				servletHolderRestOntology.setInitParameter("jersey.config.server.provider.packages", "io.swagger.jaxrs.listing," + FileUtils.getNamePackage(SetBodyWriter.class) + "," + packageJavaName);
+				if (swagger)
+					servletHolderRestOntology.setInitParameter("jersey.config.server.provider.packages", "io.swagger.jaxrs.listing," + FileUtils.getNamePackage(SetBodyWriter.class) + "," + packageJavaName);
+				else
+					servletHolderRestOntology.setInitParameter("jersey.config.server.provider.packages", FileUtils.getNamePackage(SetBodyWriter.class) + "," + packageJavaName);
+
 				servletHolderRestOntology.setInitParameter("jersey.config.server.wadl.disableWadl", "true");
 				servletHolderRestOntology.setInitParameter("jersey.config.server.provider.classnames", "org.glassfish.jersey.jackson.JacksonFeature");
-				servletHolderRestOntology.setInitParameter("swagger.scanner.id", packageJavaName);
-				servletHolderRestOntology.setInitParameter("swagger.context.id", packageJavaName);
-				servletHolderRestOntology.setInitParameter("swagger.config.id", packageJavaName);
+				if (swagger) {
+					servletHolderRestOntology.setInitParameter("swagger.scanner.id", packageJavaName);
+					servletHolderRestOntology.setInitParameter("swagger.context.id", packageJavaName);
+					servletHolderRestOntology.setInitParameter("swagger.config.id", packageJavaName);
 
-				ServletHolder ontologySwaggerHolder = servletContextHandler.addServlet(Bootstrap.class, "/swagger/" + basePathResources);
-				ontologySwaggerHolder.setInitOrder(2);
-				ontologySwaggerHolder.setInitParameter("swagger.scanner.id", packageJavaName);
-				ontologySwaggerHolder.setInitParameter("swagger.context.id", packageJavaName);
-				ontologySwaggerHolder.setInitParameter("swagger.config.id", packageJavaName);
-				ontologySwaggerHolder.setInitParameter(Bootstrap.TITLE, packageJavaName);
-				ontologySwaggerHolder.setInitParameter(Bootstrap.PACKAGE, packageJavaName);
-				ontologySwaggerHolder.setInitParameter(Bootstrap.BASE_PATH, "/" + basePathResources);
-				ontologySwaggerHolder.setInitParameter(Bootstrap.DESCRIPTION, "Rest services defined in package " + packageJavaName + " for accessing the corresponding ontology.");
-				ontologySwaggerHolder.setInitParameter(Bootstrap.HOST, "localhost:" + serverPort);
-				ontologySwaggerHolder.setInitParameter(Bootstrap.VERSION, "0.99"); // TODO
+					ServletHolder ontologySwaggerHolder = servletContextHandler.addServlet(Bootstrap.class, "/swagger/" + basePathResources);
+					ontologySwaggerHolder.setInitOrder(2);
+					ontologySwaggerHolder.setInitParameter("swagger.scanner.id", packageJavaName);
+					ontologySwaggerHolder.setInitParameter("swagger.context.id", packageJavaName);
+					ontologySwaggerHolder.setInitParameter("swagger.config.id", packageJavaName);
+					ontologySwaggerHolder.setInitParameter(Bootstrap.TITLE, packageJavaName);
+					ontologySwaggerHolder.setInitParameter(Bootstrap.PACKAGE, packageJavaName);
+					ontologySwaggerHolder.setInitParameter(Bootstrap.BASE_PATH, "/" + basePathResources);
+					ontologySwaggerHolder.setInitParameter(Bootstrap.DESCRIPTION, "Rest services defined in package " + packageJavaName + " for accessing the corresponding ontology.");
+					ontologySwaggerHolder.setInitParameter(Bootstrap.HOST, "localhost:" + serverPort);
+					ontologySwaggerHolder.setInitParameter(Bootstrap.VERSION, "0.99"); // TODO
+				}
 				aaPackages.add(packageJavaName);
 			}
 		});

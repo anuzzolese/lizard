@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.jena.ontology.OntDocumentManager;
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.ontology.OntModelSpec;
 import org.apache.jena.query.Query;
@@ -28,6 +29,10 @@ public class JenaLizardContext {
 	private Model model;
 	private JenaLizardConfiguration conf;
 
+	public JenaLizardConfiguration getConf() {
+		return conf;
+	}
+
 	JenaLizardContext(JenaLizardConfiguration conf) {
 		this.conf = conf;
 		init();
@@ -35,55 +40,54 @@ public class JenaLizardContext {
 
 	private void init() {
 		RepositoryType repositoryType = conf.getType();
+		
+		System.out.println(conf.toString());
+
 		switch (repositoryType) {
 		case Virtuoso:
-
-			System.out.println("Configuration [graph:" + conf.getGraph() + ", Host:" + conf.getVirtuosoHost() + ",Port:" + conf.getVirtuosoPort() + ",User:" + conf.getVirtuosoUser() + ",Password:" + conf.getVirtuosoPassword() + "]");
-
 			String url = "jdbc:virtuoso://" + conf.getVirtuosoHost() + ":" + conf.getVirtuosoPort();
-			System.out.println(getClass() + " : " + url + " credentials " + conf.getVirtuosoUser() + ":" + conf.getVirtuosoPassword());
-
 			model = new VirtModel(new VirtGraph(conf.getGraph(), url, conf.getVirtuosoUser(), conf.getVirtuosoPassword()));
-
 			break;
-
 		case TDB:
 			model = TDBFactory.createDataset(conf.getTdbLocation()).getDefaultModel();
 			break;
 		case File:
-			System.out.println("Configuration for model file [modelFilePath=" + conf.getModelFilePath() + ",lang=" + conf.getLang() + ",inference=" + conf.getInference() + ",ontologiesFile=" + conf.getOntologies_file() + "]");
 			if (!conf.getInference()) {
 				model = ModelFactory.createDefaultModel();
 				RDFDataMgr.read(model, conf.getModelFilePath());
+				model.register(new JenaLizardModelListener(model, conf.getModelFilePath(), conf.getLang()));
 			} else {
+				OntDocumentManager odm = new OntDocumentManager(conf.getJena_doc_manager());
 				OntModelSpec oms = OntModelSpec.OWL_MEM;
+				oms.setDocumentManager(odm);
 				OntModel om = ModelFactory.createOntologyModel(oms);
-				System.out.println("Loading ontologies with language " + oms.getLanguage()+" ");
+				System.out.println("Loading ontologies with language " + oms.getLanguage() + " ");
 
 				List<String> files;
 				try {
 					files = getLines(conf.getOntologies_file());
 					for (String file : files) {
-						System.out.println("Loading ontology "+file);
+						System.out.println("Loading ontology " + file);
 						om.read(file);
 					}
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
-				System.out.println("Ontology loaded ");
+				System.out.println("Ontology loaded " + om.size());
 
 				Model data = ModelFactory.createDefaultModel();
 				RDFDataMgr.read(data, conf.getModelFilePath());
 
 				System.out.println("Model loaded");
-				
+
 				Reasoner resasoner = ReasonerRegistry.getRDFSSimpleReasoner();
 				InfModel infModel = ModelFactory.createInfModel(resasoner, om, data);
-				System.out.println("Inf model created, Reasoner: "+resasoner.getClass().getSimpleName());
+				System.out.println("Inf model created, Reasoner: " + resasoner.getClass().getSimpleName());
 
 				model = infModel;
+				infModel.register(new JenaLizardModelListener(data, conf.getModelFilePath(), conf.getLang()));
 			}
-			model.register(new JenaLizardModelListener(model, conf.getModelFilePath(), conf.getLang()));
+
 			break;
 		default:
 			model = ModelFactory.createDefaultModel();
@@ -94,9 +98,6 @@ public class JenaLizardContext {
 	public Model getModel() {
 		return model;
 	}
-	
-	
-	
 
 	public QueryExecution createQueryExecution(Query q, Model m) {
 		switch (conf.getType()) {
@@ -120,6 +121,7 @@ public class JenaLizardContext {
 		String line = br.readLine();
 		while (line != null) {
 			result.add(line);
+			line = br.readLine();
 		}
 		br.close();
 		return result;

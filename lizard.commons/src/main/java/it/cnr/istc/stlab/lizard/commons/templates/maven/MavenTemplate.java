@@ -14,17 +14,20 @@ public class MavenTemplate extends AbstractTemplate {
 
 	protected static final String TEMPLATE_FOLDER = "/templates/maven";
 
-	public MavenTemplate() {
+	public MavenTemplate(boolean marvin) {
 		super(TEMPLATE_FOLDER);
 		try {
-			template = cfg.getTemplate("pom.ftl");
+			if (marvin)
+				template = cfg.getTemplate("pom_marvin.ftl");
+			else
+				template = cfg.getTemplate("pom.ftl");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
 	public static void main(String[] args) {
-		ITemplate iTemplate = new MavenTemplate();
+		ITemplate iTemplate = new MavenTemplate(false);
 		Template template = iTemplate.getTemplate();
 		Map<String, Object> dataModel = new HashMap<String, Object>();
 		dataModel.put("groupId", "test");

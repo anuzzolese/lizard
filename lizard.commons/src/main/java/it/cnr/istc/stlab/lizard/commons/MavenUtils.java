@@ -21,9 +21,9 @@ import it.cnr.istc.stlab.lizard.commons.templates.maven.MavenTemplate;
 
 public class MavenUtils {
 
-	public static void generatePOM(Writer out, Map<String, String> model) {
+	public static void generatePOM(Writer out, Map<String, String> model, boolean marvin) {
 
-		MavenTemplate mavenTemplate = new MavenTemplate();
+		MavenTemplate mavenTemplate = new MavenTemplate(marvin);
 		Template template = mavenTemplate.getTemplate();
 		try {
 			template.process(model, out);

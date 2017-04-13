@@ -15,6 +15,8 @@ public class JenaLizardConfiguration {
 	public static final String GRAPH = "graph";
 	public static final String INFERENCE_ON_DATA = "inference_on_data";
 	public static final String ONTOLOGIES_FILE = "ontologies_file";
+	public static final String SWAGGER = "swagger";
+	public static final String JENA_DOC_MANAGER = "jan_doc_manager";
 
 	private String tdbLocation;
 	private String modelFilePath;
@@ -26,7 +28,9 @@ public class JenaLizardConfiguration {
 	private String graph;
 	private String lang;
 	private boolean inference;
+	private boolean swagger;
 	private String ontologies_file;
+	private String jena_doc_manager;
 
 	public JenaLizardConfiguration() {
 
@@ -40,6 +44,9 @@ public class JenaLizardConfiguration {
 			typeString = typeString.toLowerCase().trim();
 			this.inference = Boolean.parseBoolean(props.getProperty(INFERENCE_ON_DATA));
 			this.ontologies_file = props.getProperty(ONTOLOGIES_FILE);
+			this.swagger = Boolean.parseBoolean(props.getProperty(SWAGGER));
+			this.jena_doc_manager = props.getProperty(JENA_DOC_MANAGER);
+
 			if (typeString.equals("virtuoso")) {
 				type = RepositoryType.Virtuoso;
 				setType(type);
@@ -54,9 +61,9 @@ public class JenaLizardConfiguration {
 				typeString = props.getProperty(TDB_LOCATION);
 				if (typeString != null)
 					setTdbLocation(typeString);
-			} else if (typeString.equals("inmemory")){
+			} else if (typeString.equals("inmemory")) {
 				type = RepositoryType.InMemory;
-			} else if(typeString.equalsIgnoreCase("file")){
+			} else if (typeString.equalsIgnoreCase("file")) {
 				type = RepositoryType.File;
 				this.setModelFilePath(props.getProperty(MODEL_FILEPATH));
 				this.setLang(props.getProperty(MODEL_LANG));
@@ -179,5 +186,29 @@ public class JenaLizardConfiguration {
 	public void setOntologies_file(String ontologies_file) {
 		this.ontologies_file = ontologies_file;
 	}
+
+	public boolean isSwagger() {
+		return swagger;
+	}
+
+	public void setSwagger(boolean swagger) {
+		this.swagger = swagger;
+	}
+
+	public String getJena_doc_manager() {
+		return jena_doc_manager;
+	}
+
+	public void setJena_doc_manager(String jena_doc_manager) {
+		this.jena_doc_manager = jena_doc_manager;
+	}
+
+	@Override
+	public String toString() {
+		return "JenaLizardConfiguration [tdbLocation=" + tdbLocation + ", modelFilePath=" + modelFilePath + ", type=" + type + ", virtuosoUser=" + virtuosoUser + ", virtuosoPassword=" + virtuosoPassword + ", virtuosoHost=" + virtuosoHost + ", virtuosoPort=" + virtuosoPort + ", graph=" + graph + ", lang=" + lang + ", inference=" + inference + ", swagger=" + swagger + ", ontologies_file=" + ontologies_file + ", jena_doc_manager=" + jena_doc_manager + "]";
+	}
+	
+	
+	
 
 }
