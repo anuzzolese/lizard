@@ -1,16 +1,5 @@
 package it.cnr.istc.stlab.lizard.core.model;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import it.cnr.istc.stlab.lizard.commons.Constants;
-import it.cnr.istc.stlab.lizard.commons.PrefixRegistry;
-import it.cnr.istc.stlab.lizard.commons.exception.ClassAlreadyExistsException;
-import it.cnr.istc.stlab.lizard.commons.inmemory.RestInterface;
-import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClass;
-import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeClass;
-import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeInterface;
-
 import java.util.HashSet;
 import java.util.Set;
 
@@ -27,9 +16,11 @@ import javax.ws.rs.core.Response.Status;
 import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntResource;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.sun.codemodel.JAnnotationArrayMember;
 import com.sun.codemodel.JBlock;
 import com.sun.codemodel.JClassAlreadyExistsException;
 import com.sun.codemodel.JCodeModel;
@@ -42,6 +33,17 @@ import com.sun.codemodel.JMethod;
 import com.sun.codemodel.JMod;
 import com.sun.codemodel.JType;
 import com.sun.codemodel.JVar;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import it.cnr.istc.stlab.lizard.commons.Constants;
+import it.cnr.istc.stlab.lizard.commons.PrefixRegistry;
+import it.cnr.istc.stlab.lizard.commons.exception.ClassAlreadyExistsException;
+import it.cnr.istc.stlab.lizard.commons.inmemory.RestInterface;
+import it.cnr.istc.stlab.lizard.commons.model.AbstractOntologyCodeClass;
+import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeClass;
+import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeInterface;
 
 public class RestOntologyCodeClass extends OntologyCodeClass {
 
@@ -98,6 +100,9 @@ public class RestOntologyCodeClass extends OntologyCodeClass {
 			((JDefinedClass) super.jClass).annotate(Path.class).param("value", path);
 			((JDefinedClass) super.jClass).annotate(Api.class).param("value", path);
 			((JDefinedClass) super.jClass).annotate(Produces.class).param("value", jCodeModel.ref(MediaType.class).staticRef("APPLICATION_JSON"));
+
+			// OSGi Annotation
+			((JDefinedClass) super.jClass).annotate(Component.class).param("service", jCodeModel.ref(Object.class)).paramArray("property").param("javax.ws.rs=true");
 		} catch (JClassAlreadyExistsException e) {
 			super.jClass = codeModel._getClass(entityName);
 		}

@@ -76,8 +76,8 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 	private static Logger logger_create_bean_methods = LoggerFactory.getLogger(LizardCore.class.getCanonicalName() + ".createBeanMethods");
 	private static Logger logger_createRESTMethods = LoggerFactory.getLogger(LizardCore.class.getCanonicalName() + ".createRESTMethods");
 	private static Logger logger_high_level = LoggerFactory.getLogger("HIGH_LEVEL");
-
 	private static Logger logger_inspect = LoggerFactory.getLogger(LizardCore.class.getCanonicalName() + ".inspect");
+	
 	private OntologyCodeModel ontologyModel;
 	private URI ontologyURIBase;
 
@@ -405,6 +405,7 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 		List<OntClass> roots = OntTools.namedHierarchyRoots(ontModel);
 
 		for (OntClass root : roots) {
+			logger.info("Root "+root.getURI());
 			visitHierarchyTreeForBeans(root, ontologyCodeModel);
 		}
 
@@ -533,6 +534,8 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 		}
 
 		List<OntClass> roots = OntTools.namedHierarchyRoots(ontModel);
+
+		visitHierarchyTreeForRest(ontModel.getOntClass(OWL2.Thing.getURI()), restOntologyModel);
 
 		for (OntClass root : roots) {
 			visitHierarchyTreeForRest(root, restOntologyModel);
@@ -694,12 +697,6 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 								logger_getProperties.debug("Adding not inf " + opInf.getURI() + " ");
 							}
 						}
-						// if (dom.getURI().equals(c.getURI()) || dom.asClass().hasSubClass(c)) {
-						// // The domain domain is a class
-						// r.add(opInf);
-						// logger_getProperties.debug("Adding not inf " + opInf.getURI() + " ");
-						// }
-
 					}
 				}
 			}
@@ -824,6 +821,8 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 
 	public static void main(String[] args) {
 
+		boolean marvin = true;
+
 		System.setProperty("M2_HOME", "/Users/lgu/Programs/apache-maven");
 		System.setProperty("JAVA_HOME", "/Library/Java/JavaVirtualMachines/jdk1.8.0_25.jdk/Contents/Home");
 
@@ -844,7 +843,7 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 			System.out.println("API generated in " + (t2 - t1) + "ms");
 
 			try {
-				String outFolder = "/Users/lgu/Desktop/Lizard/generated-projects/cga";
+				String outFolder = "/Users/lgu/Desktop/Lizard/generated-projects/cga-osgi";
 				File testFolder = new File(outFolder);
 				if (testFolder.exists()) {
 					System.out.println("esists " + testFolder.getClass());
@@ -873,21 +872,10 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 				Map<String, String> dataModel = new HashMap<String, String>();
 				dataModel.put("artifactId", ontologyCodeProject.getArtifactId());
 				dataModel.put("groupId", ontologyCodeProject.getGroupId());
-				MavenUtils.generatePOM(pomWriter, dataModel);
-				MavenUtils.buildProject(pom);
 
-				/*
-				 * Generate Lizard file
-				 */
-
-				OntModel om = ModelFactory.createOntologyModel(INF_PROFILE);
-				om.read(uri.toString());
-
-				for (URI u : uris) {
-					om.read(u.toString());
-				}
-
-				// writeGeneratedOntologies(om, outFolder);
+				MavenUtils.generatePOM(pomWriter, dataModel, marvin);
+				if (!marvin)
+					MavenUtils.buildProject(pom);
 
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -897,35 +885,6 @@ public class LizardCore implements OntologyCodeGenerationRecipe {
 		}
 
 	}
-
-	public static final String ontologiesFileName = "ontologies";
-
-	// private static void writeGeneratedOntologies(OntModel ontModel, String folder) throws IOException {
-	// FileOutputStream fos = new FileOutputStream(new File(folder + "/" + ontologiesFileName));
-	//
-	// String ontModelBase = ontModel.getNsPrefixURI("");
-	// if (ontModelBase.endsWith("#")) {
-	// ontModelBase = ontModelBase.substring(0, ontModelBase.length() - 1);
-	// }
-	// ontModelBase += "\n";
-	//
-	// fos.write(ontModelBase.getBytes());
-	//
-	// ontModel.listSubModels(true).forEachRemaining(om -> {
-	// String toPrint = om.getNsPrefixURI("");
-	// if (toPrint.endsWith("#")) {
-	// toPrint = toPrint.substring(0, toPrint.length() - 1);
-	// }
-	// toPrint += "\n";
-	// try {
-	// fos.write(toPrint.getBytes());
-	// } catch (IOException e) {
-	// e.printStackTrace();
-	// }
-	// });
-	//
-	// fos.close();
-	// }
 
 	private static boolean hasMethod(JDefinedClass jdefClass, String methodName) {
 		for (JMethod m : jdefClass.methods()) {
