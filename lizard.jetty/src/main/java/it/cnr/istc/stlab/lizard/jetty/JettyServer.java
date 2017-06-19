@@ -19,7 +19,8 @@ public class JettyServer {
 
 	public static void main(String[] args) {
 
-		boolean swagger = RuntimeJenaLizardContext.getContext().getConf().isSwagger();
+		// boolean swagger = RuntimeJenaLizardContext.getContext().getConf().isSwagger();
+		final boolean swagger = true;
 
 		Logger log = Logger.getLogger(JettyServer.class);
 

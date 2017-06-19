@@ -47,8 +47,8 @@ public class Bootstrap extends HttpServlet {
 		// Resource package
 		System.out.println("BEAN CONFIG SCAN FOR " + config.getInitParameter(PACKAGE));
 		beanConfig.setResourcePackage(config.getInitParameter(PACKAGE));
-		beanConfig.setScan();
-		// beanConfig.setScan(true);
+		// beanConfig.setScan();
+		beanConfig.setScan(true);
 
 		Swagger swagger = new Swagger();
 		new SwaggerContextService().withSwaggerConfig(beanConfig).updateSwagger(swagger);
