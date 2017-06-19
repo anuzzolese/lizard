@@ -284,6 +284,5 @@ public class RestImpl implements RestInterface {
 		}
 		return responseBuilder.build();
 	}
-	
 
 }

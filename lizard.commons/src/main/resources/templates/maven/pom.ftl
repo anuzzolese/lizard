@@ -75,6 +75,11 @@
 		  	<version>1.5.0</version>
 		</dependency>
 		
+		<dependency>
+			<groupId>org.osgi</groupId>
+			<artifactId>org.osgi.service.component.annotations</artifactId>
+			<version>1.3.0</version>
+		</dependency>
 
 		<dependency>
 			<groupId>org.slf4j</groupId>

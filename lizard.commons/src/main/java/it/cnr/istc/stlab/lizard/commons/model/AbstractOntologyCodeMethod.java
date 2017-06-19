@@ -77,5 +77,7 @@ public abstract class AbstractOntologyCodeMethod extends AbstractOntologyCodeEnt
 	public void setRange(AbstractOntologyCodeClass range) {
 		this.range = range;
 	}
+	
+	
 
 }

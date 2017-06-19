@@ -43,6 +43,7 @@ public class SetBodyWriter implements MessageBodyWriter<HashSet<?>> {
 		JSONArray setArray = new JSONArray();
 
 		t.forEach(bean -> {
+			System.out.println("bean");
 			try {
 				String jsonInString = mapper.writeValueAsString(bean);
 				JSONObject obj = new JSONObject(jsonInString);

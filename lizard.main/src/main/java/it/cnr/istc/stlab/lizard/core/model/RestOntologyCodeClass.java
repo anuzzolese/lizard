@@ -20,7 +20,6 @@ import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.sun.codemodel.JAnnotationArrayMember;
 import com.sun.codemodel.JBlock;
 import com.sun.codemodel.JClassAlreadyExistsException;
 import com.sun.codemodel.JCodeModel;
@@ -117,7 +116,8 @@ public class RestOntologyCodeClass extends OntologyCodeClass {
 		// Method declaration
 		String localName = this.ontResource.getLocalName().substring(0, 1).toUpperCase() + this.ontResource.getLocalName().substring(1);
 		JType responseType = super.jCodeModel.ref(Response.class);
-		String methodName = "get" + Constants.getJavaName(localName) + "ById";
+		// String methodName = "get" + Constants.getJavaName(localName) + "ById";
+		String methodName = "getById";
 
 		JMethod tempSet = ((JDefinedClass) this.asJDefinedClass()).getMethod(methodName, new JType[] { jCodeModel.ref(String.class) });
 
@@ -176,7 +176,8 @@ public class RestOntologyCodeClass extends OntologyCodeClass {
 
 		String localName = this.ontResource.getLocalName().substring(0, 1).toUpperCase() + this.ontResource.getLocalName().substring(1);
 		JType responseType = super.jCodeModel.ref(Response.class);
-		String methodName = "getAll" + Constants.getJavaName(localName);
+		// String methodName = "getAll" + Constants.getJavaName(localName);
+		String methodName = "getAll";
 
 		JMethod tempSet = ((JDefinedClass) this.asJDefinedClass()).getMethod(methodName, new JType[] {});
 
@@ -238,7 +239,8 @@ public class RestOntologyCodeClass extends OntologyCodeClass {
 
 		String localName = this.ontResource.getLocalName().substring(0, 1).toUpperCase() + this.ontResource.getLocalName().substring(1);
 		JType responseType = super.jCodeModel.ref(Response.class);
-		String methodName = "create" + Constants.getJavaName(localName);
+		// String methodName = "create" + Constants.getJavaName(localName);
+		String methodName = "create";
 
 		JMethod tempSet = ((JDefinedClass) this.asJDefinedClass()).getMethod(methodName, new JType[] { super.jCodeModel._ref(String.class) });
 

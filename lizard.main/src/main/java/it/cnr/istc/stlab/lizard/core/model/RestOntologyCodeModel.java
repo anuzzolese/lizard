@@ -1,10 +1,8 @@
 package it.cnr.istc.stlab.lizard.core.model;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -33,7 +31,7 @@ import it.cnr.istc.stlab.lizard.commons.model.anon.BooleanAnonClass;
 import it.cnr.istc.stlab.lizard.commons.model.datatype.DatatypeCodeInterface;
 import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeClassType;
 import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeMethodType;
-import it.cnr.istc.stlab.lizard.core.LizardCore;
+import it.cnr.istc.stlab.lizard.core.OntologyProjectGenerationRecipe;
 import it.cnr.istc.stlab.lizard.core.anonymous.AnonymousClassBuilder;
 
 public class RestOntologyCodeModel implements OntologyCodeModel {
@@ -284,7 +282,6 @@ public class RestOntologyCodeModel implements OntologyCodeModel {
 	}
 
 	private Collection<AbstractOntologyCodeMethod> getMethodsOf(OntResource ontResource, OntologyCodeMethodType type, Collection<AbstractOntologyCodeMethod> methods) {
-
 		Collection<AbstractOntologyCodeMethod> result = new HashSet<>();
 		for (AbstractOntologyCodeMethod method : methods) {
 			if (method.getOntResource().getURI().equals(ontResource.getURI()) && type.equals(method.getMethodType())) {
@@ -297,7 +294,9 @@ public class RestOntologyCodeModel implements OntologyCodeModel {
 	private Collection<String> detectSameErasures(Collection<AbstractOntologyCodeMethod> methods) {
 		Collection<String> result = new HashSet<>();
 		for (AbstractOntologyCodeMethod method : methods) {
+			logger_sameerasure.trace("Method {}, Type {}",method.getOntResource().getLocalName(),method.getMethodType());
 			if (getMethodsOf(method.getOntResource(), method.getMethodType(), methods).size() > 1) {
+				logger.trace("Raise same erasure");
 				result.add(method.getOntResource().getURI());
 			}
 		}
@@ -307,25 +306,23 @@ public class RestOntologyCodeModel implements OntologyCodeModel {
 	public AbstractOntologyCodeClassImpl createClassImplements(AbstractOntologyCodeClassImpl ontologyClass, OntologyCodeInterface... ontologyInterfaces) {
 
 		// FIXME detect methods with same erasure!
-		List<AbstractOntologyCodeMethod> methodsToImplement = new ArrayList<>();
+		Set<AbstractOntologyCodeMethod> methodsToImplement = new HashSet<>();
 
 		for (OntologyCodeInterface ontologyInterface : ontologyInterfaces) {
 			if (ontologyInterface.getOntologyClassType() == OntologyCodeClassType.Interface) {
-				 ((JDefinedClass) ontologyClass.asJDefinedClass())._implements(ontologyInterface.asJDefinedClass());
-				 ontologyClass.implementsInterfaces(ontologyInterface);
+				((JDefinedClass) ontologyClass.asJDefinedClass())._implements(ontologyInterface.asJDefinedClass());
+				ontologyClass.implementsInterfaces(ontologyInterface);
 				methodsToImplement.addAll(ontologyInterface.getMethods());
-				// for (AbstractOntologyCodeMethod method : ontologyInterface.getMethods()) {
-				// createMethod(method.getMethodType(), method.getOntResource(), ontologyClass, method.getDomain(), method.getRange());
-				// }
 			}
 		}
 
 		// The Resources that provoke the same erasure are implemented as default method in THING class
 		Collection<String> ontResourcesProvokeSameErasure = detectSameErasures(methodsToImplement);
 		logger_sameerasure.trace("Methods to implent for " + ontologyClass.getOntResource().getLocalName() + " ");
-		methodsToImplement.forEach(m -> {
-			logger_sameerasure.trace("Method resource: " + m.getOntResource().getLocalName() + " " + m.getMethodType());
-		});
+		for (String s : ontResourcesProvokeSameErasure) {
+			logger_sameerasure.trace(s);
+
+		}
 
 		for (AbstractOntologyCodeMethod method : methodsToImplement) {
 			logger_sameerasure.trace("Method " + method.getOwner().getOntResource().getLocalName() + " " + method.getOntResource().getLocalName() + " " + method.getOwner().getClass().getName());
@@ -450,7 +447,7 @@ public class RestOntologyCodeModel implements OntologyCodeModel {
 		}
 
 		logger.trace("Creating class of " + resource.getURI());
-		if (resource.isProperty() || (LizardCore.hasTypeMapper(resource.getURI()) && !DatatypeCodeInterface.class.isAssignableFrom(ontologyEntityClass))) {
+		if (resource.isProperty() || (OntologyProjectGenerationRecipe.hasTypeMapper(resource.getURI()) && !DatatypeCodeInterface.class.isAssignableFrom(ontologyEntityClass))) {
 			throw new RuntimeException("Cannot create a class of the resource " + resource.getURI());
 		}
 

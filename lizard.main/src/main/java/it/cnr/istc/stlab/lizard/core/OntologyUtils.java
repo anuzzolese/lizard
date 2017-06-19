@@ -25,7 +25,7 @@ public class OntologyUtils {
 
 	private static Logger logger = LoggerFactory.getLogger(OntologyUtils.class);
 
-	private static OntModelSpec INF_PROFILE = OntModelSpec.OWL_MEM_MINI_RULE_INF;
+	private static OntModelSpec INF_PROFILE = OntModelSpec.OWL_MEM_MICRO_RULE_INF;
 
 	static void validateOntology(OntModel ontModel) {
 
@@ -201,7 +201,6 @@ public class OntologyUtils {
 		r.add(most_specific);
 
 		for (OntResource domain : ontModelInf.getOntProperty(op.getURI()).listDomain().toSet()) {
-
 			if (domain.isURIResource() && domain.isClass()) {
 				if (most_specific.hasSubClass(domain)) {
 					// range is more specific than most_specific
@@ -215,6 +214,10 @@ public class OntologyUtils {
 			}
 		}
 		return most_specific;
+	}
+
+	static OntModelSpec getInfProfile() {
+		return INF_PROFILE;
 	}
 
 }

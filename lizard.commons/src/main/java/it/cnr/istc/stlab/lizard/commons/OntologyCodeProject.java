@@ -1,58 +1,29 @@
 package it.cnr.istc.stlab.lizard.commons;
 
-import java.io.IOException;
 import java.net.URI;
 
 import it.cnr.istc.stlab.lizard.commons.model.OntologyCodeModel;
 
 public class OntologyCodeProject {
 
-    private OntologyCodeModel ontologyCodeModel;
-    private String groupId;
-    private String artifactId;
-    //private String projectFolder;
-    private String srcFolder;
-    private String testFolder;
-    private String mainFolder;
-    
-    //public OntologyCodeProject(URI ontologyURI, String projectFolder, OntologyCodeModel ontologyCodeModel) {
-    public OntologyCodeProject(URI ontologyURI, OntologyCodeModel ontologyCodeModel) {
-        this.ontologyCodeModel = ontologyCodeModel;
-        groupId = PackageResolver.resolveGroupId(ontologyURI);
-        artifactId = PackageResolver.resolveArtifactId(ontologyURI);
-        //this.projectFolder = projectFolder;
-        //this.srcFolder = this.projectFolder + "/src";
-        this.setMainFolder(this.srcFolder + "/main");
-        this.setTestFolder(this.srcFolder + "/test");
-    }
-    
-    public OntologyCodeModel getOntologyCodeModel() {
-        return ontologyCodeModel;
-    }
-    
-    public String getArtifactId() {
-        return artifactId;
-    }
-    
-    public String getGroupId() {
-        return groupId;
-    }
-    
-    public void write(String destinationFolder) throws IOException{}
+	private OntologyCodeModel ontologyCodeModel;
+	private URI ontologyURI;
 
-	public String getTestFolder() {
-		return testFolder;
+	public OntologyCodeProject(URI ontologyURI, OntologyCodeModel ontologyCodeModel) {
+		this.ontologyCodeModel = ontologyCodeModel;
+		this.ontologyURI = ontologyURI;
 	}
 
-	public void setTestFolder(String testFolder) {
-		this.testFolder = testFolder;
+	public OntologyCodeModel getOntologyCodeModel() {
+		return ontologyCodeModel;
 	}
 
-	public String getMainFolder() {
-		return mainFolder;
+	public URI getOntologyURI() {
+		return ontologyURI;
 	}
 
-	public void setMainFolder(String mainFolder) {
-		this.mainFolder = mainFolder;
+	public void setOntologyURI(URI ontologyURI) {
+		this.ontologyURI = ontologyURI;
 	}
+
 }
