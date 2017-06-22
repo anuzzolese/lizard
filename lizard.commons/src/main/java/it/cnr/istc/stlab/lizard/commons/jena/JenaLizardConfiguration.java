@@ -121,32 +121,6 @@ public class JenaLizardConfiguration {
 		this.virtuosoPort = virtuosoPort;
 	}
 
-	@Override
-	public int hashCode() {
-		int code = -1;
-		switch (type) {
-		case Virtuoso:
-			code = (getVirtuosoHost() + getVirtuosoPort()).hashCode();
-			break;
-
-		case TDB:
-			code = getTdbLocation().hashCode();
-			break;
-		default:
-			break;
-		}
-		return code;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (obj instanceof JenaLizardConfiguration) {
-			if (hashCode() == obj.hashCode())
-				return true;
-		}
-		return false;
-	}
-
 	public String getGraph() {
 		return graph;
 	}

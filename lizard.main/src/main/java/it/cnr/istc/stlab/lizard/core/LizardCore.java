@@ -191,15 +191,15 @@ public class LizardCore {
 
 	public static void main(String[] args) throws IOException, URISyntaxException {
 
-		String outFolder = "/Users/lgu/Desktop/Lizard/generated-projects/ppdb_rest_test";
+		String outFolder = "/Users/lgu/Desktop/Lizard/generated-projects/cga_rest";
 		//@formatter:off
 		String[] ontologiesUris = { 
 				// "http://www.ontologydesignpatterns.org/ont/mario/tagging.owl"
 				// ,"http://www.ontologydesignpatterns.org/ont/mario/personalevents.owl"
 				// ,"http://www.ontologydesignpatterns.org/ont/mario/healthrole.owl"
-				"/Users/lgu/Dropbox/stlab/Projects/MARIO/deployRobot/jetty-lizard/ppdb.owl"
-				//"http://etna.istc.cnr.it/ppdb/ontology/ppdb.owl"
-				//,"http://www.ontologydesignpatterns.org/ont/mario/cga.owl" 
+				//"/Users/lgu/Dropbox/stlab/Projects/MARIO/deployRobot/jetty-lizard/ppdb.owl"
+				"http://etna.istc.cnr.it/ppdb/ontology/ppdb.owl"
+				,"http://www.ontologydesignpatterns.org/ont/mario/cga.owl" 
 				};
 		//@formatter:on
 		URI[] uris = new URI[ontologiesUris.length];

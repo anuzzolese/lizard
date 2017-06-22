@@ -15,6 +15,7 @@ public class JettySimplified {
 		Logger log = Logger.getLogger(JettyServer.class);
 
 		log.info("Starting Jetty.");
+		
 
 		int port;
 		if (args.length > 0) {
@@ -54,7 +55,6 @@ public class JettySimplified {
 		try {
 			jettyServer.start();
 			System.out.println("Done! Jetty Server is up and running!");
-			System.out.println(org.w3._2002._07.owl.Thing.getAll().size());
 			jettyServer.join();
 		} catch (Exception e) {
 			e.printStackTrace();

@@ -67,12 +67,6 @@
 
 	<dependencies>
 
-		<!-- Ontologies -->
-		<dependency>
-			<groupId>org.w3id</groupId>
-			<artifactId>ppdb.ontology</artifactId>
-			<version>0.9-SNAPSHOT</version>
-		</dependency>
 
 		<!-- JUNIT -->
 		<dependency>

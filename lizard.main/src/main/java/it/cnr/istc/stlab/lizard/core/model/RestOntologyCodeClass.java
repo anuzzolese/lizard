@@ -101,7 +101,7 @@ public class RestOntologyCodeClass extends OntologyCodeClass {
 			((JDefinedClass) super.jClass).annotate(Produces.class).param("value", jCodeModel.ref(MediaType.class).staticRef("APPLICATION_JSON"));
 
 			// OSGi Annotation
-			((JDefinedClass) super.jClass).annotate(Component.class).param("service", jCodeModel.ref(Object.class)).paramArray("property").param("javax.ws.rs=true");
+			// ((JDefinedClass) super.jClass).annotate(Component.class).param("service", jCodeModel.ref(Object.class)).paramArray("property").param("javax.ws.rs=true");
 		} catch (JClassAlreadyExistsException e) {
 			super.jClass = codeModel._getClass(entityName);
 		}
@@ -136,7 +136,7 @@ public class RestOntologyCodeClass extends OntologyCodeClass {
 
 			jMethod.annotate(GET.class);
 			jMethod.annotate(Path.class).param("value", "/" + methodName);
-			jMethod.annotate(ApiOperation.class).param("value", "Retrieve a " + Constants.getJavaName(localName) + " by id").param("nickname", methodName).param("response", javaInterface.asJDefinedClass().dotclass()).param("responseContainer", "List");
+			jMethod.annotate(ApiOperation.class).param("value", "Retrieve a " + Constants.getJavaName(localName) + " by id").param("nickname", "get" + Constants.getJavaName(localName) + "ById").param("response", javaInterface.asJDefinedClass().dotclass()).param("responseContainer", "List");
 
 			// Create parameters
 			JVar idParam = jMethod.param(String.class, "id");
@@ -195,7 +195,7 @@ public class RestOntologyCodeClass extends OntologyCodeClass {
 
 			jMethod.annotate(GET.class);
 			jMethod.annotate(Path.class).param("value", "/" + methodName);
-			jMethod.annotate(ApiOperation.class).param("value", "Retrieve all " + Constants.getJavaName(localName)).param("nickname", methodName).param("response", javaInterface.asJDefinedClass().dotclass()).param("responseContainer", "List");
+			jMethod.annotate(ApiOperation.class).param("value", "Retrieve all " + Constants.getJavaName(localName)).param("nickname", "getAll" + Constants.getJavaName(localName)).param("response", javaInterface.asJDefinedClass().dotclass()).param("responseContainer", "List");
 
 			JVar responseBuilderVar = methodBody.decl(jCodeModel._ref(ResponseBuilder.class), "_responseBuilder", JExpr._null());
 			JType setType = jCodeModel.ref(Set.class).narrow(javaInterface.asJDefinedClass());

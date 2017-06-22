@@ -2,6 +2,7 @@ package it.cnr.istc.stlab.lizard.commons.jena;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
@@ -9,22 +10,6 @@ public class RuntimeJenaLizardContext {
 
 	private static String configurationFilePath = "lizard.conf";
 	private static JenaLizardContext context;
-
-	public static boolean contextExists(String c) {
-
-		try {
-			Properties props = new Properties();
-			System.out.println("PROVA context exists");
-			InputStream is = new FileInputStream(new File(c));
-			props.load(is);
-			System.out.println(props.toString());
-			return true;
-		} catch (Exception e) {
-			e.printStackTrace();
-			return false;
-		}
-
-	}
 
 	public static JenaLizardContext getContext() {
 		if (context == null) {
@@ -51,17 +36,29 @@ public class RuntimeJenaLizardContext {
 		return context;
 	}
 
-	public static void resetContext() {
-		context = null;
+	public static void changeContext(JenaLizardConfiguration config) {
+		if (context != null) {
+			System.err.println("closing model");
+			context.getModel().close();
+		}
+		context = JenaLizardContextManager.getInstance().getJenaLizardContext(config);
 	}
 
-	public static void switchContext(String lizardConfFilepath) {
-		context = null;
-		configurationFilePath = lizardConfFilepath;
-	}
-
-	public static void main(String[] args) {
-		RuntimeJenaLizardContext.getContext();
+	public static void newContext(JenaLizardConfiguration config) {
+		File repoFile = new File(config.getModelFilePath());
+		if (repoFile.getParentFile() != null) {
+			repoFile.getParentFile().mkdirs();
+		}
+		try {
+			repoFile.createNewFile();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		if (context != null) {
+			System.err.println("closing model");
+			context.getModel().close();
+		}
+		context = JenaLizardContextManager.getInstance().getJenaLizardContext(config);
 	}
 
 }

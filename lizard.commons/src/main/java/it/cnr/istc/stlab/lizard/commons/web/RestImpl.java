@@ -34,16 +34,24 @@ public class RestImpl implements RestInterface {
 
 	private static Logger logger = LoggerFactory.getLogger(RestImpl.class);
 
+	private static String extractClassName(String className) {
+		StringBuilder sb = new StringBuilder();
+		String[] a = className.split("_");
+		for (int i = 1; i < a.length; i++) {
+			sb.append(a[i].substring(0, 1).toUpperCase());
+			sb.append(a[i].substring(1));
+		}
+		return sb.toString();
+	}
+
 	private static String getAbsoluteJenaClassName(String ontology, String className) {
-		className = className.split("_")[1];
-		className = className.substring(0, 1).toUpperCase() + className.substring(1);
+		className = extractClassName(className);
 		String absoluteJenaClassName = PackageResolver.urlPathToPackageName(ontology) + ".jena." + className + "Jena";
 		return absoluteJenaClassName;
 	}
 
 	private static String getAbsoluteInterfaceName(String ontology, String className) {
-		className = className.split("_")[1];
-		className = className.substring(0, 1).toUpperCase() + className.substring(1);
+		className = extractClassName(className);
 		String absoluteInterfaceName = PackageResolver.urlPathToPackageName(ontology) + "." + className;
 		return absoluteInterfaceName;
 	}
@@ -51,6 +59,8 @@ public class RestImpl implements RestInterface {
 	@POST
 	@Path("/create")
 	public Response create(@PathParam("ontology") String ontology, @PathParam("class_name") String className, @QueryParam("id") String id) {
+		logger.trace("Create {} {} {}", ontology, className, id);
+
 		String absoluteJenaClassName = getAbsoluteJenaClassName(ontology, className);
 		try {
 			// Create a new object

@@ -15,7 +15,6 @@ import org.json.JSONObject;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import it.cnr.istc.stlab.lizard.commons.jena.RuntimeJenaLizardContext;
 
 @Path("/lizard")
 @Api(value = "/lizard")
@@ -54,7 +53,6 @@ public class Lizard {
 	@Path("resetContext")
 	@ApiOperation(value = "Reset the context of RuntimeJenaLizard.", notes = "Reset the context of RuntimeJenaLizard.")
 	public javax.ws.rs.core.Response refreshModel() throws FileNotFoundException {
-		RuntimeJenaLizardContext.resetContext();
 		return Response.ok().build();
 	}
 }

@@ -40,7 +40,7 @@ public class JenaLizardContext {
 
 	private void init() {
 		RepositoryType repositoryType = conf.getType();
-		
+
 		System.out.println(conf.toString());
 
 		switch (repositoryType) {

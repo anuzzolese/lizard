@@ -6,6 +6,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.jena.ontology.OntResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 
@@ -14,6 +16,8 @@ import org.apache.jena.ontology.OntResource;
  */
 
 public class PackageResolver {
+
+	private static Logger logger = LoggerFactory.getLogger(PackageResolver.class);
 
 	public static String resolve(OntResource ontResource) throws URISyntaxException {
 		URI ontologyURI;
@@ -83,9 +87,29 @@ public class PackageResolver {
 	}
 
 	public static String urlPathToPackageName(String packageName) {
+
+		logger.trace("Input {}", packageName);
+
 		String a = packageName.replaceAll("_", ".");
-		a = a.replaceAll("\\.\\.", "._");
-		return a;
+		if (a.matches(".*\\.\\..*")) {
+			a = a.replaceAll("\\.\\.", "._");
+			return a;
+		}
+
+		String[] s = a.split("\\.");
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < s.length - 2; i++) {
+			sb.append(s[i]);
+			sb.append(".");
+		}
+		sb.append(s[s.length - 2]);
+		sb.append("_");
+		sb.append(s[s.length - 1]);
+		return sb.toString();
+	}
+
+	public static void main(String[] args) {
+		System.out.println(urlPathToPackageName("org_w3__2002__07_owl"));
 	}
 
 }
