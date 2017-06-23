@@ -27,7 +27,7 @@
 							!freemarker*,
 							!org.apache.maven*,
 							javax.ws.rs.*;version="[0,3)", javax.servlet.*,
-							org.slf4j;version="[1.5,2)", javax.xml., *
+							org.slf4j;version="[1.5,2)", javax.xml.*, *
 						</Import-Package>
 						<DynamicImport-Package>*</DynamicImport-Package>
 						<Bundle-Vendor>MARIO Project</Bundle-Vendor>
