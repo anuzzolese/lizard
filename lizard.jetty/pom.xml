@@ -168,5 +168,12 @@
 		</dependency>
 
 
+		<!-- https://mvnrepository.com/artifact/io.swagger/swagger-models -->
+		<dependency>
+			<groupId>io.swagger</groupId>
+			<artifactId>swagger-models</artifactId>
+			<version>1.5.0</version>
+		</dependency>
+
 	</dependencies>
 </project>

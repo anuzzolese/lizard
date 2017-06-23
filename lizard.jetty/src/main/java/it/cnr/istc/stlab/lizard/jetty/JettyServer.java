@@ -11,7 +11,7 @@ import org.eclipse.jetty.servlet.ServletHolder;
 
 import it.cnr.istc.stlab.lizard.commons.inmemory.RestInterface;
 import it.cnr.istc.stlab.lizard.commons.jena.RuntimeJenaLizardContext;
-import it.cnr.istc.stlab.lizard.commons.jersey.SetBodyWriter;
+//import it.cnr.istc.stlab.lizard.commons.jersey.SetBodyWriter;
 import it.cnr.istc.stlab.lizard.jetty.resources.Lizard;
 import it.cnr.istc.stlab.lizard.jetty.utils.FileUtils;
 
@@ -95,10 +95,13 @@ public class JettyServer {
 				ServletHolder servletHolderRestOntology = servletContextHandler.addServlet(org.glassfish.jersey.servlet.ServletContainer.class, "/" + basePathResources + "/*");
 				System.out.println("Package " + packageJavaName + " - Service will be available at " + "http://localhost:" + serverPort + "/" + basePathResources + "/*");
 				servletHolderRestOntology.setInitOrder(1);
-				if (swagger)
-					servletHolderRestOntology.setInitParameter("jersey.config.server.provider.packages", "io.swagger.jaxrs.listing," + FileUtils.getNamePackage(SetBodyWriter.class) + "," + packageJavaName);
-				else
-					servletHolderRestOntology.setInitParameter("jersey.config.server.provider.packages", FileUtils.getNamePackage(SetBodyWriter.class) + "," + packageJavaName);
+				if (swagger){
+//					servletHolderRestOntology.setInitParameter("jersey.config.server.provider.packages", "io.swagger.jaxrs.listing," + FileUtils.getNamePackage(SetBodyWriter.class) + "," + packageJavaName);
+					servletHolderRestOntology.setInitParameter("jersey.config.server.provider.packages", "io.swagger.jaxrs.listing," + packageJavaName);
+				}else{
+//					servletHolderRestOntology.setInitParameter("jersey.config.server.provider.packages", FileUtils.getNamePackage(SetBodyWriter.class) + "," + packageJavaName);
+					servletHolderRestOntology.setInitParameter("jersey.config.server.provider.packages",   packageJavaName);
+					}
 
 				servletHolderRestOntology.setInitParameter("jersey.config.server.wadl.disableWadl", "true");
 				servletHolderRestOntology.setInitParameter("jersey.config.server.provider.classnames", "org.glassfish.jersey.jackson.JacksonFeature");

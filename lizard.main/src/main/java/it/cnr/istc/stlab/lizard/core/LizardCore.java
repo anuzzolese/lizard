@@ -191,7 +191,7 @@ public class LizardCore {
 
 	public static void main(String[] args) throws IOException, URISyntaxException {
 
-		String outFolder = "/Users/lgu/Desktop/Lizard/generated-projects/cga_rest";
+		String outFolder = "/Users/lgu/Desktop/Lizard/generated-projects/cga_rest_t";
 		//@formatter:off
 		String[] ontologiesUris = { 
 				// "http://www.ontologydesignpatterns.org/ont/mario/tagging.owl"
