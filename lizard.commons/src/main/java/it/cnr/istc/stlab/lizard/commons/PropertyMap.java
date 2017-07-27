@@ -48,7 +48,7 @@ public class PropertyMap {
 		return propertyMap.containsKey(ontResource);
 	}
 	
-	@ObjectPropertyAnnotation(method=OntologyCodeMethodType.Get, uri="http://www.foo.org/")
+	@ObjectPropertyAnnotation(method=OntologyCodeMethodType.GET, uri="http://www.foo.org/")
 	public void test(){
 		Method method;
 		try {

@@ -1,69 +1,95 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-    <groupId>it.cnr.istc.stlab</groupId>
+	<groupId>it.cnr.istc.stlab</groupId>
 	<artifactId>lizard.core</artifactId>
-    <version>0.9-SNAPSHOT</version>
+	<version>0.9-SNAPSHOT</version>
 	<name>Lizard</name>
 
 	<properties>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
-  	</properties>
+		<swagger.version>1.5.10</swagger.version>
+	</properties>
 
 	<dependencies>
-	
+
 		<!-- Lizard Commons -->
 		<dependency>
 			<groupId>it.cnr.istc.stlab</groupId>
 			<artifactId>lizard.commons</artifactId>
-    		<version>0.9-SNAPSHOT</version>
-    	</dependency>
-    	
+			<version>0.9-SNAPSHOT</version>
+		</dependency>
+
 		<!-- Apache Jena -->
 		<dependency>
-    		<groupId>org.apache.jena</groupId>
-    		<artifactId>apache-jena-libs</artifactId>
-    		<type>pom</type>
-    		<version>3.0.0</version>
-  		</dependency>
-  		
-  		<!-- Codemodel -->
-  		<dependency>
+			<groupId>org.apache.jena</groupId>
+			<artifactId>apache-jena-libs</artifactId>
+			<type>pom</type>
+			<version>3.2.0</version>
+		</dependency>
+
+
+		<!-- Codemodel -->
+		<dependency>
 			<groupId>com.sun.codemodel</groupId>
 			<artifactId>codemodel</artifactId>
 			<version>2.6</version>
 		</dependency>
-		
+
+		<!-- https://mvnrepository.com/artifact/com.helger/jcodemodel <dependency> 
+			<groupId>com.helger</groupId> <artifactId>jcodemodel</artifactId> <version>2.8.6</version> 
+			</dependency> -->
+
+
 		<!-- Apache Commons -->
 		<dependency>
 			<groupId>commons-io</groupId>
 			<artifactId>commons-io</artifactId>
 			<version>2.4</version>
 		</dependency>
-		
-		
+
+
 		<!-- Freemarker -->
 		<dependency>
 			<groupId>org.freemarker</groupId>
 			<artifactId>freemarker</artifactId>
 			<version>2.3.20</version>
 		</dependency>
-		
+
 		<!-- Jersey -->
 		<dependency>
-    		<groupId>org.glassfish.jersey.containers</groupId>
-    		<artifactId>jersey-container-servlet</artifactId>
-    		<version>2.23.2</version>
-    		<scope>provided</scope>
+			<groupId>org.glassfish.jersey.containers</groupId>
+			<artifactId>jersey-container-servlet</artifactId>
+			<version>2.23.2</version>
+			<scope>provided</scope>
 		</dependency>
-		
+
 		<!-- Swagger -->
 		<dependency>
-		  	<groupId>io.swagger</groupId>
-		  	<artifactId>swagger-jersey2-jaxrs</artifactId>
-		  	<version>1.5.0</version>
+			<groupId>io.swagger</groupId>
+			<artifactId>swagger-jersey2-jaxrs</artifactId>
+			<version>${swagger.version}</version>
 		</dependency>
-		
+
+		<dependency>
+			<groupId>io.swagger</groupId>
+			<artifactId>swagger-models</artifactId>
+			<version>${swagger.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>io.swagger</groupId>
+			<artifactId>swagger-core</artifactId>
+			<version>${swagger.version}</version>
+		</dependency>
+
+
+		<dependency>
+			<groupId>org.osgi</groupId>
+			<artifactId>org.osgi.service.component.annotations</artifactId>
+			<version>1.3.0</version>
+		</dependency>
 
 		<dependency>
 			<groupId>org.slf4j</groupId>
@@ -75,6 +101,14 @@
 			<artifactId>slf4j-jdk14</artifactId>
 			<version>1.7.7</version>
 		</dependency>
+		<!-- json.org -->
+		<dependency>
+			<groupId>org.json</groupId>
+			<artifactId>json</artifactId>
+			<version>20160212</version>
+			<scope>compile</scope>
+		</dependency>
+
 
 	</dependencies>
 </project>

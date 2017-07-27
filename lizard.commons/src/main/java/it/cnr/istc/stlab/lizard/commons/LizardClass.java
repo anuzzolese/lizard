@@ -1,74 +1,84 @@
 package it.cnr.istc.stlab.lizard.commons;
 
-import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.jena.datatypes.TypeMapper;
-import org.apache.jena.datatypes.xsd.XSDDatatype;
-import org.apache.jena.datatypes.xsd.XSDDateTime;
-import org.apache.jena.datatypes.xsd.XSDDuration;
 import org.apache.jena.ontology.OntResource;
-import org.apache.jena.rdf.model.Literal;
-import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 
-public class LizardClass implements LizardInterface {
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-    protected RDFNode individual;
-    protected OntResource classResource;
-    protected PropertyMap propertyMap;
-    protected Set<ExtentionalLizardClassImpl<LizardInterface>> extentionalClasses;
-    
-    public LizardClass() {
-    	propertyMap = new PropertyMap();
-    	extentionalClasses = new HashSet<ExtentionalLizardClassImpl<LizardInterface>>();
-    }
-    
-    protected LizardClass(RDFNode individual, OntResource classResource) {
-    	this();
-        this.individual = individual;
-        this.classResource = classResource;
-    }
-    
-    protected LizardClass(RDFNode individual, OntResource classResource, PropertyMap propertyMap) {
-    	this();
-        this.individual = individual;
-        this.classResource = classResource;
-        this.propertyMap = propertyMap;
-    }
-    
-    public OntResource getClassResource() {
-        return classResource;
-    }
-    
-    public RDFNode getIndividual() {
-        return individual;
-    }
-    
-    public void setClassResource(OntResource classResource) {
-        this.classResource = classResource;
-    }
-    
-    public void setIndividual(RDFNode individual) {
-        this.individual = individual;
-    }
-    
-    public PropertyMap getPropertyMap() {
-		return propertyMap;
+@JsonIgnoreProperties({ "individual", "classResource", "propertyMap", "extentionalClasses" })
+public class LizardClass implements LizardInterface {
+	@JsonIgnore
+	protected RDFNode individual;
+	@JsonIgnore
+	protected OntResource classResource;
+	@JsonIgnore
+	protected PropertyMap propertyMap;
+	@JsonIgnore
+	protected Set<ExtentionalLizardClassImpl<LizardInterface>> extentionalClasses;
+
+	@JsonIgnore
+	public LizardClass() {
+		propertyMap = new PropertyMap();
+		extentionalClasses = new HashSet<ExtentionalLizardClassImpl<LizardInterface>>();
 	}
-    
-    public void setPropertyMap(PropertyMap propertyMap) {
+
+	@JsonIgnore
+	protected LizardClass(RDFNode individual, OntResource classResource) {
+		this();
+		this.individual = individual;
+		this.classResource = classResource;
+	}
+
+	@JsonIgnore
+	protected LizardClass(RDFNode individual, OntResource classResource, PropertyMap propertyMap) {
+		this();
+		this.individual = individual;
+		this.classResource = classResource;
 		this.propertyMap = propertyMap;
 	}
-    
-    public Object getPropertyValue(OntResource ontResource, Class<? extends Object> objectClass){
-    	return propertyMap.get(ontResource, objectClass);
-    }
-    
-    public void setPropertyValue(OntResource ontResource, Object object){
-    	propertyMap.put(ontResource, object);
-    }
-     
-    
+
+	@JsonIgnore
+	public OntResource getClassResource() {
+		return classResource;
+	}
+
+	@JsonIgnore
+	public RDFNode getIndividual() {
+		return individual;
+	}
+
+	@JsonIgnore
+	public void setClassResource(OntResource classResource) {
+		this.classResource = classResource;
+	}
+
+	@JsonIgnore
+	public void setIndividual(RDFNode individual) {
+		this.individual = individual;
+	}
+
+	@JsonIgnore
+	public PropertyMap getPropertyMap() {
+		return propertyMap;
+	}
+
+	@JsonIgnore
+	public void setPropertyMap(PropertyMap propertyMap) {
+		this.propertyMap = propertyMap;
+	}
+
+	@JsonIgnore
+	public Object getPropertyValue(OntResource ontResource, Class<? extends Object> objectClass) {
+		return propertyMap.get(ontResource, objectClass);
+	}
+
+	@JsonIgnore
+	public void setPropertyValue(OntResource ontResource, Object object) {
+		propertyMap.put(ontResource, object);
+	}
+
 }

@@ -3,17 +3,32 @@ package it.cnr.istc.stlab.lizard.commons;
 import org.apache.jena.ontology.OntResource;
 import org.apache.jena.rdf.model.RDFNode;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public interface LizardInterface {
 
+	@JsonIgnore
 	RDFNode getIndividual();
-    void setIndividual(RDFNode individual);
-    OntResource getClassResource();
-    void setClassResource(OntResource classResource);
-    PropertyMap getPropertyMap();
-    
-    void setPropertyMap(PropertyMap propertyMap);
-    
-    Object getPropertyValue(OntResource ontResource, Class<? extends Object> objectClass);
-    
-    void setPropertyValue(OntResource ontResource, Object object);
+
+	@JsonIgnore
+	void setIndividual(RDFNode individual);
+
+	@JsonIgnore
+	OntResource getClassResource();
+
+	@JsonIgnore
+	void setClassResource(OntResource classResource);
+
+	@JsonIgnore
+	PropertyMap getPropertyMap();
+
+	@JsonIgnore
+	void setPropertyMap(PropertyMap propertyMap);
+
+	@JsonIgnore
+	Object getPropertyValue(OntResource ontResource, Class<? extends Object> objectClass);
+
+	@JsonIgnore
+	void setPropertyValue(OntResource ontResource, Object object);
+
 }

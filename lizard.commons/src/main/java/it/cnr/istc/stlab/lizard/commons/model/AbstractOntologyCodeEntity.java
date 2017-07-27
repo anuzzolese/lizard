@@ -1,14 +1,12 @@
 package it.cnr.istc.stlab.lizard.commons.model;
 
-import java.net.URISyntaxException;
-import java.util.ServiceLoader;
+import it.cnr.istc.stlab.lizard.commons.PackageResolver;
 
-import org.apache.jena.ontology.OntProperty;
+import java.net.URISyntaxException;
+
 import org.apache.jena.ontology.OntResource;
 
 import com.sun.codemodel.JCodeModel;
-
-import it.cnr.istc.stlab.lizard.commons.PackageResolver;
 
 public abstract class AbstractOntologyCodeEntity implements OntologyCodeEntity {
 
@@ -29,7 +27,6 @@ public abstract class AbstractOntologyCodeEntity implements OntologyCodeEntity {
         try {
         	this.packageName = PackageResolver.resolve(ontResource);
         } catch (URISyntaxException e1) {
-            // TODO Auto-generated catch block
             e1.printStackTrace();
         }
     }

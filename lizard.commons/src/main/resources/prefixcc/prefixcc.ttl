@@ -245,7 +245,7 @@
 @prefix vote:       <http://www.rdfabout.com/rdf/schema/vote/>.
 @prefix imm:        <http://schemas.microsoft.com/imm/>.
 @prefix rei:        <http://www.w3.org/2004/06/rei#>.
-@prefix dul:        <http://www.loa-cnr.it/ontologies/DUL.owl#>.
+@prefix dul:        <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#>.
 @prefix nao:        <http://www.semanticdesktop.org/ontologies/2007/08/15/nao#>.
 @prefix ssn:        <http://purl.oclc.org/NET/ssnx/ssn#>.
 @prefix hcterms:    <http://purl.org/uF/hCard/terms/>.
