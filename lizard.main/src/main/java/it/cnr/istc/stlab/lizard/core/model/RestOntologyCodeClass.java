@@ -16,7 +16,6 @@ import javax.ws.rs.core.Response.Status;
 import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntResource;
 import org.apache.jena.rdf.model.ModelFactory;
-import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,9 +72,7 @@ public class RestOntologyCodeClass extends OntologyCodeClass {
 		for (char c : chars) {
 			if (Character.isUpperCase(c) && !start)
 				sb.append("_");
-
 			sb.append(Character.toLowerCase(c));
-
 			if (start)
 				start = !start;
 		}

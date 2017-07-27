@@ -1,5 +1,8 @@
 package it.cnr.istc.stlab.lizard.core;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -32,6 +35,8 @@ import org.apache.jena.vocabulary.RDFS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Multimap;
 import com.sun.codemodel.JDefinedClass;
 import com.sun.codemodel.JMethod;
 import com.sun.codemodel.JMod;
@@ -48,6 +53,7 @@ import it.cnr.istc.stlab.lizard.commons.model.anon.BooleanAnonClass;
 import it.cnr.istc.stlab.lizard.commons.model.datatype.DatatypeCodeInterface;
 import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeMethodType;
 import it.cnr.istc.stlab.lizard.commons.recipe.OntologyCodeGenerationRecipe;
+import it.cnr.istc.stlab.lizard.commons.web.swagger.DescriptionGenerator;
 import it.cnr.istc.stlab.lizard.core.model.BeanOntologyCodeClass;
 import it.cnr.istc.stlab.lizard.core.model.BeanOntologyCodeInterface;
 import it.cnr.istc.stlab.lizard.core.model.JenaOntologyCodeClass;
@@ -61,7 +67,6 @@ public class OntologyProjectGenerationRecipe implements OntologyCodeGenerationRe
 	private static Logger logger_createRESTMethods = LoggerFactory.getLogger(OntologyProjectGenerationRecipe.class.getCanonicalName() + ".createRESTMethods");
 	private static Logger logger_high_level = LoggerFactory.getLogger("HIGH_LEVEL");
 	private static Logger logger_inspect = LoggerFactory.getLogger(OntologyProjectGenerationRecipe.class.getCanonicalName() + ".inspect");
-
 	private OntologyCodeModel ontologyModel;
 	private RestOntologyCodeModel restOntologyModel;
 	private boolean generateRestProject = true;
@@ -87,27 +92,7 @@ public class OntologyProjectGenerationRecipe implements OntologyCodeGenerationRe
 	}
 
 	public OntologyProjectGenerationRecipe(URI... uris) {
-		this(true, uris);
-	}
-
-	@Override
-	public OntologyCodeProject generate() {
-
-		OntologyCodeProject project = null;
-		try {
-			logger.info("Create Bean Project");
-			logger_high_level.info("Create Bean Project");
-			project = generateBeans();
-		} catch (NotAvailableOntologyCodeEntityException e) {
-			e.printStackTrace();
-		}
-		if (project != null && generateRestProject) {
-			logger.info("Create REST Project");
-			logger_high_level.info("Create REST Project");
-			project = generateRestProject(project.getOntologyCodeModel());
-		}
-		return project;
-
+		this(false, uris);
 	}
 
 	private boolean causesNameClash(OntClass ontClass, OntProperty ontProperty, OntologyCodeModel ontologyModel) {
@@ -125,14 +110,14 @@ public class OntologyProjectGenerationRecipe implements OntologyCodeGenerationRe
 			if (superClassInf.isRestriction()) {
 				Restriction restriction = superClassInf.asRestriction();
 				if (restriction.getOnProperty().getURI().equals(ontProperty.getURI())) {
-					logger.debug("Found a restriction on {} for class {}", ontProperty.getLocalName(), ontClass.getLocalName());
+					logger.debug("Found a restriction on {} for class {} SV {} AV {}", ontProperty.getLocalName(), ontClass.getLocalName(), restriction.isSomeValuesFromRestriction(), restriction.isAllValuesFromRestriction());
 					restrictions.add(restriction);
 				}
 			} else if (superClassInf.isURIResource()) {
 				// The name clash occurs also when one of the super classes defines a method for this ontProperty
 				// This is also caused by the fact that the the parameters of the methods are collections using generics.
 				// The class into the diamond is ignored in compilation!
-				logger.debug("CL {} OP: {} SC: {} MSD: {}", ontClass.getLocalName(), ontProperty.getLocalName(), superClassInf.getLocalName(), mostSpecificDomainInf.getLocalName());
+				logger.debug("SC {} CL {} OP: {} SC: {} MSD: {}", superClassInf.asResource().getURI(), ontClass.getLocalName(), ontProperty.getLocalName(), superClassInf.getLocalName(), mostSpecificDomainInf.getLocalName());
 				if (!superClassInf.getURI().equals(ontClass.getURI()) && mostSpecificDomainInf.hasEquivalentClass(superClassInf.asClass())) {
 					return true;
 				}
@@ -142,7 +127,26 @@ public class OntologyProjectGenerationRecipe implements OntologyCodeGenerationRe
 		if (restrictions.size() > 1) {
 			// The name clash occurs only when two restrictions are defined on the same property for the same class but with different ranges
 			// FIXME ??? Is it necessary to check the range of the restriction???
-			return true;
+			logger.debug("Multiple restictions on {} for property {}!", ontClass.getLocalName(), ontProperty.getLocalName());
+			Resource range = null;
+			for (Restriction restriction : restrictions) {
+				// TODO FIXME check other classes of restrictions
+				logger.debug("Restriction some {} all {}:: {}", restriction.isSomeValuesFromRestriction(), restriction.isAllValuesFromRestriction(), restriction.getClass().getName());
+				if (restriction.isAllValuesFromRestriction()) {
+					Resource allRange = restriction.asAllValuesFromRestriction().getAllValuesFrom();
+					if (range != null && !range.equals(allRange)) {
+						return true;
+					}
+					range = allRange;
+
+				} else if (restriction.isSomeValuesFromRestriction()) {
+					Resource someRange = restriction.asSomeValuesFromRestriction().getSomeValuesFrom();
+					if (range != null && !range.equals(someRange)) {
+						return true;
+					}
+					range = someRange;
+				}
+			}
 		}
 		return false;
 	}
@@ -294,6 +298,10 @@ public class OntologyProjectGenerationRecipe implements OntologyCodeGenerationRe
 		}
 	}
 
+	private void createRESTMethod(OntologyCodeModel ontologyModel, AbstractOntologyCodeClass owner, OntProperty ontProperty, Collection<AbstractOntologyCodeClass> domain, AbstractOntologyCodeClass rangeClass, OntologyCodeMethodType type) {
+		ontologyModel.createMethod(type, ontProperty, owner, domain, rangeClass);
+	}
+
 	private void createRESTMethods(AbstractOntologyCodeClass owner, OntologyCodeModel ontologyModel) {
 
 		logger_high_level.trace("Creating REST methods for class " + owner.getOntResource().getURI());
@@ -308,15 +316,35 @@ public class OntologyProjectGenerationRecipe implements OntologyCodeGenerationRe
 
 	}
 
-	private void createRESTMethod(OntologyCodeModel ontologyModel, AbstractOntologyCodeClass owner, OntProperty ontProperty, Collection<AbstractOntologyCodeClass> domain, AbstractOntologyCodeClass rangeClass, OntologyCodeMethodType type) {
-		ontologyModel.createMethod(type, ontProperty, owner, domain, rangeClass);
+	@Override
+	public OntologyCodeProject generate() {
+
+		OntologyCodeProject project = null;
+		try {
+			logger.info("Create Bean Project");
+			logger_high_level.info("Create Bean Project");
+			project = generateBeans();
+		} catch (NotAvailableOntologyCodeEntityException e) {
+			e.printStackTrace();
+		}
+		if (project != null && generateRestProject) {
+			logger.info("Create REST Project");
+			logger_high_level.info("Create REST Project");
+			project = generateRestProject(project.getOntologyCodeModel());
+		}
+
+		return project;
+
 	}
 
 	private OntologyCodeProject generateBeans() throws NotAvailableOntologyCodeEntityException {
 
 		OntologyCodeModel ontologyCodeModel = new RestOntologyCodeModel(this.ontologyModel.asOntModel());
-
 		ontologyCodeModel.setInfOntModel(this.ontologyModel.getInfOntModel());
+
+		// TODO //FIXME
+		this.ontologyModel = ontologyCodeModel;
+
 		OntModel ontModel = ontologyCodeModel.asOntModel();
 
 		String baseURI = ontModel.getNsPrefixURI("");
@@ -467,6 +495,8 @@ public class OntologyProjectGenerationRecipe implements OntologyCodeGenerationRe
 
 	private OntologyCodeProject generateRestProject(OntologyCodeModel model) {
 
+		// TODO generate swagger description
+
 		this.restOntologyModel = new RestOntologyCodeModel(model);
 		this.restOntologyModel.setInfOntModel(model.getInfOntModel());
 
@@ -499,6 +529,47 @@ public class OntologyProjectGenerationRecipe implements OntologyCodeGenerationRe
 		}
 
 		return new OntologyCodeProject(ontologyBaseURI, restOntologyModel);
+
+	}
+
+	public void generateSwaggerDescription(String swaggerFolder) {
+
+		LizardConfiguration l = LizardConfiguration.getInstance();
+
+		ImmutableMultimap.Builder<String, AbstractOntologyCodeClass> builderMap = new ImmutableMultimap.Builder<>();
+
+		AbstractOntologyCodeClass thingClass = this.ontologyModel.getOntologyClass(this.ontologyModel.asOntModel().getOntClass(OWL2.Thing.getURI()), BeanOntologyCodeInterface.class);
+
+		this.ontologyModel.getEntityMap().get(BeanOntologyCodeInterface.class).values().forEach(occ -> {
+			builderMap.put(occ.getPackageName(), occ);
+			builderMap.put(occ.getPackageName(), thingClass);
+		});
+
+		Multimap<String, AbstractOntologyCodeClass> map = builderMap.build();
+
+		map.keySet().forEach(pack -> {
+			String ontologyBasePath = "/" + pack.replaceAll("\\.", "_");
+			new File(swaggerFolder + ontologyBasePath).mkdirs();
+			DescriptionGenerator dg = new DescriptionGenerator();
+			dg.setApiDescription("Rest services for accessing the api defined in the package " + pack + " for accessing the corresponding ontology.");
+			dg.setApiTitle(pack);
+			dg.setApiVersion(l.getApiVersion());
+			dg.setBasePath(ontologyBasePath);
+			dg.setContactName(l.getContactName());
+			dg.setContanctEmail(l.getContanctEmail());
+			dg.setHost(l.getHost());
+			dg.setLicenseName(l.getLicenseName());
+			dg.setLicenseUrl(l.getLicenseUrl());
+			dg.setClasses(map.get(pack));
+			try {
+				FileOutputStream fos = new FileOutputStream(new File(swaggerFolder + ontologyBasePath + "/swagger.json"));
+				fos.write(dg.generateSwaggerJSONStringDescription().getBytes());
+				fos.flush();
+				fos.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		});
 
 	}
 
@@ -573,20 +644,20 @@ public class OntologyProjectGenerationRecipe implements OntologyCodeGenerationRe
 		}
 	}
 
-	public static boolean hasTypeMapper(String uri) {
-		Iterator<RDFDatatype> it = TypeMapper.getInstance().listTypes();
-		while (it.hasNext()) {
-			RDFDatatype rdfDatatype = (RDFDatatype) it.next();
-			if (rdfDatatype.getURI().equals(uri)) {
+	private static boolean hasMethod(JDefinedClass jdefClass, String methodName) {
+		for (JMethod m : jdefClass.methods()) {
+			if (m.name().equals(methodName)) {
 				return true;
 			}
 		}
 		return false;
 	}
 
-	private static boolean hasMethod(JDefinedClass jdefClass, String methodName) {
-		for (JMethod m : jdefClass.methods()) {
-			if (m.name().equals(methodName)) {
+	public static boolean hasTypeMapper(String uri) {
+		Iterator<RDFDatatype> it = TypeMapper.getInstance().listTypes();
+		while (it.hasNext()) {
+			RDFDatatype rdfDatatype = (RDFDatatype) it.next();
+			if (rdfDatatype.getURI().equals(uri)) {
 				return true;
 			}
 		}
