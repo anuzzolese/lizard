@@ -1,5 +1,6 @@
 package it.cnr.istc.stlab.lizard.commons.web;
 
+import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -26,8 +27,9 @@ import org.slf4j.LoggerFactory;
 import it.cnr.istc.stlab.lizard.commons.LizardInterface;
 import it.cnr.istc.stlab.lizard.commons.PackageResolver;
 import it.cnr.istc.stlab.lizard.commons.inmemory.RestInterface;
+import it.cnr.istc.stlab.lizard.commons.jena.RuntimeJenaLizardContext;
 
-@Path("/{ontology}/{class_name}")
+@Path("/{ontology}")
 @Produces(MediaType.APPLICATION_JSON)
 @Component(service = Object.class, property = { "javax.ws.rs=true" })
 public class RestImpl implements RestInterface {
@@ -57,7 +59,7 @@ public class RestImpl implements RestInterface {
 	}
 
 	@POST
-	@Path("/create")
+	@Path("/{class_name}/create")
 	public Response create(@PathParam("ontology") String ontology, @PathParam("class_name") String className, @QueryParam("id") String id) {
 		logger.trace("Create {} {} {}", ontology, className, id);
 
@@ -73,7 +75,7 @@ public class RestImpl implements RestInterface {
 	}
 
 	@GET
-	@Path("/getAll")
+	@Path("/{class_name}/getAll")
 	public Response getAll(@PathParam("ontology") String ontology, @PathParam("class_name") String className) {
 		logger.trace("Get all {} {}", ontology, className);
 		Response.ResponseBuilder responseBuilder = null;
@@ -105,7 +107,24 @@ public class RestImpl implements RestInterface {
 	}
 
 	@GET
-	@Path("/getById")
+	@Path("/swagger.json")
+	public Response getSwaggerDescription(@PathParam("ontology") String ontology) {
+		logger.trace("Get swagger descrition {}", ontology);
+		Response.ResponseBuilder responseBuilder = null;
+
+		File f = new File(RuntimeJenaLizardContext.getContext().getConf().getSwaggerApiDescriptionFolder() + "/" + ontology + "/swagger.json");
+
+		if (!f.exists()) {
+			responseBuilder = Response.status(Response.Status.NOT_FOUND);
+		} else {
+			responseBuilder = Response.ok(f);
+		}
+
+		return responseBuilder.build();
+	}
+
+	@GET
+	@Path("/{class_name}/getById")
 	public Response getById(@PathParam("ontology") String ontology, @PathParam("class_name") String className, @QueryParam("id") String id) {
 		logger.trace("Get by id {} {} {}", ontology, className, id);
 		Response.ResponseBuilder responseBuilder = null;
@@ -170,7 +189,7 @@ public class RestImpl implements RestInterface {
 	}
 
 	@POST
-	@Path("/entity/set{property}")
+	@Path("/{class_name}/entity/set{property}")
 	public Response setEntityProperty(@PathParam("ontology") String ontology, @PathParam("class_name") String className, @PathParam("property") String property, @QueryParam("id") String id, @QueryParam("value") String value) {
 		logger.trace("Set {} {} {} {} {}", ontology, className, property, id, value);
 		Response.ResponseBuilder responseBuilder = null;
@@ -210,7 +229,7 @@ public class RestImpl implements RestInterface {
 	}
 
 	@GET
-	@Path("/getBy{property}")
+	@Path("/{class_name}/getBy{property}")
 	public Response getByProperty(@PathParam("ontology") String ontology, @PathParam("class_name") String className, @PathParam("property") String property, @QueryParam("constraint") String constraint) {
 		logger.trace("Get by {} {} {} constraint {}", ontology, className, property, constraint);
 		Response.ResponseBuilder responseBuilder = null;
@@ -270,7 +289,7 @@ public class RestImpl implements RestInterface {
 	}
 
 	@GET
-	@Path("/entity/get{property}")
+	@Path("/{class_name}/entity/get{property}")
 	public Response getProperty(@PathParam("ontology") String ontology, @PathParam("class_name") String className, @PathParam("property") String property, @QueryParam("id") String id) {
 		logger.trace("Get by {} {} {} entity {}", ontology, className, property, id);
 		Response.ResponseBuilder responseBuilder = null;

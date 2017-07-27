@@ -17,6 +17,7 @@ public class JenaLizardConfiguration {
 	public static final String ONTOLOGIES_FILE = "ontologies_file";
 	public static final String SWAGGER = "swagger";
 	public static final String JENA_DOC_MANAGER = "jan_doc_manager";
+	public static final String SWAGGER_API_DESCRIPTION_FOLDER = "swagger_api_description_folder";
 
 	private String tdbLocation;
 	private String modelFilePath;
@@ -31,6 +32,11 @@ public class JenaLizardConfiguration {
 	private boolean swagger;
 	private String ontologies_file;
 	private String jena_doc_manager;
+	private String swaggerApiDescriptionFolder;
+
+	public String getSwaggerApiDescriptionFolder() {
+		return swaggerApiDescriptionFolder;
+	}
 
 	public JenaLizardConfiguration() {
 
@@ -46,6 +52,7 @@ public class JenaLizardConfiguration {
 			this.ontologies_file = props.getProperty(ONTOLOGIES_FILE);
 			this.swagger = Boolean.parseBoolean(props.getProperty(SWAGGER));
 			this.jena_doc_manager = props.getProperty(JENA_DOC_MANAGER);
+			this.swaggerApiDescriptionFolder = props.getProperty(SWAGGER_API_DESCRIPTION_FOLDER);
 
 			if (typeString.equals("virtuoso")) {
 				type = RepositoryType.Virtuoso;
@@ -181,8 +188,5 @@ public class JenaLizardConfiguration {
 	public String toString() {
 		return "JenaLizardConfiguration [tdbLocation=" + tdbLocation + ", modelFilePath=" + modelFilePath + ", type=" + type + ", virtuosoUser=" + virtuosoUser + ", virtuosoPassword=" + virtuosoPassword + ", virtuosoHost=" + virtuosoHost + ", virtuosoPort=" + virtuosoPort + ", graph=" + graph + ", lang=" + lang + ", inference=" + inference + ", swagger=" + swagger + ", ontologies_file=" + ontologies_file + ", jena_doc_manager=" + jena_doc_manager + "]";
 	}
-	
-	
-	
 
 }
