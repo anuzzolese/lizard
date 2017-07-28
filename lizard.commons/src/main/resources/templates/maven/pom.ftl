@@ -3,7 +3,6 @@
     <groupId>${groupId}</groupId>
 	<artifactId>${artifactId}</artifactId>
     <version>0.9-SNAPSHOT</version>
-	<!-- name>MARIO OntNet</name -->
 	
 	<build>
     	<plugins>
