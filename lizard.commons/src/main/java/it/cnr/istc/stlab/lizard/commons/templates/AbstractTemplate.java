@@ -19,10 +19,11 @@ public abstract class AbstractTemplate implements ITemplate {
     protected Template template;
     protected String templateFolder;
     
-    protected AbstractTemplate(String templateFolder){
+    @SuppressWarnings("deprecation")
+	protected AbstractTemplate(String templateFolder){
         
         this.templateFolder = templateFolder;
-        cfg = new Configuration();
+		cfg = new Configuration();
         
         //String directoryPath = getClass().getClassLoader().getResource(templateFolder).getFile();
         String directoryPath = templateFolder;

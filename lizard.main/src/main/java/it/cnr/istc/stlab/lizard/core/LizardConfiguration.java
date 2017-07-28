@@ -8,9 +8,10 @@ import java.util.Properties;
 
 class LizardConfiguration {
 
-	private static final String configFile = "lizard-core.conf";
+	private static String configFile = "lizard-core.conf";
 	private static LizardConfiguration instance;
-	private String M2_HOME, JAVA_HOME, apiVersion, contactName, contanctEmail, licenseName, licenseUrl, host;
+	private String M2_HOME, JAVA_HOME, apiVersion, contactName, contanctEmail, licenseName, licenseUrl, host, artifactId, versionId, groupId;
+	private String[] ontologies;
 
 	private LizardConfiguration() {
 
@@ -31,12 +32,23 @@ class LizardConfiguration {
 				instance.contanctEmail = props.getProperty("contanctEmail");
 				instance.licenseName = props.getProperty("licenseName");
 				instance.licenseUrl = props.getProperty("licenseUrl");
+				instance.artifactId = props.getProperty("artifactId");
+				instance.versionId = props.getProperty("versionId");
+				instance.groupId = props.getProperty("groupId");
 				instance.host = props.getProperty("host");
+				instance.ontologies = props.getProperty("ontologies").split(",");
+				for (int i = 0; i < instance.ontologies.length; i++) {
+					instance.ontologies[i] = instance.ontologies[i].trim();
+				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
 		return instance;
+	}
+
+	public static void setConfigFile(String configFile) {
+		LizardConfiguration.configFile = configFile;
 	}
 
 	public String getM2_HOME() {
@@ -69,6 +81,22 @@ class LizardConfiguration {
 
 	public String getHost() {
 		return host;
+	}
+
+	public String getArtifactId() {
+		return artifactId;
+	}
+
+	public String getVersionId() {
+		return versionId;
+	}
+
+	public String getGroupId() {
+		return groupId;
+	}
+
+	public String[] getOntologies() {
+		return ontologies;
 	}
 
 }
