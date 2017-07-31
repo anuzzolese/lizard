@@ -78,7 +78,7 @@ public class ReflectionUtils {
 			return Byte.parseByte(value);
 		}
 
-		throw new IntantiationException();
+		throw new InstantiationException();
 	}
 
 }

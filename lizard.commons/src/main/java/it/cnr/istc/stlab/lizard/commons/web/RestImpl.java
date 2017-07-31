@@ -67,7 +67,7 @@ public class RestImpl implements RestInterface {
 		try {
 			// Create a new object
 			Class.forName(absoluteJenaClassName).getConstructor(String.class).newInstance(id);
-		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException | ClassNotFoundException e) {
+		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException | ClassNotFoundException | java.lang.InstantiationException e) {
 			e.printStackTrace();
 		}
 		Response.ResponseBuilder _responseBuilder = Response.ok();
@@ -151,7 +151,7 @@ public class RestImpl implements RestInterface {
 		return responseBuilder.build();
 	}
 
-	private static Object getObjectFromStringValueCollectionsParameters(String value, Method method) throws ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
+	private static Object getObjectFromStringValueCollectionsParameters(String value, Method method) throws ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, java.lang.InstantiationException {
 		Type[] parameters = method.getGenericParameterTypes();
 		// Lizard methods defines only one parameters Set<T> for set methods
 		ParameterizedType type = (ParameterizedType) parameters[0];
@@ -160,11 +160,11 @@ public class RestImpl implements RestInterface {
 		return getValueFromType(value, typeArgClass);
 	}
 
-	private static Object getObjectFromStringValueSimpleParameters(String value, Method method) throws ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
+	private static Object getObjectFromStringValueSimpleParameters(String value, Method method) throws ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, java.lang.InstantiationException {
 		return getValueFromType(value, method.getParameters()[0].getType());
 	}
 
-	private static Object getValueFromType(String value, Class<?> type) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException {
+	private static Object getValueFromType(String value, Class<?> type) throws  IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, java.lang.InstantiationException {
 		boolean lizardInterface = false;
 		for (Class<?> i : type.getInterfaces()) {
 			if (i.equals(LizardInterface.class)) {
@@ -222,7 +222,7 @@ public class RestImpl implements RestInterface {
 				logger.trace("Not found");
 				responseBuilder = Response.status(Response.Status.NOT_FOUND);
 			}
-		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException | ClassNotFoundException | InstantiationException e) {
+		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException | ClassNotFoundException | InstantiationException | java.lang.InstantiationException e) {
 			e.printStackTrace();
 		}
 		return responseBuilder.build();
@@ -282,7 +282,7 @@ public class RestImpl implements RestInterface {
 			} else {
 				responseBuilder = Response.ok(kbSet.toArray(new Object[kbSet.size()]));
 			}
-		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException | java.lang.InstantiationException e) {
 			e.printStackTrace();
 		}
 		return responseBuilder.build();

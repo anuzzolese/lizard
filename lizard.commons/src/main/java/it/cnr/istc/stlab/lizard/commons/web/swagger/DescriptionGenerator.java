@@ -11,6 +11,8 @@ import java.util.Set;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.ontology.OntResource;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -46,6 +48,8 @@ import it.cnr.istc.stlab.lizard.commons.model.types.OntologyCodeMethodType;
 import jersey.repackaged.com.google.common.collect.Lists;
 
 public class DescriptionGenerator {
+
+	private static Logger logger = LoggerFactory.getLogger(DescriptionGenerator.class);
 
 	private String apiDescription, apiVersion, apiTitle, contactName, contanctEmail, licenseName, licenseUrl;
 	private String host, basePath;
@@ -175,6 +179,8 @@ public class DescriptionGenerator {
 		Map<String, Model> definitions = new HashMap<String, Model>();
 		classes.forEach(clazz -> {
 
+			logger.debug(clazz.getOntResource().getLocalName());
+
 			String javaName = getJavaClassName(clazz.getOntResource());
 			Model classModel = new ModelImpl();
 			definitions.put(javaName, classModel);
@@ -186,7 +192,9 @@ public class DescriptionGenerator {
 			classProperties.put("isCompleted", isCompletedProperty);
 
 			clazz.getMethods().forEach(m -> {
+				logger.debug(clazz.getOntResource().getLocalName() + " " + m.getOntResource().getLocalName());
 				if (m.getMethodType() == OntologyCodeMethodType.GET) {
+					logger.debug("Adding method");
 					ArrayProperty methodProperty = new ArrayProperty();
 					methodProperty.setUniqueItems(true);
 					classProperties.put(m.getEntityName(), methodProperty);
@@ -204,6 +212,15 @@ public class DescriptionGenerator {
 						methodProperty.items(new RefProperty("#/definitions/" + getJavaClassName(m.getRange().getOntResource())));
 					}
 				}
+			});
+
+			HashSet<String> classNames = new HashSet<>();
+			classProperties.forEach((k, v) -> {
+				if (classNames.contains(k)) {
+					System.out.println("WARNING: Two or more classes have the same local name! Swagger definitions may not be as expected!");
+				}
+				classNames.add(k);
+				logger.debug(k);
 			});
 
 			classModel.setProperties(classProperties);
@@ -277,7 +294,7 @@ public class DescriptionGenerator {
 	}
 
 	private Path getGetPath(AbstractOntologyCodeClass clazz, AbstractOntologyCodeMethod method, String getMethodName, String tag) {
-		String operationId = "entity_" + clazz.getEntityName() + "_" + method.getEntityName();
+		String operationId = "get_" + getPath(clazz.getOntResource()).substring(1) + "_" + getPath(method.getOntResource()).substring(1);
 		Path p = new Path();
 		Operation op = new Operation();
 		op.setTags(Lists.newArrayList(tag));
@@ -319,7 +336,7 @@ public class DescriptionGenerator {
 
 	private Path getGetByPath(AbstractOntologyCodeClass clazz, AbstractOntologyCodeMethod method, String methodName, String tag) {
 		String classJavaName = getJavaClassName(clazz.getOntResource());
-		String operationId = classJavaName.toLowerCase() + "_" + methodName;
+		String operationId = "get_by_" + getPath(clazz.getOntResource()).substring(1) + "_" + getPath(method.getOntResource()).substring(1);
 		Path p = new Path();
 		Operation op = new Operation();
 		op.setTags(Lists.newArrayList(tag));
@@ -330,7 +347,7 @@ public class DescriptionGenerator {
 		List<Parameter> parameters = new ArrayList<Parameter>();
 		{
 			QueryParameter p1 = new QueryParameter();
-			p1.setName(method.getEntityName());
+			p1.setName(getPath(method.getOntResource()).substring(1));
 			p1.setIn("query");
 			p1.setDescription(method.getEntityName());
 			p1.setType("string");
@@ -362,7 +379,7 @@ public class DescriptionGenerator {
 
 	private Path getSetPath(AbstractOntologyCodeClass clazz, AbstractOntologyCodeMethod method, String methodName, String tag) {
 		String classJavaName = getJavaClassName(clazz.getOntResource());
-		String operationId = "set_" + classJavaName.toLowerCase() + "_" + method.getEntityName();
+		String operationId = "set_" + getPath(clazz.getOntResource()).substring(1) + "_" + getPath(method.getOntResource()).substring(1);
 		Path p = new Path();
 		Operation op = new Operation();
 		op.setTags(Lists.newArrayList(tag));
@@ -419,7 +436,8 @@ public class DescriptionGenerator {
 		op.setTags(Lists.newArrayList(tag));
 		op.setSummary("Get a " + localName + " by id.");
 		op.setDescription("Get a " + localName + " by id.");
-		op.setOperationId("get" + localName + "ById");
+		// e.g. get_question_by_id
+		op.setOperationId("get_" + localName + "_by_id");
 		op.setProduces(Lists.newArrayList("application/json"));
 		List<Parameter> parameters = new ArrayList<Parameter>();
 		QueryParameter p1 = new QueryParameter();
@@ -451,7 +469,7 @@ public class DescriptionGenerator {
 		op.setTags(Lists.newArrayList(tag));
 		op.setSummary("Create a new " + localName);
 		op.setDescription("Create a new " + localName);
-		op.setOperationId("create" + localName);
+		op.setOperationId("create_" + localName);
 		op.setProduces(Lists.newArrayList("application/json"));
 		List<Parameter> parameters = new ArrayList<Parameter>();
 		QueryParameter p1 = new QueryParameter();

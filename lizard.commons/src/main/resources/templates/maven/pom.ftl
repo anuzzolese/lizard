@@ -2,7 +2,7 @@
 	<modelVersion>4.0.0</modelVersion>
     <groupId>${groupId}</groupId>
 	<artifactId>${artifactId}</artifactId>
-    <version>0.9-SNAPSHOT</version>
+    <version>${versionId}</version>
 	
 	<build>
     	<plugins>
@@ -45,12 +45,6 @@
     		<version>3.0.0</version>
   		</dependency>
   		
-  		<!-- Codemodel -->
-  		<dependency>
-			<groupId>com.sun.codemodel</groupId>
-			<artifactId>codemodel</artifactId>
-			<version>2.6</version>
-		</dependency>
 		
 		<!-- Freemarker -->
 		<dependency>
@@ -67,13 +61,6 @@
     		<scope>provided</scope>
 		</dependency>
 		
-		<!-- Swagger -->
-		<dependency>
-		  	<groupId>io.swagger</groupId>
-		  	<artifactId>swagger-jersey2-jaxrs</artifactId>
-		  	<version>1.5.0</version>
-		</dependency>
-		
 		<dependency>
 			<groupId>org.osgi</groupId>
 			<artifactId>org.osgi.service.component.annotations</artifactId>
@@ -85,6 +72,7 @@
 			<artifactId>slf4j-log4j12</artifactId>
 			<version>1.7.7</version>
 		</dependency>
+		
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-jdk14</artifactId>

@@ -21,13 +21,7 @@ public class RuntimeJenaLizardContext {
 				props.load(is);
 
 			} catch (Exception e) {
-				props.setProperty("type", "virtuoso");
-				props.setProperty("user", "dba");
-				props.setProperty("password", "dba");
-				props.setProperty("host", "localhost");
-				props.setProperty("port", "7777");
-				props.setProperty("graph", "music");
-				System.out.println("Starting with properties for localhost");
+				System.err.println(e.getMessage());
 			}
 
 			context = JenaLizardContextManager.getInstance().getJenaLizardContext(new JenaLizardConfiguration(props));

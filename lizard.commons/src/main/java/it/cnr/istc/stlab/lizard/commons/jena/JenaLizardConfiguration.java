@@ -186,7 +186,7 @@ public class JenaLizardConfiguration {
 
 	@Override
 	public String toString() {
-		return "JenaLizardConfiguration [tdbLocation=" + tdbLocation + ", modelFilePath=" + modelFilePath + ", type=" + type + ", virtuosoUser=" + virtuosoUser + ", virtuosoPassword=" + virtuosoPassword + ", virtuosoHost=" + virtuosoHost + ", virtuosoPort=" + virtuosoPort + ", graph=" + graph + ", lang=" + lang + ", inference=" + inference + ", swagger=" + swagger + ", ontologies_file=" + ontologies_file + ", jena_doc_manager=" + jena_doc_manager + "]";
+		return "JenaLizardConfiguration [modelFilePath=" + modelFilePath + ", type=" + type + ", lang=" + lang + ", inference=" + inference + ", ontologies_file=" + ontologies_file + ", jena_doc_manager=" + jena_doc_manager + ", swaggerApiDescriptionFolder=" + swaggerApiDescriptionFolder + "]";
 	}
 
 }

@@ -89,13 +89,6 @@
 			<version>0.1-SNAPSHOT</version>
 		</dependency>
 
-		<!-- Swagger annotations -->
-		<dependency>
-			<groupId>io.swagger</groupId>
-			<artifactId>swagger-annotations</artifactId>
-			<version>1.5.0</version>
-		</dependency>
-
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>

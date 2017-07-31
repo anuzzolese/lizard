@@ -540,7 +540,7 @@ public class OntologyProjectGenerationRecipe implements OntologyCodeGenerationRe
 
 		AbstractOntologyCodeClass thingClass = this.ontologyModel.getOntologyClass(this.ontologyModel.asOntModel().getOntClass(OWL2.Thing.getURI()), BeanOntologyCodeInterface.class);
 
-		this.ontologyModel.getEntityMap().get(BeanOntologyCodeInterface.class).values().forEach(occ -> {
+		this.ontologyModel.getEntityMap().get(BeanOntologyCodeClass.class).values().forEach(occ -> {
 			builderMap.put(occ.getPackageName(), occ);
 			builderMap.put(occ.getPackageName(), thingClass);
 		});

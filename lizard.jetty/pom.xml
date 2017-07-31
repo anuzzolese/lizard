@@ -68,6 +68,12 @@
 
 	<dependencies>
 
+		<dependency>
+			<groupId>eu.mario-project</groupId>
+			<artifactId>ontology-api</artifactId>
+			<version>alpha</version>
+		</dependency>
+
 
 		<!-- JUNIT -->
 		<dependency>
@@ -90,7 +96,7 @@
 			<artifactId>jackson-databind</artifactId>
 			<version>${jackson.version}</version>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-annotations</artifactId>

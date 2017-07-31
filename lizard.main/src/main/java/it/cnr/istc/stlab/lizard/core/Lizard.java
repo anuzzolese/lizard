@@ -1,9 +1,11 @@
 package it.cnr.istc.stlab.lizard.core;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
@@ -30,19 +32,14 @@ import it.cnr.istc.stlab.lizard.commons.recipe.OntologyCodeGenerationRecipe;
 
 public class Lizard {
 
+	private static Logger logger = LoggerFactory.getLogger(Lizard.class);
 	public final static String BUILD = "b";
 	public final static String BUILD_LONG = "build";
 	public final static String CONFIGURATION_FILE = "c";
 	public final static String CONFIGURATION_FILE_LONG = "config";
-
-	private static Logger logger = LoggerFactory.getLogger(Lizard.class);
-
 	public final static String MARVIN = "m";
-
 	public final static String MARVIN_LONG = "marvin";
-
 	public final static String OUTPUT_FOLDER = "o";
-
 	public final static String OUTPUT_FOLDER_LONG = "output";
 	private boolean isForMarvin = false;
 
@@ -60,7 +57,17 @@ public class Lizard {
 		this(outFolder, false, uris);
 	}
 
-	private void generateProject(boolean buildProject, String groupId, String artifactId) {
+	private void generateOntologiesFile() throws MalformedURLException, IOException {
+		FileOutputStream fos = new FileOutputStream(new File(outFolder + "/ontologies"));
+		for (URI u : uris) {
+			fos.write(u.toURL().toString().getBytes());
+			fos.write('\n');
+		}
+		fos.flush();
+		fos.close();
+	}
+
+	public void generateProject(boolean buildProject, String groupId, String artifactId, String versionId) {
 
 		logger.info("Generating project");
 
@@ -89,13 +96,16 @@ public class Lizard {
 
 			CodeWriter writer = new FileCodeWriter(src, "UTF-8");
 			ontologyCodeProject.getOntologyCodeModel().asJCodeModel().build(writer);
+
 			codegen.generateSwaggerDescription(outFolder + "/swagger");
+			generateOntologiesFile();
 
 			File pom = new File(outFolder + "/pom.xml");
 			Writer pomWriter = new FileWriter(new File(outFolder + "/pom.xml"));
 			Map<String, String> dataModel = new HashMap<String, String>();
 			dataModel.put("artifactId", artifactId);
 			dataModel.put("groupId", groupId);
+			dataModel.put("versionId", versionId);
 
 			MavenUtils.generatePOM(pomWriter, dataModel, this.isForMarvin);
 
@@ -165,7 +175,7 @@ public class Lizard {
 			Lizard lizard = new Lizard(outputFolder, marvin, uris);
 
 			long t1 = System.currentTimeMillis();
-			lizard.generateProject(build, lizardConfiguration.getGroupId(), lizardConfiguration.getArtifactId());
+			lizard.generateProject(build, lizardConfiguration.getGroupId(), lizardConfiguration.getArtifactId(), lizardConfiguration.getVersionId());
 			long t2 = System.currentTimeMillis();
 
 			System.out.println("Output folder " + outputFolder);

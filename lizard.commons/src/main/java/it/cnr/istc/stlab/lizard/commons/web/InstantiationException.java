@@ -1,6 +1,6 @@
 package it.cnr.istc.stlab.lizard.commons.web;
 
-public class IntantiationException extends RuntimeException {
+public class InstantiationException extends RuntimeException {
 
 	/**
 	 * 
