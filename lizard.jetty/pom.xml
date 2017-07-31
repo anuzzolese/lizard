@@ -4,7 +4,7 @@
 
 	<groupId>it.cnr.istc.stlab</groupId>
 	<artifactId>lizard.jetty</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>alpha</version>
 	<packaging>jar</packaging>
 
 	<name>lizard.jetty</name>
@@ -68,12 +68,6 @@
 
 	<dependencies>
 
-		<dependency>
-			<groupId>eu.mario-project</groupId>
-			<artifactId>ontology-api</artifactId>
-			<version>alpha</version>
-		</dependency>
-
 
 		<!-- JUNIT -->
 		<dependency>
@@ -115,7 +109,7 @@
 		<dependency>
 			<groupId>it.cnr.istc.stlab</groupId>
 			<artifactId>lizard.commons</artifactId>
-			<version>0.9-SNAPSHOT</version>
+			<version>alpha</version>
 		</dependency>
 
 
