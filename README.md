@@ -6,3 +6,5 @@ The generated APIs expose the RDF triples as sets of resources and seamlessly in
 Moreover, Lizard provides a RESTful layer that exposes Object Oriented paradigm by using the REST architectural style over HTTP.
 The RESTful layer is described in [link Swagger](https://swagger.io/) notation.
 The Swagger description enable API users to generate a RESTful client in [link over 40 different](https://swagger.io/swagger-codegen/) programming languages.
+
+## Using Lizard
