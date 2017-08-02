@@ -1,4 +1,4 @@
-# Lizard
+# Lizard in a nutshell
 Lizard automatically generates language-agnostic APIs for accessing knowledge bases without knowing of Semantic Web languages (such as RDF, OWL or SPARQL).
 To generate the APIs of a KB Lizard only needs of the ontology that describes the schema of the information containted in the knowledge base.
 Given as input an ontology, Lizard generates a Java library for accessing the target knowledge base.
