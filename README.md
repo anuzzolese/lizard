@@ -6,8 +6,8 @@ Given as input an ontology, Lizard generates a Java library for accessing the ta
 The generated APIs expose the RDF triples as sets of resources and seamlessly integrates them into the Object Oriented paradigm.
 
 Moreover, Lizard provides a RESTful layer that exposes Object Oriented paradigm by using the REST architectural style over HTTP.
-The RESTful layer is described in [link Swagger](https://swagger.io/) notation.
-The Swagger description enable API users to generate a RESTful client in [link over 40 different](https://swagger.io/swagger-codegen/) programming languages.
+The RESTful layer is described in [Swagger](https://swagger.io/) notation.
+The Swagger description enable API users to generate a RESTful client in [over 40 different](https://swagger.io/swagger-codegen/) programming languages.
 
 ## Using Lizard
 1. Clone the repository and move to the jars directory
