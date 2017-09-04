@@ -30,14 +30,19 @@ public class JenaLizardModelListener implements ModelChangedListener {
 	}
 
 	private void updateFileModel() {
-		Thread t = new Thread(new Saver(this.model, this.filePath, this.lang));
+		Thread t = new Thread(new Saver(model, this.filePath, this.lang));
 		t.start();
 	}
 
 	@Override
 	public void addedStatement(Statement arg0) {
 		logger.debug("Adding " + arg0);
-		model.add(arg0);
+		try {
+			model.enterCriticalSection(Lock.WRITE);
+			model.add(arg0);
+		} finally {
+			model.leaveCriticalSection();
+		}
 		updateFileModel();
 	}
 
@@ -45,7 +50,12 @@ public class JenaLizardModelListener implements ModelChangedListener {
 	public void addedStatements(Statement[] arg0) {
 		for (int i = 0; i < arg0.length; i++) {
 			Statement statement = arg0[i];
-			model.add(statement);
+			try {
+				model.enterCriticalSection(Lock.WRITE);
+				model.add(statement);
+			} finally {
+				model.leaveCriticalSection();
+			}
 			logger.debug("Adding " + statement);
 		}
 		updateFileModel();
@@ -55,7 +65,12 @@ public class JenaLizardModelListener implements ModelChangedListener {
 	public void addedStatements(List<Statement> arg0) {
 		for (Statement statement : arg0) {
 			logger.debug("Adding " + statement);
-			model.add(statement);
+			try {
+				model.enterCriticalSection(Lock.WRITE);
+				model.add(statement);
+			} finally {
+				model.leaveCriticalSection();
+			}
 		}
 		updateFileModel();
 	}
@@ -64,7 +79,12 @@ public class JenaLizardModelListener implements ModelChangedListener {
 	public void addedStatements(StmtIterator arg0) {
 		while (arg0.hasNext()) {
 			Statement statement = (Statement) arg0.next();
-			model.add(statement);
+			try {
+				model.enterCriticalSection(Lock.WRITE);
+				model.add(statement);
+			} finally {
+				model.leaveCriticalSection();
+			}
 			logger.debug("Adding " + statement);
 		}
 		updateFileModel();
@@ -73,7 +93,12 @@ public class JenaLizardModelListener implements ModelChangedListener {
 	@Override
 	public void addedStatements(Model arg0) {
 		for (Statement statement : arg0.listStatements().toList()) {
-			model.add(statement);
+			try {
+				model.enterCriticalSection(Lock.WRITE);
+				model.add(statement);
+			} finally {
+				model.leaveCriticalSection();
+			}
 			logger.debug("Adding " + statement);
 		}
 		updateFileModel();
@@ -87,7 +112,12 @@ public class JenaLizardModelListener implements ModelChangedListener {
 	@Override
 	public void removedStatement(Statement arg0) {
 		logger.debug("Removed " + arg0.toString());
-		model.remove(arg0);
+		try {
+			model.enterCriticalSection(Lock.WRITE);
+			model.remove(arg0);
+		} finally {
+			model.leaveCriticalSection();
+		}
 		updateFileModel();
 
 	}
@@ -95,7 +125,12 @@ public class JenaLizardModelListener implements ModelChangedListener {
 	@Override
 	public void removedStatements(Statement[] arg0) {
 		for (Statement statement : arg0) {
-			model.remove(statement);
+			try {
+				model.enterCriticalSection(Lock.WRITE);
+				model.remove(statement);
+			} finally {
+				model.leaveCriticalSection();
+			}
 			logger.debug("Removed " + statement);
 		}
 		updateFileModel();
@@ -105,7 +140,12 @@ public class JenaLizardModelListener implements ModelChangedListener {
 	@Override
 	public void removedStatements(List<Statement> arg0) {
 		for (Statement statement : arg0) {
-			model.remove(statement);
+			try {
+				model.enterCriticalSection(Lock.WRITE);
+				model.remove(statement);
+			} finally {
+				model.leaveCriticalSection();
+			}
 			logger.debug("Removed " + statement);
 		}
 		updateFileModel();
@@ -116,7 +156,12 @@ public class JenaLizardModelListener implements ModelChangedListener {
 	public void removedStatements(StmtIterator arg0) {
 		while (arg0.hasNext()) {
 			Statement statement = (Statement) arg0.next();
-			model.remove(statement);
+			try {
+				model.enterCriticalSection(Lock.WRITE);
+				model.remove(statement);
+			} finally {
+				model.leaveCriticalSection();
+			}
 			logger.debug("Removed " + statement);
 		}
 		updateFileModel();
@@ -126,7 +171,13 @@ public class JenaLizardModelListener implements ModelChangedListener {
 	@Override
 	public void removedStatements(Model arg0) {
 		for (Statement statement : arg0.listStatements().toList()) {
-			model.remove(statement);
+			try {
+				model.enterCriticalSection(Lock.WRITE);
+				model.remove(statement);
+			} finally {
+				model.leaveCriticalSection();
+			}
+
 			logger.debug("Removed " + statement);
 		}
 		updateFileModel();
