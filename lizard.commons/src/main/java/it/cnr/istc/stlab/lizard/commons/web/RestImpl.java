@@ -227,6 +227,46 @@ public class RestImpl implements RestInterface {
 		}
 		return responseBuilder.build();
 	}
+	
+	@POST
+	@Path("/{class_name}/entity/add{property}")
+	public Response addEntityProperty(@PathParam("ontology") String ontology, @PathParam("class_name") String className, @PathParam("property") String property, @QueryParam("id") String id, @QueryParam("value") String value) {
+		logger.trace("Set {} {} {} {} {}", ontology, className, property, id, value);
+		Response.ResponseBuilder responseBuilder = null;
+		String interfaceClassName = getAbsoluteInterfaceName(ontology, className);
+		String jenaClassName = getAbsoluteJenaClassName(ontology, className);
+		try {
+			Class<?> interfaceClass = Class.forName(interfaceClassName);
+			Class<?> jenaClass = Class.forName(jenaClassName);
+			Method asMicroBeanMethod = jenaClass.getMethod("asMicroBean", (Class<?>[]) null);
+			Method getMethod = interfaceClass.getMethod("get", String.class);
+			Method[] methods = interfaceClass.getMethods();
+			List<Method> addAllMethods = new ArrayList<Method>();
+			for (Method m : methods) {
+				if (m.getName().equals("addAll" + property)) {
+					addAllMethods.add(m);
+				}
+			}
+			Object entity = getMethod.invoke(null, id);
+			Set<Object> toAdd = new HashSet<Object>();
+			if (entity != null) {
+				logger.trace("Found");
+				for (Method m : addAllMethods) {
+					toAdd.add(getObjectFromStringValueCollectionsParameters(value, m));
+					m.invoke(entity, toAdd);
+				}
+				Set<Object> retSet = new HashSet<Object>();
+				retSet.add(asMicroBeanMethod.invoke(jenaClass.cast(entity), (Object[]) null));
+				responseBuilder = Response.ok(retSet.toArray(new Object[retSet.size()]));
+			} else {
+				logger.trace("Not found");
+				responseBuilder = Response.status(Response.Status.NOT_FOUND);
+			}
+		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException | ClassNotFoundException | InstantiationException | java.lang.InstantiationException e) {
+			e.printStackTrace();
+		}
+		return responseBuilder.build();
+	}
 
 	@GET
 	@Path("/{class_name}/getBy{property}")

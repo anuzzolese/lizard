@@ -704,7 +704,9 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 			JVar ontPropertyVar = methodBody.decl(jCodeModel._ref(Property.class), "predicate", jCodeModel.ref(ModelFactory.class).staticInvoke("createDefaultModel").invoke("createProperty").arg(ontResource.toString()));
 			JVar jenaModelVar = methodBody.decl(jCodeModel._ref(Model.class), "model", jCodeModel.ref(RuntimeJenaLizardContext.class).staticInvoke("getContext").invoke("getModel"));
 
-			methodBody.add(jenaModelVar.invoke("getResource").arg(JExpr._super().ref("individual").invoke("asResource").invoke("getURI")).invoke("removeAll").arg(ontPropertyVar));
+			// methodBody.add(jenaModelVar.invoke("getResource").arg(JExpr._super().ref("individual").invoke("asResource").invoke("getURI")).invoke("removeAll").arg(ontPropertyVar));
+			String methodName = entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
+			methodBody.directStatement("removeAll" + methodName + "(get" + methodName + "());");
 
 			logger.debug(owner.getOntResource().getURI() + " " + entityName + " " + (this.domain == null));
 

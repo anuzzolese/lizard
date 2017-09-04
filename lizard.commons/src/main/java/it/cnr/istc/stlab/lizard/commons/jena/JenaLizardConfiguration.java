@@ -29,7 +29,6 @@ public class JenaLizardConfiguration {
 	private String graph;
 	private String lang;
 	private boolean inference;
-	private boolean swagger;
 	private String ontologies_file;
 	private String jena_doc_manager;
 	private String swaggerApiDescriptionFolder;
@@ -50,7 +49,6 @@ public class JenaLizardConfiguration {
 			typeString = typeString.toLowerCase().trim();
 			this.inference = Boolean.parseBoolean(props.getProperty(INFERENCE_ON_DATA));
 			this.ontologies_file = props.getProperty(ONTOLOGIES_FILE);
-			this.swagger = Boolean.parseBoolean(props.getProperty(SWAGGER));
 			this.jena_doc_manager = props.getProperty(JENA_DOC_MANAGER);
 			this.swaggerApiDescriptionFolder = props.getProperty(SWAGGER_API_DESCRIPTION_FOLDER);
 
@@ -168,14 +166,6 @@ public class JenaLizardConfiguration {
 		this.ontologies_file = ontologies_file;
 	}
 
-	public boolean isSwagger() {
-		return swagger;
-	}
-
-	public void setSwagger(boolean swagger) {
-		this.swagger = swagger;
-	}
-
 	public String getJena_doc_manager() {
 		return jena_doc_manager;
 	}
@@ -184,9 +174,13 @@ public class JenaLizardConfiguration {
 		this.jena_doc_manager = jena_doc_manager;
 	}
 
+	public void setSwaggerApiDescriptionFolder(String swaggerApiDescriptionFolder) {
+		this.swaggerApiDescriptionFolder = swaggerApiDescriptionFolder;
+	}
+
 	@Override
 	public String toString() {
-		return "JenaLizardConfiguration [modelFilePath=" + modelFilePath + ", type=" + type + ", lang=" + lang + ", inference=" + inference + ", ontologies_file=" + ontologies_file + ", jena_doc_manager=" + jena_doc_manager + ", swaggerApiDescriptionFolder=" + swaggerApiDescriptionFolder + "]";
+		return "JenaLizardConfiguration [modelFilePath=" + modelFilePath + ", type=" + type + ", lang=" + lang + ", inference=" + inference + ", ontologies_file=" + ontologies_file + ", swaggerApiDescriptionFolder=" + swaggerApiDescriptionFolder + "]";
 	}
 
 }

@@ -275,8 +275,10 @@ public class DescriptionGenerator {
 			result.put(path + "/getById", getByIdPath(clazz, tag));
 			clazz.getMethods().forEach(method -> {
 				if (method.getMethodType().equals(OntologyCodeMethodType.SET)) {
+
 					String methodName = "set" + method.getEntityName().substring(0, 1).toUpperCase() + method.getEntityName().substring(1);
 					result.put(path + "/entity/" + methodName, getSetPath(clazz, method, methodName, tag));
+
 				} else if (method.getMethodType().equals(OntologyCodeMethodType.GET)) {
 					{
 						String getByMethodName = "getBy" + method.getEntityName().substring(0, 1).toUpperCase() + method.getEntityName().substring(1);
@@ -285,6 +287,11 @@ public class DescriptionGenerator {
 					{
 						String getMethodName = "get" + method.getEntityName().substring(0, 1).toUpperCase() + method.getEntityName().substring(1);
 						result.put(path + "/entity/" + getMethodName, getGetPath(clazz, method, getMethodName, tag));
+					}
+				} else if (method.getMethodType().equals(OntologyCodeMethodType.ADD_ALL)) {
+					{
+						String addMethodName = "add" + method.getEntityName().substring(0, 1).toUpperCase() + method.getEntityName().substring(1);
+						result.put(path + "/entity/" + addMethodName, getAddPath(clazz, method, addMethodName, tag));
 					}
 				}
 
@@ -385,6 +392,58 @@ public class DescriptionGenerator {
 		op.setTags(Lists.newArrayList(tag));
 		op.setSummary("Set the " + method.getEntityName() + " of the object identified the the iri passed as parameter.");
 		op.setDescription("Set the " + methodName + " of the object identified the the iri passed as parameter.");
+		op.setOperationId(operationId);
+		op.setProduces(Lists.newArrayList("application/json"));
+		List<Parameter> parameters = new ArrayList<Parameter>();
+		{
+			QueryParameter p1 = new QueryParameter();
+			p1.setName("id");
+			p1.setIn("query");
+			p1.setDescription("id");
+			p1.setType("string");
+			p1.setRequired(true);
+			parameters.add(p1);
+		}
+		{
+			QueryParameter p2 = new QueryParameter();
+			p2.setName("value");
+			p2.setIn("query");
+			p2.setDescription("value to be set");
+			p2.setType("string");
+			p2.setRequired(true);
+			parameters.add(p2);
+		}
+		op.setParameters(parameters);
+		p.set("post", op);
+		Map<String, Response> responses = new HashMap<>();
+
+		{
+			Response r1 = new Response();
+			r1.setDescription("Not found");
+			responses.put("404", r1);
+		}
+		{
+			Response r2 = new Response();
+			r2.setDescription("successful operation");
+			responses.put("200", r2);
+			ArrayProperty schema = new ArrayProperty();
+			r2.setSchema(schema);
+			RefProperty rp = new RefProperty();
+			rp.set$ref("#/definitions/" + classJavaName);
+			schema.setItems(rp);
+		}
+		op.setResponses(responses);
+		return p;
+	}
+	
+	private Path getAddPath(AbstractOntologyCodeClass clazz, AbstractOntologyCodeMethod method, String methodName, String tag) {
+		String classJavaName = getJavaClassName(clazz.getOntResource());
+		String operationId = "add_" + getPath(clazz.getOntResource()).substring(1) + "_" + getPath(method.getOntResource()).substring(1);
+		Path p = new Path();
+		Operation op = new Operation();
+		op.setTags(Lists.newArrayList(tag));
+		op.setSummary("Add the " + method.getEntityName() + " of the object identified the the iri passed as parameter.");
+		op.setDescription("Add the " + methodName + " of the object identified the the iri passed as parameter.");
 		op.setOperationId(operationId);
 		op.setProduces(Lists.newArrayList("application/json"));
 		List<Parameter> parameters = new ArrayList<Parameter>();

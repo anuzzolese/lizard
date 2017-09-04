@@ -54,7 +54,7 @@ public class JenaLizardContext {
 		case File:
 			if (!conf.getInference()) {
 				model = ModelFactory.createDefaultModel();
-				RDFDataMgr.read(model, conf.getModelFilePath());
+				RDFDataMgr.read(model  , conf.getModelFilePath());
 				model.register(new JenaLizardModelListener(model, conf.getModelFilePath(), conf.getLang()));
 			} else {
 				OntDocumentManager odm = new OntDocumentManager(conf.getJena_doc_manager());

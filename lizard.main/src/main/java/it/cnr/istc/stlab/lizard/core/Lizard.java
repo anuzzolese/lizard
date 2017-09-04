@@ -145,14 +145,14 @@ public class Lizard {
 
 		{
 			optionBuilder = Option.builder(MARVIN);
-			Option buildOption = optionBuilder.argName("marvin").desc("Genre").longOpt(MARVIN_LONG).build();
+			Option buildOption = optionBuilder.argName("marvin").desc("Generate the project for Marvin platform.").longOpt(MARVIN_LONG).build();
 			options.addOption(buildOption);
 		}
 
 		CommandLine commandLine = null;
 
 		CommandLineParser cmdLineParser = new DefaultParser();
-		try {
+		try { 
 			commandLine = cmdLineParser.parse(options, args);
 		} catch (ParseException e) {
 			HelpFormatter formatter = new HelpFormatter();

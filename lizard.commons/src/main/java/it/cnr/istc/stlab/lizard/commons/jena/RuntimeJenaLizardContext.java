@@ -54,5 +54,9 @@ public class RuntimeJenaLizardContext {
 		}
 		context = JenaLizardContextManager.getInstance().getJenaLizardContext(config);
 	}
+	
+	public static void setConfigurationFilePath(String filePath){
+		configurationFilePath = filePath;
+	}
 
 }
