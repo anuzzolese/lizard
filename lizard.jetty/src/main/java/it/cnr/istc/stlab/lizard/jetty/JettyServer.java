@@ -11,12 +11,16 @@ import org.apache.commons.cli.Option.Builder;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import it.cnr.istc.stlab.lizard.commons.jena.RuntimeJenaLizardContext;
 import it.cnr.istc.stlab.lizard.commons.web.RestImpl;
 import it.cnr.istc.stlab.lizard.jetty.utils.FileUtils;
 
 public class JettyServer {
+
+	private static Logger logger = LoggerFactory.getLogger(JettyServer.class);
 
 	public final static String CONFIGURATION_FILE = "c";
 	public final static String CONFIGURATION_FILE_LONG = "config";
@@ -28,6 +32,8 @@ public class JettyServer {
 	public final static String PORT_LONG = "port";
 
 	public static void main(String[] args) {
+
+		logger.trace("Starting server");
 
 		Options options = new Options();
 

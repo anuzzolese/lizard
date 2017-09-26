@@ -1,5 +1,7 @@
 package it.cnr.istc.stlab.lizard.commons;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -39,6 +41,34 @@ public class LizardClass implements LizardInterface {
 		this.individual = individual;
 		this.classResource = classResource;
 		this.propertyMap = propertyMap;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		LizardClass other = (LizardClass) obj;
+		if (individual == null) {
+			if (other.individual != null)
+				return false;
+		} else if (!individual.asResource().getURI().equals(other.individual.asResource().getURI()))
+			return false;
+		return true;
+	}
+
+	public <T extends LizardInterface> T as(Class<T> klass) {
+		try {
+			Method m = klass.getMethod("get", String.class);
+			Object o = m.invoke(this, this.getIndividual().asResource().getURI());
+			if (o != null)
+				return klass.cast(o);
+		} catch (SecurityException | NoSuchMethodException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+		}
+		return null;
 	}
 
 	@JsonIgnore

@@ -57,7 +57,7 @@ public class JenaLizardContext {
 				RDFDataMgr.read(model  , conf.getModelFilePath());
 				model.register(new JenaLizardModelListener(model, conf.getModelFilePath(), conf.getLang()));
 			} else {
-				OntDocumentManager odm = new OntDocumentManager(conf.getJena_doc_manager());
+				OntDocumentManager odm = new OntDocumentManager(conf.getJenaOntoPolicyDoc());
 				OntModelSpec oms = OntModelSpec.OWL_MEM;
 				oms.setDocumentManager(odm);
 				OntModel om = ModelFactory.createOntologyModel(oms);

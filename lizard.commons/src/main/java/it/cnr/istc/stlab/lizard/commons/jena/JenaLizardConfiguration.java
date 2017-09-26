@@ -16,7 +16,7 @@ public class JenaLizardConfiguration {
 	public static final String INFERENCE_ON_DATA = "inference_on_data";
 	public static final String ONTOLOGIES_FILE = "ontologies_file";
 	public static final String SWAGGER = "swagger";
-	public static final String JENA_DOC_MANAGER = "jan_doc_manager";
+	public static final String JENA_ONTO_POLICY_DOC = "jena_onto_policy";
 	public static final String SWAGGER_API_DESCRIPTION_FOLDER = "swagger_api_description_folder";
 
 	private String tdbLocation;
@@ -49,7 +49,7 @@ public class JenaLizardConfiguration {
 			typeString = typeString.toLowerCase().trim();
 			this.inference = Boolean.parseBoolean(props.getProperty(INFERENCE_ON_DATA));
 			this.ontologies_file = props.getProperty(ONTOLOGIES_FILE);
-			this.jena_doc_manager = props.getProperty(JENA_DOC_MANAGER);
+			this.jena_doc_manager = props.getProperty(JENA_ONTO_POLICY_DOC);
 			this.swaggerApiDescriptionFolder = props.getProperty(SWAGGER_API_DESCRIPTION_FOLDER);
 
 			if (typeString.equals("virtuoso")) {
@@ -166,12 +166,12 @@ public class JenaLizardConfiguration {
 		this.ontologies_file = ontologies_file;
 	}
 
-	public String getJena_doc_manager() {
+	public String getJenaOntoPolicyDoc() {
 		return jena_doc_manager;
 	}
 
-	public void setJena_doc_manager(String jena_doc_manager) {
-		this.jena_doc_manager = jena_doc_manager;
+	public void setJenaOntoPolicyDoc(String file) {
+		this.jena_doc_manager = file;
 	}
 
 	public void setSwaggerApiDescriptionFolder(String swaggerApiDescriptionFolder) {

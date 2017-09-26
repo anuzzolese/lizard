@@ -103,7 +103,10 @@ public class PackageResolver {
 			sb.append(".");
 		}
 		sb.append(s[s.length - 2]);
-		sb.append("_");
+		if (s[s.length - 1].equals("owl"))
+			sb.append("_");
+		else
+			sb.append(".");
 		sb.append(s[s.length - 1]);
 		return sb.toString();
 	}

@@ -620,8 +620,11 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 			JVar ontPropertyVar = methodBody.decl(jCodeModel._ref(Property.class), "predicate", jCodeModel.ref(ModelFactory.class).staticInvoke("createDefaultModel").invoke("createProperty").arg(ontResource.toString()));
 
 			JVar jenaModelVar = methodBody.decl(jCodeModel._ref(Model.class), "model", jCodeModel.ref(RuntimeJenaLizardContext.class).staticInvoke("getContext").invoke("getModel"));
-			JVar stmtIteratorVar = methodBody.decl(jCodeModel._ref(StmtIterator.class), "stmtIt", jenaModelVar.invoke("listStatements").arg(JExpr.cast(jCodeModel._ref(Resource.class), JExpr._super().ref("individual"))).arg(ontPropertyVar).arg(JExpr.cast(jCodeModel._ref(RDFNode.class), JExpr._null())));
 
+			JVar stmtIterator = methodBody.decl(jCodeModel._ref(StmtIterator.class), "stmtItTemp", jenaModelVar.invoke("listStatements").arg(JExpr.cast(jCodeModel._ref(Resource.class), JExpr._super().ref("individual"))).arg(ontPropertyVar).arg(JExpr.cast(jCodeModel._ref(RDFNode.class), JExpr._null())));
+			JVar tempModelVar = methodBody.decl(jCodeModel._ref(Model.class), "tempModel", jCodeModel.ref(ModelFactory.class).staticInvoke("createDefaultModel").invoke("add").arg(stmtIterator));
+			JVar stmtIteratorVar = methodBody.decl(jCodeModel._ref(StmtIterator.class), "stmtIt", tempModelVar.invoke("listStatements"));
+			
 			JWhileLoop stmtItHasNextWhile = methodBody._while(stmtIteratorVar.invoke("hasNext"));
 			JBlock stmtItHasNextWhileBlock = stmtItHasNextWhile.body();
 			JVar stmtVar = stmtItHasNextWhileBlock.decl(jCodeModel._ref(Statement.class), "stmt", stmtIteratorVar.invoke("next"));
@@ -678,6 +681,9 @@ public class JenaOntologyCodeMethod extends OntologyCodeMethod {
 						JCatchBlock catchBlock = tryBlock._catch(jCodeModel.ref("java.net.URISyntaxException"));
 						catchBlock.body().directStatement("// The URI violates the expected syntax!");
 						catchBlock.body().add(jCodeModel.ref(System.class).staticRef("err").invoke("println").arg(objectLiteralVar.invoke("getString").plus(JExpr.lit(" violates the expected URI syntax!"))));
+					} else if (range.getOntResource().getURI().equals("http://www.w3.org/2000/01/rdf-schema#Literal")) {
+						JVar objectLiteralVar = stmtItHasNextWhileBlock.decl(jCodeModel.ref(Literal.class), "objectLiteral", JExpr.cast(jCodeModel.ref(Literal.class), stmtObjectVar));
+						stmtItHasNextWhileBlock.add(returnVar.invoke("add").arg(objectLiteralVar.invoke("getValue").invoke("toString")));
 					} else {
 						JInvocation typeMapperInvocation = jCodeModel.ref(TypeMapper.class).staticInvoke("getInstance").invoke("getTypeByName").arg(range.getOntResource().getURI()).invoke("parse");
 						JVar objectLiteralVar = stmtItHasNextWhileBlock.decl(jCodeModel.ref(Literal.class), "objectLiteral", JExpr.cast(jCodeModel.ref(Literal.class), stmtObjectVar));

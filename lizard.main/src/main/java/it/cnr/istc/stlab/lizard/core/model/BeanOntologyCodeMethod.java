@@ -66,7 +66,7 @@ public class BeanOntologyCodeMethod extends OntologyCodeMethod {
 			} else if (methodType == OntologyCodeMethodType.ADD_ALL) {
 				createAddAllSignature();
 			}
-			
+
 			logger.trace("Signature created " + methodType.toString() + " " + ontResource.getURI() + " to class " + this.owner.getOntResource().getLocalName());
 
 			annotateMethod();
@@ -364,14 +364,17 @@ public class BeanOntologyCodeMethod extends OntologyCodeMethod {
 
 					JVar modelVar = staticMethodBlock.decl(codeModel.ref(Model.class), "model", codeModel.ref(RuntimeJenaLizardContext.class).staticInvoke("getContext").invoke("getModel"));
 
-					JVar stmtItVar = staticMethodBlock.decl(codeModel.ref(StmtIterator.class), "stmtIt", modelVar.invoke("listStatements").arg(JExpr._null()).arg(predicateVar).arg(JExpr.cast(codeModel._ref(RDFNode.class), JExpr._null())));
+					JVar stmtItVar = staticMethodBlock.decl(codeModel.ref(StmtIterator.class), "stmtItTemp", modelVar.invoke("listStatements").arg(JExpr._null()).arg(predicateVar).arg(JExpr.cast(codeModel._ref(RDFNode.class), JExpr._null())));
+
+					JVar tempModelVar = staticMethodBlock.decl(jCodeModel._ref(Model.class), "tempModel", jCodeModel.ref(ModelFactory.class).staticInvoke("createDefaultModel").invoke("add").arg(stmtItVar));
+					JVar stmtIteratorVar = staticMethodBlock.decl(jCodeModel._ref(StmtIterator.class), "stmtIt", tempModelVar.invoke("listStatements"));
 
 					/*
 					 * While loop to iterate StmtIterator statements
 					 */
-					JWhileLoop whileLoop = staticMethodBlock._while(stmtItVar.invoke("hasNext"));
+					JWhileLoop whileLoop = staticMethodBlock._while(stmtIteratorVar.invoke("hasNext"));
 					JBlock whileLoopBlock = whileLoop.body();
-					JVar stmtVar = whileLoopBlock.decl(codeModel.ref(Statement.class), "stmt", stmtItVar.invoke("next"));
+					JVar stmtVar = whileLoopBlock.decl(codeModel.ref(Statement.class), "stmt", stmtIteratorVar.invoke("next"));
 
 					JVar subjVar = whileLoopBlock.decl(codeModel.ref(Resource.class), "subj", stmtVar.invoke("getSubject"));
 
@@ -414,13 +417,18 @@ public class BeanOntologyCodeMethod extends OntologyCodeMethod {
 
 					JVar modelVar = staticMethodBlock.decl(codeModel.ref(Model.class), "model", codeModel.ref(RuntimeJenaLizardContext.class).staticInvoke("getContext").invoke("getModel"));
 
-					JVar stmtItVar = staticMethodBlock.decl(codeModel.ref(StmtIterator.class), "stmtIt", modelVar.invoke("listStatements").arg(JExpr._null()).arg(predicateVar).arg(inputParam.invoke("getIndividual")));
+					JVar stmtItVar = staticMethodBlock.decl(codeModel.ref(StmtIterator.class), "stmtItTemp", modelVar.invoke("listStatements").arg(JExpr._null()).arg(predicateVar).arg(inputParam.invoke("getIndividual")));
+					
+					JVar tempModelVar = staticMethodBlock.decl(jCodeModel._ref(Model.class), "tempModel", jCodeModel.ref(ModelFactory.class).staticInvoke("createDefaultModel").invoke("add").arg(stmtItVar));
+					JVar stmtIteratorVar = staticMethodBlock.decl(jCodeModel._ref(StmtIterator.class), "stmtIt", tempModelVar.invoke("listStatements"));
+
 					/*
 					 * While loop to iterate StmtIterator statements
 					 */
-					JWhileLoop whileLoop = staticMethodBlock._while(stmtItVar.invoke("hasNext"));
+					JWhileLoop whileLoop = staticMethodBlock._while(stmtIteratorVar.invoke("hasNext"));
 					JBlock whileLoopBlock = whileLoop.body();
-					JVar stmtVar = whileLoopBlock.decl(codeModel.ref(Statement.class), "stmt", stmtItVar.invoke("next"));
+					JVar stmtVar = whileLoopBlock.decl(codeModel.ref(Statement.class), "stmt", stmtIteratorVar.invoke("next"));
+
 
 					JVar subjVar = whileLoopBlock.decl(codeModel.ref(Resource.class), "subj", stmtVar.invoke("getSubject"));
 

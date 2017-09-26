@@ -35,7 +35,7 @@
 		<dependency>
 			<groupId>it.cnr.istc.stlab</groupId>
 			<artifactId>lizard.commons</artifactId>
-			<version>0.9-SNAPSHOT</version>
+			<version>alpha</version>
 		</dependency>
 
 		<dependency>

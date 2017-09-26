@@ -49,12 +49,14 @@ public class RestImpl implements RestInterface {
 	private static String getAbsoluteJenaClassName(String ontology, String className) {
 		className = extractClassName(className);
 		String absoluteJenaClassName = PackageResolver.urlPathToPackageName(ontology) + ".jena." + className + "Jena";
+		logger.debug("Requesting jena classname ontology: {}, class: {} result {}", ontology, className, absoluteJenaClassName);
 		return absoluteJenaClassName;
 	}
 
 	private static String getAbsoluteInterfaceName(String ontology, String className) {
 		className = extractClassName(className);
 		String absoluteInterfaceName = PackageResolver.urlPathToPackageName(ontology) + "." + className;
+		logger.debug("Requesting interface name ontology: {}, class: {} result {}", ontology, className, absoluteInterfaceName);
 		return absoluteInterfaceName;
 	}
 
@@ -164,7 +166,7 @@ public class RestImpl implements RestInterface {
 		return getValueFromType(value, method.getParameters()[0].getType());
 	}
 
-	private static Object getValueFromType(String value, Class<?> type) throws  IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, java.lang.InstantiationException {
+	private static Object getValueFromType(String value, Class<?> type) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, ClassNotFoundException, java.lang.InstantiationException {
 		boolean lizardInterface = false;
 		for (Class<?> i : type.getInterfaces()) {
 			if (i.equals(LizardInterface.class)) {
@@ -227,7 +229,7 @@ public class RestImpl implements RestInterface {
 		}
 		return responseBuilder.build();
 	}
-	
+
 	@POST
 	@Path("/{class_name}/entity/add{property}")
 	public Response addEntityProperty(@PathParam("ontology") String ontology, @PathParam("class_name") String className, @PathParam("property") String property, @QueryParam("id") String id, @QueryParam("value") String value) {

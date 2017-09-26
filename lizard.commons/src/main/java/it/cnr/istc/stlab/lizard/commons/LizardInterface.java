@@ -31,4 +31,6 @@ public interface LizardInterface {
 	@JsonIgnore
 	void setPropertyValue(OntResource ontResource, Object object);
 
+	public <T extends LizardInterface> T as(Class<T> klass);
+
 }
