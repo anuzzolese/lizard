@@ -77,27 +77,6 @@
 			<scope>test</scope>
 		</dependency>
 
-		<!-- JACKSON -->
-
-		<dependency>
-			<groupId>com.fasterxml.jackson.jaxrs</groupId>
-			<artifactId>jackson-jaxrs-json-provider</artifactId>
-			<version>${jackson.version}</version>
-		</dependency>
-
-		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-databind</artifactId>
-			<version>${jackson.version}</version>
-		</dependency>
-
-		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-annotations</artifactId>
-			<version>${jackson.version}</version>
-		</dependency>
-
-
 		<!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
 		<dependency>
 			<groupId>org.slf4j</groupId>
@@ -166,6 +145,26 @@
 			<artifactId>jersey-media-json-jackson</artifactId>
 			<version>${jersey2.version}</version>
 		</dependency>
+		
+		<!-- JACKSON -->
+
+		<dependency>
+			<groupId>com.fasterxml.jackson.jaxrs</groupId>
+			<artifactId>jackson-jaxrs-json-provider</artifactId>
+			<version>${jackson.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>${jackson.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-annotations</artifactId>
+			<version>${jackson.version}</version>
+		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/org.codehaus.jettison/jettison -->
 		<dependency>
@@ -180,13 +179,13 @@
 			<artifactId>commons-cli</artifactId>
 			<version>1.4</version>
 		</dependency>
-
+	<!-- 
 		<dependency>
 			<groupId>eu.mario-project</groupId>
 			<artifactId>ontology-api</artifactId>
 			<version>alpha</version>
 		</dependency>
 
-
+ -->
 	</dependencies>
 </project>

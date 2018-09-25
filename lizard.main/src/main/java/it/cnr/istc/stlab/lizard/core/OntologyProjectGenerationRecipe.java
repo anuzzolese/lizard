@@ -78,6 +78,7 @@ public class OntologyProjectGenerationRecipe implements OntologyCodeGenerationRe
 		OntModel ontModel = ModelFactory.createOntologyModel(OntModelSpec.OWL_MEM);
 
 		for (URI uri : uris) {
+			logger.trace("Reading " + uri.toString());
 			ontModel.read(uri.toString());
 		}
 

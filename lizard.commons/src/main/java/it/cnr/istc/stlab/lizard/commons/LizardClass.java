@@ -43,22 +43,22 @@ public class LizardClass implements LizardInterface {
 		this.propertyMap = propertyMap;
 	}
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		LizardClass other = (LizardClass) obj;
-		if (individual == null) {
-			if (other.individual != null)
-				return false;
-		} else if (!individual.asResource().getURI().equals(other.individual.asResource().getURI()))
-			return false;
-		return true;
-	}
+//	@Override
+//	public boolean equals(Object obj) {
+//		if (this == obj)
+//			return true;
+//		if (obj == null)
+//			return false;
+//		if (getClass() != obj.getClass())
+//			return false;
+//		LizardClass other = (LizardClass) obj;
+//		if (individual == null) {
+//			if (other.individual != null)
+//				return false;
+//		} else if (!individual.asResource().getURI().equals(other.individual.asResource().getURI()))
+//			return false;
+//		return true;
+//	}
 
 	public <T extends LizardInterface> T as(Class<T> klass) {
 		try {

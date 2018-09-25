@@ -39,11 +39,14 @@ public class Lizard {
 	public final static String CONFIGURATION_FILE_LONG = "config";
 	public final static String MARVIN = "m";
 	public final static String MARVIN_LONG = "marvin";
+	public final static String CLEAR = "clear";
+	public final static String CLEAR_LONG = "clear_folder";
 	public final static String OUTPUT_FOLDER = "o";
 	public final static String OUTPUT_FOLDER_LONG = "output";
 	private boolean isForMarvin = false;
 
 	private String outFolder;
+	private boolean clearOutputFolder = false;
 	private URI[] uris;
 
 	public Lizard(String outFolder, boolean isForMarvin, URI... uris) throws IOException {
@@ -67,6 +70,10 @@ public class Lizard {
 		fos.close();
 	}
 
+	public void setClearOutputFolder(boolean c) {
+		this.clearOutputFolder = c;
+	}
+
 	public void generateProject(boolean buildProject, String groupId, String artifactId, String versionId) {
 
 		logger.info("Generating project");
@@ -77,7 +84,7 @@ public class Lizard {
 
 		try {
 			File testFolder = new File(outFolder);
-			if (testFolder.exists()) {
+			if (testFolder.exists() && clearOutputFolder) {
 				logger.info("Folder {} exists", testFolder.getAbsolutePath());
 				logger.info("Delete {}", testFolder.getAbsolutePath());
 				FileUtils.deleteDirectory(testFolder);
@@ -149,10 +156,16 @@ public class Lizard {
 			options.addOption(buildOption);
 		}
 
+		{
+			optionBuilder = Option.builder(CLEAR);
+			Option buildOption = optionBuilder.argName("clear_folder").desc("Clear the output folder.").longOpt(CLEAR_LONG).build();
+			options.addOption(buildOption);
+		}
+
 		CommandLine commandLine = null;
 
 		CommandLineParser cmdLineParser = new DefaultParser();
-		try { 
+		try {
 			commandLine = cmdLineParser.parse(options, args);
 		} catch (ParseException e) {
 			HelpFormatter formatter = new HelpFormatter();
@@ -167,12 +180,18 @@ public class Lizard {
 			String outputFolder = commandLine.getOptionValue(OUTPUT_FOLDER);
 			boolean build = commandLine.hasOption(BUILD);
 			boolean marvin = commandLine.hasOption(MARVIN);
+			boolean clear = commandLine.hasOption(CLEAR);
 
 			URI[] uris = new URI[lizardConfiguration.getOntologies().length];
 			for (int i = 0; i < lizardConfiguration.getOntologies().length; i++) {
 				uris[i] = new URI(lizardConfiguration.getOntologies()[i]);
 			}
 			Lizard lizard = new Lizard(outputFolder, marvin, uris);
+			
+			if (clear) {
+				System.out.println("Clear output folder");
+				lizard.setClearOutputFolder(true);
+			}
 
 			long t1 = System.currentTimeMillis();
 			lizard.generateProject(build, lizardConfiguration.getGroupId(), lizardConfiguration.getArtifactId(), lizardConfiguration.getVersionId());
