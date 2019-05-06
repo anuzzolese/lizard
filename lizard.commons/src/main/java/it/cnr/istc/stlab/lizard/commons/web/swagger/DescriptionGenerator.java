@@ -270,29 +270,44 @@ public class DescriptionGenerator {
 		classes.forEach(clazz -> {
 			String path = getPath(clazz.getOntResource());
 			String tag = getPath(clazz.getOntResource()).substring(1);
-			result.put(path + "/create", getCreatePath(clazz, tag));
-			result.put(path + "/getAll", getGetAllPath(clazz, tag));
-			result.put(path + "/getById", getByIdPath(clazz, tag));
+			result.put(path, getCreatePath(clazz, tag));
+			result.put(path, getGetAllPath(clazz, tag));
+			// result.put(path + "/getById", getByIdPath(clazz, tag));
 			clazz.getMethods().forEach(method -> {
+
+				Path p = result.get(path + "/" + method.getEntityName());
+				if (p == null) {
+					p = new Path();
+					result.put(path + "/" + method.getEntityName(), p);
+				}
+
 				if (method.getMethodType().equals(OntologyCodeMethodType.SET)) {
 
-					String methodName = "set" + method.getEntityName().substring(0, 1).toUpperCase() + method.getEntityName().substring(1);
-					result.put(path + "/entity/" + methodName, getSetPath(clazz, method, methodName, tag));
+					// String methodName = method.getEntityName().substring(0, 1).toUpperCase() + method.getEntityName().substring(1);
+					// result.put(path + "/" + method.getEntityName(), getSetPath(clazz, method, method.getEntityName(), tag));
+					p.put(getPostPath(clazz, method, method.getEntityName(), tag));
 
 				} else if (method.getMethodType().equals(OntologyCodeMethodType.GET)) {
 					{
-						String getByMethodName = "getBy" + method.getEntityName().substring(0, 1).toUpperCase() + method.getEntityName().substring(1);
-						result.put(path + "/" + getByMethodName, getGetByPath(clazz, method, getByMethodName, tag));
+						// String getByMethodName = "getBy" + method.getEntityName().substring(0, 1).toUpperCase() + method.getEntityName().substring(1);
+						// result.put(path + "/" + getByMethodName, getGetByPath(clazz, method, getByMethodName, tag));
+						result.put(path + "/having/" + method.getEntityName(), getGetByPath(clazz, method, method.getEntityName(), tag));
 					}
 					{
-						String getMethodName = "get" + method.getEntityName().substring(0, 1).toUpperCase() + method.getEntityName().substring(1);
-						result.put(path + "/entity/" + getMethodName, getGetPath(clazz, method, getMethodName, tag));
+						// String getMethodName = "get" + method.getEntityName().substring(0, 1).toUpperCase() + method.getEntityName().substring(1);
+						// result.put(path + "/entity/" + getMethodName, getGetPath(clazz, method, getMethodName, tag));
+
+						p.get(getGetOperation(clazz, method, method.getEntityName(), tag));
+						// result.put(path + "/" + method.getEntityName(), getGetPath(clazz, method, method.getEntityName(), tag));
 					}
 				} else if (method.getMethodType().equals(OntologyCodeMethodType.ADD_ALL)) {
-					{
-						String addMethodName = "add" + method.getEntityName().substring(0, 1).toUpperCase() + method.getEntityName().substring(1);
-						result.put(path + "/entity/" + addMethodName, getAddPath(clazz, method, addMethodName, tag));
-					}
+					// String addMethodName = "add" + method.getEntityName().substring(0, 1).toUpperCase() + method.getEntityName().substring(1);
+					// result.put(path + "/" + addMethodName, getAddPath(clazz, method, addMethodName, tag));
+					// result.put(path + "/" + method.getEntityName(), getAddPath(clazz, method, method.getEntityName(), tag));
+					p.post(getAddOperation(clazz, method, method.getEntityName(), tag));
+				} else if (method.getMethodType().equals(OntologyCodeMethodType.REMOVE_ALL)) {
+					// result.put(path + "/" + method.getEntityName(), getRemovePath(clazz, method, method.getEntityName(), tag));
+					p.delete(getRemoveOperation(clazz, method, method.getEntityName(), tag));
 				}
 
 			});
@@ -300,10 +315,11 @@ public class DescriptionGenerator {
 		return result;
 	}
 
-	private Path getGetPath(AbstractOntologyCodeClass clazz, AbstractOntologyCodeMethod method, String getMethodName, String tag) {
+	private Operation getGetOperation(AbstractOntologyCodeClass clazz, AbstractOntologyCodeMethod method, String getMethodName, String tag) {
+		// Path p = new Path();
 		String operationId = "get_" + getPath(clazz.getOntResource()).substring(1) + "_" + getPath(method.getOntResource()).substring(1);
-		Path p = new Path();
 		Operation op = new Operation();
+		// p.set("get", op);
 		op.setTags(Lists.newArrayList(tag));
 		op.setSummary("Get the " + method.getEntityName() + " of the individual identified by the iri passed as parameter.");
 		op.setDescription("Get the " + method.getEntityName() + " of the individual identified by the iri passed as parameter.");
@@ -312,16 +328,16 @@ public class DescriptionGenerator {
 		List<Parameter> parameters = new ArrayList<Parameter>();
 		{
 			QueryParameter p1 = new QueryParameter();
-			p1.setName("id");
+			p1.setName("iri");
 			p1.setIn("query");
-			p1.setDescription("id");
+			p1.setDescription("iri");
 			p1.setType("string");
 			p1.setRequired(true);
 			parameters.add(p1);
 		}
 
 		op.setParameters(parameters);
-		p.set("get", op);
+
 		Map<String, Response> responses = new HashMap<>();
 
 		{
@@ -338,7 +354,7 @@ public class DescriptionGenerator {
 			schema.setItems(ontologyCodeClassToProperty(method.getRange()));
 		}
 		op.setResponses(responses);
-		return p;
+		return op;
 	}
 
 	private Path getGetByPath(AbstractOntologyCodeClass clazz, AbstractOntologyCodeMethod method, String methodName, String tag) {
@@ -354,7 +370,7 @@ public class DescriptionGenerator {
 		List<Parameter> parameters = new ArrayList<Parameter>();
 		{
 			QueryParameter p1 = new QueryParameter();
-			p1.setName(getPath(method.getOntResource()).substring(1));
+			p1.setName("value");
 			p1.setIn("query");
 			p1.setDescription(method.getEntityName());
 			p1.setType("string");
@@ -384,10 +400,10 @@ public class DescriptionGenerator {
 		return p;
 	}
 
-	private Path getSetPath(AbstractOntologyCodeClass clazz, AbstractOntologyCodeMethod method, String methodName, String tag) {
+	private Operation getPostPath(AbstractOntologyCodeClass clazz, AbstractOntologyCodeMethod method, String methodName, String tag) {
 		String classJavaName = getJavaClassName(clazz.getOntResource());
 		String operationId = "set_" + getPath(clazz.getOntResource()).substring(1) + "_" + getPath(method.getOntResource()).substring(1);
-		Path p = new Path();
+		// Path p = new Path();
 		Operation op = new Operation();
 		op.setTags(Lists.newArrayList(tag));
 		op.setSummary("Set the " + method.getEntityName() + " of the object identified the the iri passed as parameter.");
@@ -397,7 +413,7 @@ public class DescriptionGenerator {
 		List<Parameter> parameters = new ArrayList<Parameter>();
 		{
 			QueryParameter p1 = new QueryParameter();
-			p1.setName("id");
+			p1.setName("iri");
 			p1.setIn("query");
 			p1.setDescription("id");
 			p1.setType("string");
@@ -414,7 +430,7 @@ public class DescriptionGenerator {
 			parameters.add(p2);
 		}
 		op.setParameters(parameters);
-		p.set("post", op);
+		// p.set("put", op);
 		Map<String, Response> responses = new HashMap<>();
 
 		{
@@ -433,13 +449,13 @@ public class DescriptionGenerator {
 			schema.setItems(rp);
 		}
 		op.setResponses(responses);
-		return p;
+		return op;
 	}
-	
-	private Path getAddPath(AbstractOntologyCodeClass clazz, AbstractOntologyCodeMethod method, String methodName, String tag) {
+
+	private Operation getAddOperation(AbstractOntologyCodeClass clazz, AbstractOntologyCodeMethod method, String methodName, String tag) {
 		String classJavaName = getJavaClassName(clazz.getOntResource());
 		String operationId = "add_" + getPath(clazz.getOntResource()).substring(1) + "_" + getPath(method.getOntResource()).substring(1);
-		Path p = new Path();
+		// Path p = new Path();
 		Operation op = new Operation();
 		op.setTags(Lists.newArrayList(tag));
 		op.setSummary("Add the " + method.getEntityName() + " of the object identified the the iri passed as parameter.");
@@ -449,9 +465,9 @@ public class DescriptionGenerator {
 		List<Parameter> parameters = new ArrayList<Parameter>();
 		{
 			QueryParameter p1 = new QueryParameter();
-			p1.setName("id");
+			p1.setName("iri");
 			p1.setIn("query");
-			p1.setDescription("id");
+			p1.setDescription("iri");
 			p1.setType("string");
 			p1.setRequired(true);
 			parameters.add(p1);
@@ -466,7 +482,7 @@ public class DescriptionGenerator {
 			parameters.add(p2);
 		}
 		op.setParameters(parameters);
-		p.set("post", op);
+		// p.set("post", op);
 		Map<String, Response> responses = new HashMap<>();
 
 		{
@@ -485,41 +501,93 @@ public class DescriptionGenerator {
 			schema.setItems(rp);
 		}
 		op.setResponses(responses);
-		return p;
+		return op;
 	}
 
-	private Path getByIdPath(AbstractOntologyCodeClass clazz, String tag) {
-		String localName = getLocalName(clazz);
-		Path p = new Path();
+	private Operation getRemoveOperation(AbstractOntologyCodeClass clazz, AbstractOntologyCodeMethod method, String methodName, String tag) {
+		String classJavaName = getJavaClassName(clazz.getOntResource());
+		String operationId = "remove_" + getPath(clazz.getOntResource()).substring(1) + "_" + getPath(method.getOntResource()).substring(1);
+		// Path p = new Path();
 		Operation op = new Operation();
 		op.setTags(Lists.newArrayList(tag));
-		op.setSummary("Get a " + localName + " by id.");
-		op.setDescription("Get a " + localName + " by id.");
-		// e.g. get_question_by_id
-		op.setOperationId("get_" + localName + "_by_id");
+		op.setSummary("Remove the " + method.getEntityName() + " of the object identified the the iri passed as parameter.");
+		op.setDescription("Remove the " + methodName + " of the object identified the the iri passed as parameter.");
+		op.setOperationId(operationId);
 		op.setProduces(Lists.newArrayList("application/json"));
 		List<Parameter> parameters = new ArrayList<Parameter>();
-		QueryParameter p1 = new QueryParameter();
-		p1.setName("id");
-		p1.setIn("query");
-		p1.setDescription("id");
-		p1.setType("string");
-		p1.setRequired(true);
-		parameters.add(p1);
+		{
+			QueryParameter p1 = new QueryParameter();
+			p1.setName("iri");
+			p1.setIn("query");
+			p1.setDescription("iri");
+			p1.setType("string");
+			p1.setRequired(true);
+			parameters.add(p1);
+		}
+		{
+			QueryParameter p2 = new QueryParameter();
+			p2.setName("value");
+			p2.setIn("query");
+			p2.setDescription("value to be set");
+			p2.setType("string");
+			p2.setRequired(true);
+			parameters.add(p2);
+		}
 		op.setParameters(parameters);
-		p.set("get", op);
+		// p.set("delete", op);
 		Map<String, Response> responses = new HashMap<>();
-		Response r1 = new Response();
-		r1.setDescription("successful operation");
-		responses.put("200", r1);
-		ArrayProperty schema = new ArrayProperty();
-		r1.setSchema(schema);
-		RefProperty rp = new RefProperty();
-		rp.set$ref("#/definitions/" + getJavaClassName(clazz.getOntResource()));
-		schema.setItems(rp);
+
+		{
+			Response r1 = new Response();
+			r1.setDescription("Not found");
+			responses.put("404", r1);
+		}
+		{
+			Response r2 = new Response();
+			r2.setDescription("successful operation");
+			responses.put("200", r2);
+			ArrayProperty schema = new ArrayProperty();
+			r2.setSchema(schema);
+			RefProperty rp = new RefProperty();
+			rp.set$ref("#/definitions/" + classJavaName);
+			schema.setItems(rp);
+		}
 		op.setResponses(responses);
-		return p;
+		return op;
 	}
+
+	// private Path getByIdPath(AbstractOntologyCodeClass clazz, String tag) {
+	// String localName = getLocalName(clazz);
+	// Path p = new Path();
+	// Operation op = new Operation();
+	// op.setTags(Lists.newArrayList(tag));
+	// op.setSummary("Get a " + localName + " by id.");
+	// op.setDescription("Get a " + localName + " by id.");
+	// // e.g. get_question_by_id
+	// op.setOperationId("get_" + localName + "_by_id");
+	// op.setProduces(Lists.newArrayList("application/json"));
+	// List<Parameter> parameters = new ArrayList<Parameter>();
+	// QueryParameter p1 = new QueryParameter();
+	// p1.setName("id");
+	// p1.setIn("query");
+	// p1.setDescription("id");
+	// p1.setType("string");
+	// p1.setRequired(true);
+	// parameters.add(p1);
+	// op.setParameters(parameters);
+	// p.set("get", op);
+	// Map<String, Response> responses = new HashMap<>();
+	// Response r1 = new Response();
+	// r1.setDescription("successful operation");
+	// responses.put("200", r1);
+	// ArrayProperty schema = new ArrayProperty();
+	// r1.setSchema(schema);
+	// RefProperty rp = new RefProperty();
+	// rp.set$ref("#/definitions/" + getJavaClassName(clazz.getOntResource()));
+	// schema.setItems(rp);
+	// op.setResponses(responses);
+	// return p;
+	// }
 
 	private Path getCreatePath(AbstractOntologyCodeClass occ, String tag) {
 		String localName = getLocalName(occ);
@@ -528,13 +596,13 @@ public class DescriptionGenerator {
 		op.setTags(Lists.newArrayList(tag));
 		op.setSummary("Create a new " + localName);
 		op.setDescription("Create a new " + localName);
-		op.setOperationId("create_" + localName);
+		op.setOperationId("new_" + localName);
 		op.setProduces(Lists.newArrayList("application/json"));
 		List<Parameter> parameters = new ArrayList<Parameter>();
 		QueryParameter p1 = new QueryParameter();
-		p1.setName("id");
+		p1.setName("iri");
 		p1.setIn("query");
-		p1.setDescription("id");
+		p1.setDescription("iri");
 		p1.setType("string");
 		p1.setRequired(true);
 		parameters.add(p1);
@@ -553,11 +621,18 @@ public class DescriptionGenerator {
 		Path p = new Path();
 		Operation op = new Operation();
 		op.setTags(Lists.newArrayList(tag));
-		op.setSummary("Retrieve all individuals of type " + localName);
-		op.setDescription("Retrieve all individuals of type " + localName);
-		op.setOperationId("getAll" + localName);
+		op.setSummary("Retrieve individuals of type " + localName);
+		op.setDescription("Retrieve individuals of type " + localName);
+		op.setOperationId("get" + localName);
 		op.setProduces(Lists.newArrayList("application/json"));
 		List<Parameter> parameters = new ArrayList<Parameter>();
+		QueryParameter p1 = new QueryParameter();
+		p1.setName("iri");
+		p1.setIn("query");
+		p1.setDescription("iri");
+		p1.setType("string");
+		p1.setRequired(false);
+		parameters.add(p1);
 		op.setParameters(parameters);
 		p.set("get", op);
 		Map<String, Response> responses = new HashMap<>();

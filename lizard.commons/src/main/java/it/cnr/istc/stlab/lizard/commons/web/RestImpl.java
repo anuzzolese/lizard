@@ -10,8 +10,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -61,8 +63,8 @@ public class RestImpl implements RestInterface {
 	}
 
 	@POST
-	@Path("/{class_name}/create")
-	public Response create(@PathParam("ontology") String ontology, @PathParam("class_name") String className, @QueryParam("id") String id) {
+	@Path("/{class_name}")
+	public Response create(@PathParam("ontology") String ontology, @PathParam("class_name") String className, @QueryParam("iri") String id) {
 		logger.trace("Create {} {} {}", ontology, className, id);
 
 		String absoluteJenaClassName = getAbsoluteJenaClassName(ontology, className);
@@ -74,38 +76,6 @@ public class RestImpl implements RestInterface {
 		}
 		Response.ResponseBuilder _responseBuilder = Response.ok();
 		return _responseBuilder.build();
-	}
-
-	@GET
-	@Path("/{class_name}/getAll")
-	public Response getAll(@PathParam("ontology") String ontology, @PathParam("class_name") String className) {
-		logger.trace("Get all {} {}", ontology, className);
-		Response.ResponseBuilder responseBuilder = null;
-		String interfaceClassName = getAbsoluteInterfaceName(ontology, className);
-		String jenaClassName = getAbsoluteJenaClassName(ontology, className);
-		try {
-			Class<?> interfaceClass = Class.forName(interfaceClassName);
-			Class<?> jenaClass = Class.forName(jenaClassName);
-			Method getAllMethod = interfaceClass.getMethod("getAll", (Class<?>[]) null);
-			Method asMicroBeanMethod = jenaClass.getMethod("asMicroBean", (Class<?>[]) null);
-			@SuppressWarnings("unchecked")
-			Set<Object> _kbSet = (Set<Object>) getAllMethod.invoke(null, (Object[]) null);
-			Set<Object> _retSet = new HashSet<Object>();
-			logger.trace("Class name {} {}", jenaClass.getCanonicalName(), interfaceClass.getCanonicalName());
-			if (_kbSet != null) {
-				for (Object _obj : _kbSet) {
-					logger.trace("Object retrieved");
-					_retSet.add(asMicroBeanMethod.invoke(jenaClass.cast(_obj), (Object[]) null));
-				}
-				responseBuilder = Response.ok(_retSet.toArray(new Object[_retSet.size()]));
-			} else {
-				logger.trace("null");
-				responseBuilder = Response.status(Response.Status.NOT_FOUND);
-			}
-		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException | ClassNotFoundException e) {
-			e.printStackTrace();
-		}
-		return responseBuilder.build();
 	}
 
 	@GET
@@ -125,9 +95,41 @@ public class RestImpl implements RestInterface {
 		return responseBuilder.build();
 	}
 
+	// @GET
+	// @Path("/{class_name}")
+	// public Response getAll(@PathParam("ontology") String ontology, @PathParam("class_name") String className) {
+	// logger.trace("Get all {} {}", ontology, className);
+	// Response.ResponseBuilder responseBuilder = null;
+	// String interfaceClassName = getAbsoluteInterfaceName(ontology, className);
+	// String jenaClassName = getAbsoluteJenaClassName(ontology, className);
+	// try {
+	// Class<?> interfaceClass = Class.forName(interfaceClassName);
+	// Class<?> jenaClass = Class.forName(jenaClassName);
+	// Method getAllMethod = interfaceClass.getMethod("getAll", (Class<?>[]) null);
+	// Method asMicroBeanMethod = jenaClass.getMethod("asMicroBean", (Class<?>[]) null);
+	// @SuppressWarnings("unchecked")
+	// Set<Object> _kbSet = (Set<Object>) getAllMethod.invoke(null, (Object[]) null);
+	// Set<Object> _retSet = new HashSet<Object>();
+	// logger.trace("Class name {} {}", jenaClass.getCanonicalName(), interfaceClass.getCanonicalName());
+	// if (_kbSet != null) {
+	// for (Object _obj : _kbSet) {
+	// logger.trace("Object retrieved");
+	// _retSet.add(asMicroBeanMethod.invoke(jenaClass.cast(_obj), (Object[]) null));
+	// }
+	// responseBuilder = Response.ok(_retSet.toArray(new Object[_retSet.size()]));
+	// } else {
+	// logger.trace("null");
+	// responseBuilder = Response.status(Response.Status.NOT_FOUND);
+	// }
+	// } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException | ClassNotFoundException e) {
+	// e.printStackTrace();
+	// }
+	// return responseBuilder.build();
+	// }
+
 	@GET
-	@Path("/{class_name}/getById")
-	public Response getById(@PathParam("ontology") String ontology, @PathParam("class_name") String className, @QueryParam("id") String id) {
+	@Path("/{class_name}")
+	public Response getById(@PathParam("ontology") String ontology, @PathParam("class_name") String className, @QueryParam("iri") String id) {
 		logger.trace("Get by id {} {} {}", ontology, className, id);
 		Response.ResponseBuilder responseBuilder = null;
 		String interfaceClassName = getAbsoluteInterfaceName(ontology, className);
@@ -135,17 +137,35 @@ public class RestImpl implements RestInterface {
 		try {
 			Class<?> interfaceClass = Class.forName(interfaceClassName);
 			Class<?> jenaClass = Class.forName(jenaClassName);
-			Method getMethod = interfaceClass.getMethod("get", String.class);
 			Method asMicroBeanMethod = jenaClass.getMethod("asMicroBean", (Class<?>[]) null);
-			Object entity = getMethod.invoke(null, id);
-			if (entity != null) {
-				logger.trace("Found");
-				Set<Object> retSet = new HashSet<Object>();
-				retSet.add(asMicroBeanMethod.invoke(jenaClass.cast(entity), (Object[]) null));
-				responseBuilder = Response.ok(retSet.toArray(new Object[retSet.size()]));
+			if (id != null) {
+				Method getMethod = interfaceClass.getMethod("get", String.class);
+				Object entity = getMethod.invoke(null, id);
+				if (entity != null) {
+					logger.trace("Found");
+					Set<Object> retSet = new HashSet<Object>();
+					retSet.add(asMicroBeanMethod.invoke(jenaClass.cast(entity), (Object[]) null));
+					responseBuilder = Response.ok(retSet.toArray(new Object[retSet.size()]));
+				} else {
+					logger.trace("Not found");
+					responseBuilder = Response.status(Response.Status.NOT_FOUND);
+				}
 			} else {
-				logger.trace("Not found");
-				responseBuilder = Response.status(Response.Status.NOT_FOUND);
+				Method getAllMethod = interfaceClass.getMethod("getAll", (Class<?>[]) null);
+				@SuppressWarnings("unchecked")
+				Set<Object> _kbSet = (Set<Object>) getAllMethod.invoke(null, (Object[]) null);
+				Set<Object> _retSet = new HashSet<Object>();
+				logger.trace("Class name {} {}", jenaClass.getCanonicalName(), interfaceClass.getCanonicalName());
+				if (_kbSet != null) {
+					for (Object _obj : _kbSet) {
+						logger.trace("Object retrieved");
+						_retSet.add(asMicroBeanMethod.invoke(jenaClass.cast(_obj), (Object[]) null));
+					}
+					responseBuilder = Response.ok(_retSet.toArray(new Object[_retSet.size()]));
+				} else {
+					logger.trace("null");
+					responseBuilder = Response.status(Response.Status.NOT_FOUND);
+				}
 			}
 		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException | ClassNotFoundException e) {
 			e.printStackTrace();
@@ -190,9 +210,9 @@ public class RestImpl implements RestInterface {
 		}
 	}
 
-	@POST
-	@Path("/{class_name}/entity/set{property}")
-	public Response setEntityProperty(@PathParam("ontology") String ontology, @PathParam("class_name") String className, @PathParam("property") String property, @QueryParam("id") String id, @QueryParam("value") String value) {
+	@PUT
+	@Path("/{class_name}/{property}")
+	public Response setEntityProperty(@PathParam("ontology") String ontology, @PathParam("class_name") String className, @PathParam("property") String property, @QueryParam("iri") String id, @QueryParam("value") String value) {
 		logger.trace("Set {} {} {} {} {}", ontology, className, property, id, value);
 		Response.ResponseBuilder responseBuilder = null;
 		String interfaceClassName = getAbsoluteInterfaceName(ontology, className);
@@ -231,8 +251,8 @@ public class RestImpl implements RestInterface {
 	}
 
 	@POST
-	@Path("/{class_name}/entity/add{property}")
-	public Response addEntityProperty(@PathParam("ontology") String ontology, @PathParam("class_name") String className, @PathParam("property") String property, @QueryParam("id") String id, @QueryParam("value") String value) {
+	@Path("/{class_name}/{property}")
+	public Response addEntityProperty(@PathParam("ontology") String ontology, @PathParam("class_name") String className, @PathParam("property") String property, @QueryParam("iri") String id, @QueryParam("value") String value) {
 		logger.trace("Set {} {} {} {} {}", ontology, className, property, id, value);
 		Response.ResponseBuilder responseBuilder = null;
 		String interfaceClassName = getAbsoluteInterfaceName(ontology, className);
@@ -269,10 +289,50 @@ public class RestImpl implements RestInterface {
 		}
 		return responseBuilder.build();
 	}
+	
+	@DELETE
+	@Path("/{class_name}/{property}")
+	public Response removeProperty(@PathParam("ontology") String ontology, @PathParam("class_name") String className, @PathParam("property") String property, @QueryParam("iri") String id, @QueryParam("value") String value) {
+		logger.trace("Remove {} {} {} {} {}", ontology, className, property, id, value);
+		Response.ResponseBuilder responseBuilder = null;
+		String interfaceClassName = getAbsoluteInterfaceName(ontology, className);
+		String jenaClassName = getAbsoluteJenaClassName(ontology, className);
+		try {
+			Class<?> interfaceClass = Class.forName(interfaceClassName);
+			Class<?> jenaClass = Class.forName(jenaClassName);
+			Method asMicroBeanMethod = jenaClass.getMethod("asMicroBean", (Class<?>[]) null);
+			Method getMethod = interfaceClass.getMethod("get", String.class);
+			Method[] methods = interfaceClass.getMethods();
+			List<Method> removeAllMethods = new ArrayList<Method>();
+			for (Method m : methods) {
+				if (m.getName().equals("removeAll" + property)) {
+					removeAllMethods.add(m);
+				}
+			}
+			Object entity = getMethod.invoke(null, id);
+			Set<Object> toRemove = new HashSet<Object>();
+			if (entity != null) {
+				logger.trace("Found");
+				for (Method m : removeAllMethods) {
+					toRemove.add(getObjectFromStringValueCollectionsParameters(value, m));
+					m.invoke(entity, toRemove);
+				}
+				Set<Object> retSet = new HashSet<Object>();
+				retSet.add(asMicroBeanMethod.invoke(jenaClass.cast(entity), (Object[]) null));
+				responseBuilder = Response.ok(retSet.toArray(new Object[retSet.size()]));
+			} else {
+				logger.trace("Not found");
+				responseBuilder = Response.status(Response.Status.NOT_FOUND);
+			}
+		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException | ClassNotFoundException | InstantiationException | java.lang.InstantiationException e) {
+			e.printStackTrace();
+		}
+		return responseBuilder.build();
+	}
 
 	@GET
-	@Path("/{class_name}/getBy{property}")
-	public Response getByProperty(@PathParam("ontology") String ontology, @PathParam("class_name") String className, @PathParam("property") String property, @QueryParam("constraint") String constraint) {
+	@Path("/{class_name}/having/{property}")
+	public Response getByProperty(@PathParam("ontology") String ontology, @PathParam("class_name") String className, @PathParam("property") String property, @QueryParam("value") String constraint) {
 		logger.trace("Get by {} {} {} constraint {}", ontology, className, property, constraint);
 		Response.ResponseBuilder responseBuilder = null;
 		Set<Object> kbSet = new HashSet<Object>();
@@ -331,8 +391,8 @@ public class RestImpl implements RestInterface {
 	}
 
 	@GET
-	@Path("/{class_name}/entity/get{property}")
-	public Response getProperty(@PathParam("ontology") String ontology, @PathParam("class_name") String className, @PathParam("property") String property, @QueryParam("id") String id) {
+	@Path("/{class_name}/{property}")
+	public Response getProperty(@PathParam("ontology") String ontology, @PathParam("class_name") String className, @PathParam("property") String property, @QueryParam("iri") String id) {
 		logger.trace("Get by {} {} {} entity {}", ontology, className, property, id);
 		Response.ResponseBuilder responseBuilder = null;
 		String interfaceClassName = getAbsoluteInterfaceName(ontology, className);
@@ -355,5 +415,7 @@ public class RestImpl implements RestInterface {
 		}
 		return responseBuilder.build();
 	}
+
+	
 
 }

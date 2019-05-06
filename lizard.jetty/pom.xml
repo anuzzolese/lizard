@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
@@ -145,7 +146,7 @@
 			<artifactId>jersey-media-json-jackson</artifactId>
 			<version>${jersey2.version}</version>
 		</dependency>
-		
+
 		<!-- JACKSON -->
 
 		<dependency>
@@ -179,13 +180,13 @@
 			<artifactId>commons-cli</artifactId>
 			<version>1.4</version>
 		</dependency>
-	<!-- 
+
 		<dependency>
 			<groupId>eu.mario-project</groupId>
 			<artifactId>ontology-api</artifactId>
 			<version>alpha</version>
 		</dependency>
-
- -->
+		<!-- <dependency> <groupId>eu.mario-project</groupId> <artifactId>ontology-api</artifactId> 
+			<version>alpha</version> </dependency> -->
 	</dependencies>
 </project>

@@ -20,6 +20,9 @@ import org.apache.commons.cli.Option.Builder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.io.FileUtils;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.LaxRedirectStrategy;
+import org.apache.jena.riot.web.HttpOp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -174,6 +177,8 @@ public class Lizard {
 
 		if (commandLine != null) {
 
+			HttpOp.setDefaultHttpClient(HttpClientBuilder.create().setRedirectStrategy(new LaxRedirectStrategy()).build());
+
 			String configuration = commandLine.getOptionValue(CONFIGURATION_FILE);
 			LizardConfiguration.setConfigFile(configuration);
 			LizardConfiguration lizardConfiguration = LizardConfiguration.getInstance();
@@ -187,7 +192,7 @@ public class Lizard {
 				uris[i] = new URI(lizardConfiguration.getOntologies()[i]);
 			}
 			Lizard lizard = new Lizard(outputFolder, marvin, uris);
-			
+
 			if (clear) {
 				System.out.println("Clear output folder");
 				lizard.setClearOutputFolder(true);
