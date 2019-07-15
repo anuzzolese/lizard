@@ -46,6 +46,8 @@ public class Lizard {
 	public final static String CLEAR_LONG = "clear_folder";
 	public final static String OUTPUT_FOLDER = "o";
 	public final static String OUTPUT_FOLDER_LONG = "output";
+	public final static String ONTDOCMANAGER = "d";
+	public final static String ONTDOCMANAGER_LONG = "ontdocmanager";
 	private boolean isForMarvin = false;
 
 	private String outFolder;
@@ -77,11 +79,12 @@ public class Lizard {
 		this.clearOutputFolder = c;
 	}
 
-	public void generateProject(boolean buildProject, String groupId, String artifactId, String versionId) {
+	public void generateProject(boolean buildProject, String fileOntDocumentManager, String groupId, String artifactId,
+			String versionId) {
 
 		logger.info("Generating project");
 
-		OntologyCodeGenerationRecipe codegen = new OntologyProjectGenerationRecipe(uris);
+		OntologyCodeGenerationRecipe codegen = new OntologyProjectGenerationRecipe(fileOntDocumentManager, uris);
 
 		OntologyCodeProject ontologyCodeProject = codegen.generate();
 
@@ -138,30 +141,44 @@ public class Lizard {
 		Options options = new Options();
 
 		Builder optionBuilder = Option.builder(CONFIGURATION_FILE);
-		Option configurationFileOption = optionBuilder.argName("file").hasArg().required(true).desc("MANDATORY - Input file containing the app configuration.").longOpt(CONFIGURATION_FILE_LONG).build();
+		Option configurationFileOption = optionBuilder.argName("file").hasArg().required(true)
+				.desc("MANDATORY - Input file containing the app configuration.").longOpt(CONFIGURATION_FILE_LONG)
+				.build();
 		options.addOption(configurationFileOption);
 
 		{
 			optionBuilder = Option.builder(OUTPUT_FOLDER);
-			Option outputFileOption = optionBuilder.argName("folder").hasArg().required(true).desc("MANDATORY - Output directory used to store the generated project.").longOpt(OUTPUT_FOLDER_LONG).build();
+			Option outputFileOption = optionBuilder.argName("folder").hasArg().required(true)
+					.desc("MANDATORY - Output directory used to store the generated project.")
+					.longOpt(OUTPUT_FOLDER_LONG).build();
+			options.addOption(outputFileOption);
+		}
+
+		{
+			optionBuilder = Option.builder(ONTDOCMANAGER);
+			Option outputFileOption = optionBuilder.argName("odm").hasArg().required(false)
+					.desc("A filepath to the policy file for the Jena OntDocumentManager.").longOpt(ONTDOCMANAGER_LONG).build();
 			options.addOption(outputFileOption);
 		}
 
 		{
 			optionBuilder = Option.builder(BUILD);
-			Option buildOption = optionBuilder.argName("build").desc("Build the project using maven.").longOpt(BUILD_LONG).build();
+			Option buildOption = optionBuilder.argName("build").desc("Build the project using maven.")
+					.longOpt(BUILD_LONG).build();
 			options.addOption(buildOption);
 		}
 
 		{
 			optionBuilder = Option.builder(MARVIN);
-			Option buildOption = optionBuilder.argName("marvin").desc("Generate the project for Marvin platform.").longOpt(MARVIN_LONG).build();
+			Option buildOption = optionBuilder.argName("marvin").desc("Generate the project for Marvin platform.")
+					.longOpt(MARVIN_LONG).build();
 			options.addOption(buildOption);
 		}
 
 		{
 			optionBuilder = Option.builder(CLEAR);
-			Option buildOption = optionBuilder.argName("clear_folder").desc("Clear the output folder.").longOpt(CLEAR_LONG).build();
+			Option buildOption = optionBuilder.argName("clear_folder").desc("Clear the output folder.")
+					.longOpt(CLEAR_LONG).build();
 			options.addOption(buildOption);
 		}
 
@@ -177,12 +194,17 @@ public class Lizard {
 
 		if (commandLine != null) {
 
-			HttpOp.setDefaultHttpClient(HttpClientBuilder.create().setRedirectStrategy(new LaxRedirectStrategy()).build());
+			HttpOp.setDefaultHttpClient(
+					HttpClientBuilder.create().setRedirectStrategy(new LaxRedirectStrategy()).build());
 
 			String configuration = commandLine.getOptionValue(CONFIGURATION_FILE);
 			LizardConfiguration.setConfigFile(configuration);
 			LizardConfiguration lizardConfiguration = LizardConfiguration.getInstance();
 			String outputFolder = commandLine.getOptionValue(OUTPUT_FOLDER);
+			String ontDocManager = null;
+			if (commandLine.hasOption(ONTDOCMANAGER)) {
+				ontDocManager = commandLine.getOptionValue(ONTDOCMANAGER);
+			}
 			boolean build = commandLine.hasOption(BUILD);
 			boolean marvin = commandLine.hasOption(MARVIN);
 			boolean clear = commandLine.hasOption(CLEAR);
@@ -199,7 +221,8 @@ public class Lizard {
 			}
 
 			long t1 = System.currentTimeMillis();
-			lizard.generateProject(build, lizardConfiguration.getGroupId(), lizardConfiguration.getArtifactId(), lizardConfiguration.getVersionId());
+			lizard.generateProject(build, ontDocManager, lizardConfiguration.getGroupId(),
+					lizardConfiguration.getArtifactId(), lizardConfiguration.getVersionId());
 			long t2 = System.currentTimeMillis();
 
 			System.out.println("Output folder " + outputFolder);

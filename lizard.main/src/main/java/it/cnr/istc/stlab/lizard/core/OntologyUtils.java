@@ -33,10 +33,18 @@ public class OntologyUtils {
 		ValidityReport validity = ontModel.validate();
 		if (validity != null) {
 			if (!validity.isValid()) {
+				boolean throwException = false;
 				for (Iterator<Report> in = validity.getReports(); in.hasNext();) {
-					logger.error(" - " + in.next());
+					Report r = in.next();
+					if (r.isError) {
+						logger.error(" - {} ", r);
+						throwException = true;
+					} else {
+						logger.warn(" - {} ", r);
+					}
 				}
-				throw new OntologyNotValidException("Ontology not valid!");
+				if (throwException)
+					throw new OntologyNotValidException("Ontology not valid!");
 			} else {
 				logger.info("Ontology valid! Reasoner: " + INF_PROFILE.getReasoner().getClass().getName());
 			}
@@ -166,7 +174,8 @@ public class OntologyUtils {
 							r.add(opInf);
 							logger.debug("Adding not inf " + opInf.getURI() + " ");
 						} else {
-							OntClass mostspecific_domain = OntologyUtils.getMostSpecificDomain(opInf, ontModel, ontModelInf);
+							OntClass mostspecific_domain = OntologyUtils.getMostSpecificDomain(opInf, ontModel,
+									ontModelInf);
 							logger.trace("Most specific domain: " + mostspecific_domain.getURI());
 							if (mostspecific_domain != null && mostspecific_domain.hasSubClass(c)) {
 								r.add(opInf);

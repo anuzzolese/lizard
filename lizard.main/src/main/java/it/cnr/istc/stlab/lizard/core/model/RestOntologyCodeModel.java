@@ -37,7 +37,8 @@ import it.cnr.istc.stlab.lizard.core.anonymous.AnonymousClassBuilder;
 public class RestOntologyCodeModel implements OntologyCodeModel {
 
 	private static Logger logger = LoggerFactory.getLogger(RestOntologyCodeModel.class);
-	private static Logger logger_sameerasure = LoggerFactory.getLogger(RestOntologyCodeModel.class.getCanonicalName() + ".sameerasure");
+	private static Logger logger_sameerasure = LoggerFactory
+			.getLogger(RestOntologyCodeModel.class.getCanonicalName() + ".sameerasure");
 
 	private OntologyCodeModel apiCodeModel;
 	protected JCodeModel codeModel;
@@ -168,12 +169,15 @@ public class RestOntologyCodeModel implements OntologyCodeModel {
 	}
 
 	@Override
-	public AbstractOntologyCodeMethod createMethod(OntologyCodeMethodType methodType, OntResource methodResource, AbstractOntologyCodeClass owner, Collection<AbstractOntologyCodeClass> domain, AbstractOntologyCodeClass range) {
+	public AbstractOntologyCodeMethod createMethod(OntologyCodeMethodType methodType, OntResource methodResource,
+			AbstractOntologyCodeClass owner, Collection<AbstractOntologyCodeClass> domain,
+			AbstractOntologyCodeClass range) {
 
 		AbstractOntologyCodeMethod ontologyMethod = null;
 
 		if (logger.isDebugEnabled()) {
-			logger.trace("Create method for " + methodType + " " + owner.getOntResource() + " " + methodResource.getURI());
+			logger.trace(
+					"Create method for " + methodType + " " + owner.getOntResource() + " " + methodResource.getURI());
 			if (range != null) {
 				logger.trace("RANGE: " + range.getOntResource().getURI());
 			}
@@ -209,10 +213,13 @@ public class RestOntologyCodeModel implements OntologyCodeModel {
 								ontologyMethod = existingMethod;
 								break;
 							} else if (urisDomainEx.size() > 0 && urisDomainNew.size() > 0) {
-								// The Existing method is compatible with the new one only if its domain is less specific than the new one
+								// The Existing method is compatible with the new one only if its domain is less
+								// specific than the new one
 								// FIXME this consider only domains with 1 element
-								if (domain.iterator().next().getOntResource().isURIResource() && existingMethod.getDomain().iterator().next().getOntResource().isURIResource()) {
-									OntClass rangeExistingInf = this.infOntModel.getOntClass(urisDomainEx.iterator().next());
+								if (domain.iterator().next().getOntResource().isURIResource() && existingMethod
+										.getDomain().iterator().next().getOntResource().isURIResource()) {
+									OntClass rangeExistingInf = this.infOntModel
+											.getOntClass(urisDomainEx.iterator().next());
 									OntClass rangeInf = this.infOntModel.getOntClass(urisDomainNew.iterator().next());
 									if (rangeExistingInf.hasSubClass(rangeInf)) {
 										ontologyMethod = existingMethod;
@@ -231,16 +238,19 @@ public class RestOntologyCodeModel implements OntologyCodeModel {
 							break;
 						}
 
-						if (existingMethod.getRange().getOntResource().isURIResource() && range.getOntResource().isURIResource()) {
+						if (existingMethod.getRange().getOntResource().isURIResource()
+								&& range.getOntResource().isURIResource()) {
 
 							if (this.infOntModel == null)
 								throw new RuntimeException();
 
-							OntClass rangeExistingInf = this.infOntModel.getOntClass(existingMethod.getRange().getOntResource().getURI());
+							OntClass rangeExistingInf = this.infOntModel
+									.getOntClass(existingMethod.getRange().getOntResource().getURI());
 							OntClass rangeInf = this.infOntModel.getOntClass(range.getOntResource().getURI());
 
 							if (rangeExistingInf.hasSubClass(rangeInf)) {
-								// it the existing method's range is superclass of the new one, it is not need to add the new one
+								// it the existing method's range is superclass of the new one, it is not need
+								// to add the new one
 								ontologyMethod = existingMethod;
 							} else {
 								// the existing method has to be substituted by the new one
@@ -253,7 +263,8 @@ public class RestOntologyCodeModel implements OntologyCodeModel {
 					}
 				}
 			} else {
-				logger.trace("The class " + owner.getOntResource().getURI() + " does not contain any method for " + methodResource.getURI() + " yet");
+				logger.trace("The class " + owner.getOntResource().getURI() + " does not contain any method for "
+						+ methodResource.getURI() + " yet");
 			}
 
 			for (AbstractOntologyCodeMethod tr : existingMethodsToRemove) {
@@ -262,12 +273,16 @@ public class RestOntologyCodeModel implements OntologyCodeModel {
 		}
 
 		if (ontologyMethod == null) {
-			if (BeanOntologyCodeClass.class.isAssignableFrom(owner.getClass()) || BeanOntologyCodeInterface.class.isAssignableFrom(owner.getClass()))
-				ontologyMethod = new BeanOntologyCodeMethod(methodType, methodResource, owner, domain, range, this, codeModel);
+			if (BeanOntologyCodeClass.class.isAssignableFrom(owner.getClass())
+					|| BeanOntologyCodeInterface.class.isAssignableFrom(owner.getClass()))
+				ontologyMethod = new BeanOntologyCodeMethod(methodType, methodResource, owner, domain, range, this,
+						codeModel);
 			else if (JenaOntologyCodeClass.class.isAssignableFrom(owner.getClass()))
-				ontologyMethod = new JenaOntologyCodeMethod(methodType, methodResource, owner, domain, range, this, codeModel);
+				ontologyMethod = new JenaOntologyCodeMethod(methodType, methodResource, owner, domain, range, this,
+						codeModel);
 			else if (RestOntologyCodeClass.class.isAssignableFrom(owner.getClass()))
-				ontologyMethod = new RestOntologyCodeMethod(methodType, methodResource, owner, domain, range, this, codeModel);
+				ontologyMethod = new RestOntologyCodeMethod(methodType, methodResource, owner, domain, range, this,
+						codeModel);
 
 			Set<AbstractOntologyCodeMethod> ontologyMethods = methodMap.get(methodResource);
 			if (ontologyMethods == null) {
@@ -281,7 +296,8 @@ public class RestOntologyCodeModel implements OntologyCodeModel {
 		return ontologyMethod;
 	}
 
-	private Collection<AbstractOntologyCodeMethod> getMethodsOf(OntResource ontResource, OntologyCodeMethodType type, Collection<AbstractOntologyCodeMethod> methods) {
+	private Collection<AbstractOntologyCodeMethod> getMethodsOf(OntResource ontResource, OntologyCodeMethodType type,
+			Collection<AbstractOntologyCodeMethod> methods) {
 		Collection<AbstractOntologyCodeMethod> result = new HashSet<>();
 		for (AbstractOntologyCodeMethod method : methods) {
 			if (method.getOntResource().getURI().equals(ontResource.getURI()) && type.equals(method.getMethodType())) {
@@ -294,7 +310,8 @@ public class RestOntologyCodeModel implements OntologyCodeModel {
 	private Collection<String> detectSameErasures(Collection<AbstractOntologyCodeMethod> methods) {
 		Collection<String> result = new HashSet<>();
 		for (AbstractOntologyCodeMethod method : methods) {
-			logger_sameerasure.trace("Method {}, Type {}",method.getOntResource().getLocalName(),method.getMethodType());
+			logger_sameerasure.trace("Method {}, Type {}", method.getOntResource().getLocalName(),
+					method.getMethodType());
 			if (getMethodsOf(method.getOntResource(), method.getMethodType(), methods).size() > 1) {
 				logger.trace("Raise same erasure");
 				result.add(method.getOntResource().getURI());
@@ -303,7 +320,8 @@ public class RestOntologyCodeModel implements OntologyCodeModel {
 		return result;
 	}
 
-	public AbstractOntologyCodeClassImpl createClassImplements(AbstractOntologyCodeClassImpl ontologyClass, OntologyCodeInterface... ontologyInterfaces) {
+	public AbstractOntologyCodeClassImpl createClassImplements(AbstractOntologyCodeClassImpl ontologyClass,
+			OntologyCodeInterface... ontologyInterfaces) {
 
 		// FIXME detect methods with same erasure!
 		Set<AbstractOntologyCodeMethod> methodsToImplement = new HashSet<>();
@@ -316,7 +334,8 @@ public class RestOntologyCodeModel implements OntologyCodeModel {
 			}
 		}
 
-		// The Resources that provoke the same erasure are implemented as default method in THING class
+		// The Resources that provoke the same erasure are implemented as default method
+		// in THING class
 		Collection<String> ontResourcesProvokeSameErasure = detectSameErasures(methodsToImplement);
 		logger_sameerasure.trace("Methods to implent for " + ontologyClass.getOntResource().getLocalName() + " ");
 		for (String s : ontResourcesProvokeSameErasure) {
@@ -325,20 +344,25 @@ public class RestOntologyCodeModel implements OntologyCodeModel {
 		}
 
 		for (AbstractOntologyCodeMethod method : methodsToImplement) {
-			logger_sameerasure.trace("Method " + method.getOwner().getOntResource().getLocalName() + " " + method.getOntResource().getLocalName() + " " + method.getOwner().getClass().getName());
+			logger_sameerasure.trace("Method " + method.getOwner().getOntResource().getLocalName() + " "
+					+ method.getOntResource().getLocalName() + " " + method.getOwner().getClass().getName());
 			if (!ontResourcesProvokeSameErasure.contains(method.getOntResource().getURI())) {
 				logger_sameerasure.trace("Do not provoke same erasure problem.");
-				createMethod(method.getMethodType(), method.getOntResource(), ontologyClass, method.getDomain(), method.getRange());
+				createMethod(method.getMethodType(), method.getOntResource(), ontologyClass, method.getDomain(),
+						method.getRange());
 			} else {
 				logger_sameerasure.trace("** Provoke same erasure problem!");
 				// TODO Same erasure are managed by generalizing to thing
-				AbstractOntologyCodeClass thingInteface = getOntologyClass(this.asOntModel().getOntClass(OWL2.Thing.getURI()), BeanOntologyCodeInterface.class);
+				AbstractOntologyCodeClass thingInteface = getOntologyClass(
+						this.asOntModel().getOntClass(OWL2.Thing.getURI()), BeanOntologyCodeInterface.class);
 				Collection<AbstractOntologyCodeClass> domain = new HashSet<>();
 				domain.add(thingInteface);
 				if (method.getMethodType().equals(OntologyCodeMethodType.GET)) {
-					createMethod(method.getMethodType(), method.getOntResource(), ontologyClass, domain, method.getRange());
+					createMethod(method.getMethodType(), method.getOntResource(), ontologyClass, domain,
+							method.getRange());
 				} else {
-					createMethod(method.getMethodType(), method.getOntResource(), ontologyClass, method.getDomain(), thingInteface);
+					createMethod(method.getMethodType(), method.getOntResource(), ontologyClass, method.getDomain(),
+							thingInteface);
 				}
 
 				// Fix method on interface
@@ -353,9 +377,11 @@ public class RestOntologyCodeModel implements OntologyCodeModel {
 					}
 					ontologyInterface.getMethods(method.getOntResource()).remove(methodInterfaceToRemove);
 					if (method.getMethodType().equals(OntologyCodeMethodType.GET)) {
-						createMethod(method.getMethodType(), method.getOntResource(), ontologyInterface, domain, method.getRange());
+						createMethod(method.getMethodType(), method.getOntResource(), ontologyInterface, domain,
+								method.getRange());
 					} else {
-						createMethod(method.getMethodType(), method.getOntResource(), ontologyInterface, method.getDomain(), thingInteface);
+						createMethod(method.getMethodType(), method.getOntResource(), ontologyInterface,
+								method.getDomain(), thingInteface);
 					}
 				}
 			}
@@ -433,13 +459,15 @@ public class RestOntologyCodeModel implements OntologyCodeModel {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T extends AbstractOntologyCodeClass> T createAnonClass(AnonClassType anonClassType, OntResource anon, AbstractOntologyCodeClass... members) {
+	private <T extends AbstractOntologyCodeClass> T createAnonClass(AnonClassType anonClassType, OntResource anon,
+			AbstractOntologyCodeClass... members) {
 		return (T) AnonymousClassBuilder.build(anonClassType, anon, codeModel, members);
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <T extends AbstractOntologyCodeClass> T createOntologyClass(OntResource resource, Class<T> ontologyEntityClass) throws NotAvailableOntologyCodeEntityException {
+	public <T extends AbstractOntologyCodeClass> T createOntologyClass(OntResource resource,
+			Class<T> ontologyEntityClass) throws NotAvailableOntologyCodeEntityException {
 
 		T retrievedClass = getOntologyClass(resource, ontologyEntityClass);
 		if (retrievedClass != null) {
@@ -447,7 +475,16 @@ public class RestOntologyCodeModel implements OntologyCodeModel {
 		}
 
 		logger.trace("Creating class of " + resource.getURI());
-		if (resource.isProperty() || (OntologyProjectGenerationRecipe.hasTypeMapper(resource.getURI()) && !DatatypeCodeInterface.class.isAssignableFrom(ontologyEntityClass))) {
+		if ((OntologyProjectGenerationRecipe.hasTypeMapper(resource.getURI())
+				&& !DatatypeCodeInterface.class.isAssignableFrom(ontologyEntityClass))) {
+		
+//		if (resource.isProperty() || (OntologyProjectGenerationRecipe.hasTypeMapper(resource.getURI()) TODO check
+//				&& !DatatypeCodeInterface.class.isAssignableFrom(ontologyEntityClass))) {
+//			logger.trace("Resource is a property {}", resource.isProperty());
+			logger.trace("Resource has a TypeMapper but it is not DatatypeCodeInterface {}",
+					(OntologyProjectGenerationRecipe.hasTypeMapper(resource.getURI())
+							&& !DatatypeCodeInterface.class.isAssignableFrom(ontologyEntityClass)));
+			logger.trace("OntologyEntityClass {}", ontologyEntityClass.getName());
 			throw new RuntimeException("Cannot create a class of the resource " + resource.getURI());
 		}
 
@@ -464,19 +501,19 @@ public class RestOntologyCodeModel implements OntologyCodeModel {
 					e.printStackTrace();
 				}
 			} else if (BeanOntologyCodeClass.class.isAssignableFrom(ontologyEntityClass)) {
-				if (resource.isDataRange() || resource.isDatatypeProperty()) {
-					throw new RuntimeException();
-				}
+//				if (resource.isDataRange() || resource.isDatatypeProperty()) { TODO check
+//					throw new RuntimeException();
+//				}
 				ontologyClass = (T) createBeanClass(resource);
 			} else if (BeanOntologyCodeInterface.class.isAssignableFrom(ontologyEntityClass)) {
-				if (resource.isDataRange()) {
-					throw new RuntimeException();
-				}
+//				if (resource.isDataRange()) { TODO check
+//					throw new RuntimeException();
+//				}
 				ontologyClass = (T) createInterface(resource);
 			} else if (JenaOntologyCodeClass.class.isAssignableFrom(ontologyEntityClass)) {
-				if (resource.isDataRange()) {
-					throw new RuntimeException();
-				}
+//				if (resource.isDataRange()) { TODO check
+//					throw new RuntimeException();
+//				}
 				ontologyClass = (T) createJenaClass(resource);
 			} else if (RestOntologyCodeClass.class.isAssignableFrom(ontologyEntityClass)) {
 				if (resource.isDataRange()) {
