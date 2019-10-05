@@ -10,7 +10,9 @@ class LizardConfiguration {
 
 	private static String configFile = "lizard-core.conf";
 	private static LizardConfiguration instance;
-	private String M2_HOME, JAVA_HOME, apiVersion, contactName, contanctEmail, licenseName, licenseUrl, host, artifactId, versionId, groupId;
+	private String M2_HOME, JAVA_HOME, apiVersion, contactName, contanctEmail, licenseName, licenseUrl, host,
+			artifactId, versionId, groupId;
+	private boolean generateSwagger = false;
 	private String[] ontologies;
 
 	private LizardConfiguration() {
@@ -36,6 +38,7 @@ class LizardConfiguration {
 				instance.versionId = props.getProperty("versionId");
 				instance.groupId = props.getProperty("groupId");
 				instance.host = props.getProperty("host");
+				instance.generateSwagger = Boolean.parseBoolean(props.getProperty("generateSwagger"));
 				instance.ontologies = props.getProperty("ontologies").split(",");
 				for (int i = 0; i < instance.ontologies.length; i++) {
 					instance.ontologies[i] = instance.ontologies[i].trim();
@@ -97,6 +100,10 @@ class LizardConfiguration {
 
 	public String[] getOntologies() {
 		return ontologies;
+	}
+	
+	public boolean getGenerateSwagger() {
+		return generateSwagger;
 	}
 
 }

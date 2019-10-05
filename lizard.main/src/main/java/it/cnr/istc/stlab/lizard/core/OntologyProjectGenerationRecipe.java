@@ -7,6 +7,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -38,6 +39,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 import com.sun.codemodel.JDefinedClass;
 import com.sun.codemodel.JMethod;
 import com.sun.codemodel.JMod;
@@ -64,13 +66,13 @@ import it.cnr.istc.stlab.lizard.core.model.RestOntologyCodeModel;
 public class OntologyProjectGenerationRecipe implements OntologyCodeGenerationRecipe {
 
 	private static Logger logger = LoggerFactory.getLogger(OntologyProjectGenerationRecipe.class);
-	private static Logger logger_create_bean_methods = LoggerFactory
-			.getLogger(OntologyProjectGenerationRecipe.class.getCanonicalName() + ".createBeanMethods");
+//	private static Logger logger_create_bean_methods = LoggerFactory.getLogger("createBeanMethods");
 	private static Logger logger_createRESTMethods = LoggerFactory
 			.getLogger(OntologyProjectGenerationRecipe.class.getCanonicalName() + ".createRESTMethods");
-	private static Logger logger_high_level = LoggerFactory.getLogger("HIGH_LEVEL");
-	private static Logger logger_inspect = LoggerFactory
-			.getLogger(OntologyProjectGenerationRecipe.class.getCanonicalName() + ".inspect");
+	// private static Logger logger_high_level =
+	// LoggerFactory.getLogger("HIGH_LEVEL");
+//	private static Logger logger_inspect = LoggerFactory
+//			.getLogger(OntologyProjectGenerationRecipe.class.getCanonicalName() + ".inspect");
 	private OntologyCodeModel ontologyModel;
 	private RestOntologyCodeModel restOntologyModel;
 	private boolean generateRestProject = true;
@@ -96,10 +98,15 @@ public class OntologyProjectGenerationRecipe implements OntologyCodeGenerationRe
 		infOntModel.add(ontModel);
 
 		OntologyUtils.validateOntology(infOntModel);
-		
-		
-		logger.info("Number of classes: {}",infOntModel.listClasses().toList().size());
-		logger.info("Number of properties: {}",infOntModel.listAllOntProperties().toList().size());
+
+		logger.info("Number of classes: {}", infOntModel.listClasses().toList().size());
+		logger.info("Number of properties: {}", infOntModel.listAllOntProperties().toList().size());
+
+		logger.info("Imported models");
+
+		infOntModel.listImportedOntologyURIs(true).forEach(uri -> {
+			logger.info(uri);
+		});
 
 		this.ontologyModel = new RestOntologyCodeModel(ontModel);
 		this.ontologyModel.setInfOntModel(infOntModel);
@@ -109,8 +116,8 @@ public class OntologyProjectGenerationRecipe implements OntologyCodeGenerationRe
 	public OntologyProjectGenerationRecipe(URI... uris) {
 		this(false, null, uris);
 	}
-	
-	public OntologyProjectGenerationRecipe(String fileOntDocumentManager,URI... uris) {
+
+	public OntologyProjectGenerationRecipe(String fileOntDocumentManager, URI... uris) {
 		this(false, fileOntDocumentManager, uris);
 	}
 
@@ -181,19 +188,37 @@ public class OntologyProjectGenerationRecipe implements OntologyCodeGenerationRe
 		return false;
 	}
 
-	private void createBeanMethods(AbstractOntologyCodeClass owner, OntologyCodeModel ontologyModel) {
+	private void createBeanMethods(AbstractOntologyCodeClass owner, OntologyCodeModel ontologyModel,
+			Set<OntProperty> ontProperties, Map<OntProperty, OntClass> mostSpecificDomainMap,
+			Map<OntProperty, OntClass> mostSpecificRangeMap) {
+
 		OntClass ontClass = ontologyModel.asOntModel().getOntClass(owner.getOntResource().getURI());
 		logger.trace("Create bean methods for: " + owner.getOntResource().getLocalName());
-		logger_create_bean_methods.trace("Create bean methods for: " + owner.getOntResource().getLocalName());
 
-		for (OntProperty ontProperty : OntologyUtils.getPropertiesOfClass(ontClass, ontologyModel.getInfOntModel(),
-				ontologyModel.getInfOntModel())) {
+//		Set<OntProperty> ontProperties = ontModelInf.listAllOntProperties().toSet();
 
-			OntClass mostSpecificDomain = OntologyUtils.getMostSpecificDomain(ontProperty,
-					ontologyModel.getInfOntModel(), ontologyModel.getInfOntModel());
+		Set<OntProperty> propertiesOfClass = OntologyUtils.getPropertiesOfClass(ontClass,
+				ontologyModel.getInfOntModel(), ontologyModel.getInfOntModel(), ontProperties);
+
+		if (logger.isDebugEnabled()) {
+			logger.debug("Properties");
+
+			for (OntProperty ontProperty : propertiesOfClass) {
+				logger.debug(ontProperty.getURI());
+			}
+
+		}
+
+		for (OntProperty ontProperty : propertiesOfClass) {
+
+//			OntClass mostSpecificDomain = OntologyUtils.getMostSpecificDomain(ontProperty,
+//					ontologyModel.getInfOntModel(), ontologyModel.getInfOntModel());
+
+			OntClass mostSpecificDomain = mostSpecificDomainMap.get(ontProperty);
 
 			logger.trace("Create bean methods for: " + ontProperty.getLocalName() + " most specific domain "
 					+ mostSpecificDomain.getLocalName());
+			logger.trace("Property URI {}", ontProperty.getURI());
 
 			if (!mostSpecificDomain.hasEquivalentClass(ontClass) && mostSpecificDomain.hasSuperClass(ontClass)) {
 				continue;
@@ -201,28 +226,47 @@ public class OntologyProjectGenerationRecipe implements OntologyCodeGenerationRe
 
 			if (ontologyModel.asOntModel().getOntProperty(ontProperty.getURI()) == null) {
 				// The ont property has been introduced by the JENA reasoner
-				logger_create_bean_methods.trace(ontProperty + "has been introduced by the reasoner!");
 				continue;
 			}
 
 			if (!causesNameClash(ontClass, ontProperty, ontologyModel)) {
+
 				Restriction restriction = OntologyUtils.hasRestrictionOnProperty(ontClass, ontProperty);
+
 				if (restriction != null) {
+
 					createBeanMethodsForRestrictions(restriction, owner, ontologyModel);
+
 				} else {
-					OntResource range = OntologyUtils.getMostSpecificRange(ontProperty, ontologyModel.getInfOntModel(),
-							ontologyModel.getInfOntModel());
+
+//					OntResource range = OntologyUtils.getMostSpecificRange(ontProperty, ontologyModel.getInfOntModel(),
+//							ontologyModel.getInfOntModel());
+
+					OntResource range = mostSpecificRangeMap.get(ontProperty);
+
 					if (range != null) {
 						if (range.isURIResource()) {
-							logger_create_bean_methods.trace("RANGE " + range.getURI());
+							logger.trace("RANGE " + range.getURI());
 							if (range.isClass()) {
 								createBeanMethodsForClassRange(ontProperty, range.asClass(), owner, ontologyModel);
 							}
 						} else {
-							createBeanMethodsForAnonClass(ontProperty, range, owner, ontologyModel);
+							if (ontProperty.isDatatypeProperty()) {
+
+								// it holds when the property is a datatype and it is defined using owl:oneOf
+								// FIXME create either an enum in the class
+								createBeanMethodsForOntPropertyWithoutRange(ontProperty, owner, ontologyModel);
+
+							} else {
+
+								createBeanMethodsForAnonClass(ontProperty, range, owner, ontologyModel);
+
+							}
 						}
 					} else {
+
 						createBeanMethodsForOntPropertyWithoutRange(ontProperty, owner, ontologyModel);
+
 					}
 				}
 			}
@@ -248,8 +292,7 @@ public class OntologyProjectGenerationRecipe implements OntologyCodeGenerationRe
 
 	private void createBeanMethodsForClassRange(OntProperty ontProperty, OntClass rangeOntClass,
 			AbstractOntologyCodeClass owner, OntologyCodeModel ontologyCodeModel) {
-		logger_inspect
-				.trace(owner.getOntResource().getURI() + " " + ontProperty.getURI() + " " + rangeOntClass.getURI());
+		logger.trace(owner.getOntResource().getURI() + " " + ontProperty.getURI() + " " + rangeOntClass.getURI());
 		/*
 		 * Range of the property is a class
 		 */
@@ -271,7 +314,7 @@ public class OntologyProjectGenerationRecipe implements OntologyCodeGenerationRe
 		}
 
 		Collection<AbstractOntologyCodeClass> domain = new ArrayList<AbstractOntologyCodeClass>();
-		logger_inspect.trace("RANGE CLASS " + rangeClass.getOntResource().getURI());
+		logger.trace("RANGE CLASS " + rangeClass.getOntResource().getURI());
 		if (rangeClass != null)
 			domain.add(rangeClass);
 
@@ -333,9 +376,9 @@ public class OntologyProjectGenerationRecipe implements OntologyCodeGenerationRe
 			} else {
 				OntProperty datatypeProperty = ontologyModel.asOntModel().getOntProperty(onProperty.getURI());
 				OntClass rangeOntClass = ontologyModel.getInfOntModel().getOntClass(onClass.getURI());
-				logger_inspect.trace(owner.getOntResource().getURI() + " " + datatypeProperty.getURI() + " "
+				logger.trace(owner.getOntResource().getURI() + " " + datatypeProperty.getURI() + " "
 						+ rangeOntClass.getURI());
-				logger_inspect.trace(owner.getOntResource().getURI() + " " + datatypeProperty.getURI() + " "
+				logger.trace(owner.getOntResource().getURI() + " " + datatypeProperty.getURI() + " "
 						+ rangeOntClass.getURI());
 				createBeanMethodsForClassRange(datatypeProperty, rangeOntClass, owner, ontologyModel);
 			}
@@ -350,7 +393,7 @@ public class OntologyProjectGenerationRecipe implements OntologyCodeGenerationRe
 
 	private void createRESTMethods(AbstractOntologyCodeClass owner, OntologyCodeModel ontologyModel) {
 
-		logger_high_level.trace("Creating REST methods for class " + owner.getOntResource().getURI());
+//		logger_high_level.trace("Creating REST methods for class " + owner.getOntResource().getURI());
 
 		OntClass ontClass = ontologyModel.getInfOntModel().getOntClass(owner.getOntResource().getURI());
 		logger_createRESTMethods.debug("Create methods for class " + ontClass.getURI());
@@ -369,14 +412,14 @@ public class OntologyProjectGenerationRecipe implements OntologyCodeGenerationRe
 		OntologyCodeProject project = null;
 		try {
 			logger.info("Create Bean Project");
-			logger_high_level.info("Create Bean Project");
+			// logger_high_level.info("Create Bean Project");
 			project = generateBeans();
 		} catch (NotAvailableOntologyCodeEntityException e) {
 			e.printStackTrace();
 		}
 		if (project != null && generateRestProject) {
 			logger.info("Create REST Project");
-			logger_high_level.info("Create REST Project");
+//			logger_high_level.info("Create REST Project");
 			project = generateRestProject(project.getOntologyCodeModel());
 		}
 
@@ -399,10 +442,11 @@ public class OntologyProjectGenerationRecipe implements OntologyCodeGenerationRe
 			ExtendedIterator<Ontology> ontologyIt = ontModel.listOntologies();
 			while (ontologyIt.hasNext())
 				baseURI = ontologyIt.next().getURI();
-			if (baseURI == null)
+			if (baseURI == null) {
 				ontModel.setNsPrefix("", ontologyURIBase.toString());
-			else
+			} else {
 				ontModel.setNsPrefix("", baseURI);
+			}
 		}
 
 		URI ontologyBaseURI;
@@ -416,9 +460,22 @@ public class OntologyProjectGenerationRecipe implements OntologyCodeGenerationRe
 		/*
 		 * Create interface for owl:Thing
 		 */
+
+		logger.info("Create interface for owl:Thing");
 		OntologyCodeInterface ontologyThingInterface = ontologyCodeModel.createOntologyClass(owlThing,
 				BeanOntologyCodeInterface.class);
-		createBeanMethods(ontologyThingInterface, ontologyCodeModel);
+		Set<OntProperty> ontProperties = this.ontologyModel.getInfOntModel().listAllOntProperties().toSet();
+		Map<OntProperty, OntClass> mostSpecificDomainMap = new HashMap<>();
+		Map<OntProperty, OntClass> mostSpecificRangeMap = new HashMap<>();
+		for (OntProperty ontProperty : ontProperties) {
+			mostSpecificDomainMap.put(ontProperty, OntologyUtils.getMostSpecificDomain(ontProperty,
+					ontologyModel.getInfOntModel(), ontologyModel.getInfOntModel()));
+			mostSpecificRangeMap.put(ontProperty, OntologyUtils.getMostSpecificRange(ontProperty,
+					ontologyModel.getInfOntModel(), ontologyModel.getInfOntModel()));
+		}
+
+		createBeanMethods(ontologyThingInterface, ontologyCodeModel, ontProperties, mostSpecificDomainMap,
+				mostSpecificRangeMap);
 
 		((JDefinedClass) ontologyThingInterface.asJDefinedClass())
 				.method(JMod.PUBLIC, ontologyCodeModel.asJCodeModel().VOID, "setId").param(String.class, "id");
@@ -434,23 +491,22 @@ public class OntologyProjectGenerationRecipe implements OntologyCodeGenerationRe
 		/*
 		 * Create java bean and Jena-based class.
 		 */
+		logger.info("Create jena and bean classes for owl:Thing");
 		ontologyCodeModel.createOntologyClass(owlThing, BeanOntologyCodeClass.class);
 		ontologyCodeModel.createOntologyClass(owlThing, JenaOntologyCodeClass.class);
-		
-		
-//		ontologyCodeModel.createOntologyClass(ontModel.getOntClass("https://w3id.org/italia/onto/Project/PublicInvestmentProject"), BeanOntologyCodeInterface.class);
-//		ontologyCodeModel.createOntologyClass(ontModel.getOntClass("https://w3id.org/italia/onto/Project/PublicInvestmentProject"), BeanOntologyCodeClass.class);
-//		ontologyCodeModel.createOntologyClass(ontModel.getOntClass("https://w3id.org/italia/onto/Project/PublicInvestmentProject"), JenaOntologyCodeClass.class);
-		
 
 		logger.info("Visiting class hierarchy");
-		
+
 		ontModel.setStrictMode(false);
 
 		List<OntClass> roots = OntTools.namedHierarchyRoots(ontModel);
 
+		Set<String> alredyProcessed = Sets.newHashSet(owlThing.getURI());
+
 		for (OntClass root : roots) {
-			visitHierarchyTreeForBeans(root, ontologyCodeModel);
+			logger.info("Visiting hierarchy rooted in {}", root.getURI());
+			visitHierarchyTreeForBeans(root, ontologyCodeModel, alredyProcessed, ontProperties, mostSpecificDomainMap,
+					mostSpecificRangeMap);
 		}
 
 		// Extends for interfaces
@@ -489,7 +545,7 @@ public class OntologyProjectGenerationRecipe implements OntologyCodeGenerationRe
 
 		ontologyClasses.forEach(ontologyClass -> {
 
-			logger_high_level.info("Creating class bean implements for " + ontologyClass.getOntResource());
+			logger.info("Creating class bean implements for " + ontologyClass.getOntResource());
 
 			OntClass ontClass = ontologyCodeModel.getInfOntModel().getOntClass(ontologyClass.getOntResource().getURI());
 			OntologyCodeInterface ontologyInterface = ontologyCodeModel.getOntologyClass(ontClass,
@@ -533,7 +589,7 @@ public class OntologyProjectGenerationRecipe implements OntologyCodeGenerationRe
 		jenaClasses.forEach(ontologyClass -> {
 
 			OntClass ontClass = ontologyCodeModel.getInfOntModel().getOntClass(ontologyClass.getOntResource().getURI());
-			logger_high_level.info("Creating JENA classes of " + ontClass.getURI());
+			logger.info("Creating JENA classes of " + ontClass.getURI());
 			OntologyCodeInterface ontologyInterface = ontologyCodeModel.getOntologyClass(ontClass,
 					BeanOntologyCodeInterface.class);
 
@@ -651,9 +707,11 @@ public class OntologyProjectGenerationRecipe implements OntologyCodeGenerationRe
 		return ontologyModel.createAnonClass(ontClass);
 	}
 
-	private void visitHierarchyTreeForBeans(OntClass ontClass, OntologyCodeModel ontologyModel) {
+	private void visitHierarchyTreeForBeans(OntClass ontClass, OntologyCodeModel ontologyModel,
+			Set<String> urisAlreadyProcessed, Set<OntProperty> ontProperties,
+			Map<OntProperty, OntClass> mostSpecificDomainMap, Map<OntProperty, OntClass> mostSpecificRangeMap) {
 
-		logger_high_level.info("Creating class " + ontClass.getURI());
+		logger.info("Creating class " + ontClass.getURI());
 
 		OntologyCodeInterface ontologyInterface = null;
 		try {
@@ -664,7 +722,9 @@ public class OntologyProjectGenerationRecipe implements OntologyCodeGenerationRe
 
 		if (ontologyInterface != null) {
 
-			createBeanMethods(ontologyInterface, ontologyModel);
+//			Set<OntProperty> ontProperties = this.ontologyModel.getInfOntModel().listAllOntProperties().toSet();
+			createBeanMethods(ontologyInterface, ontologyModel, ontProperties, mostSpecificDomainMap,
+					mostSpecificRangeMap);
 
 			if (!hasMethod(((JDefinedClass) ontologyInterface.asJDefinedClass()), "setId")) {
 				((JDefinedClass) ontologyInterface.asJDefinedClass())
@@ -684,11 +744,18 @@ public class OntologyProjectGenerationRecipe implements OntologyCodeGenerationRe
 				e.printStackTrace();
 			}
 
+			urisAlreadyProcessed.add(ontClass.getURI());
+
 			ExtendedIterator<OntClass> subClasses = ontClass.listSubClasses();
 			while (subClasses.hasNext()) {
 				OntClass subClass = subClasses.next();
+
+				if (urisAlreadyProcessed.contains(subClass.getURI()))
+					continue;
+
 				if (subClass.isURIResource()) {
-					visitHierarchyTreeForBeans(subClass, ontologyModel);
+					visitHierarchyTreeForBeans(subClass, ontologyModel, urisAlreadyProcessed, ontProperties,
+							mostSpecificDomainMap, mostSpecificRangeMap);
 				} else {
 					manageAnonClasses(subClass, ontologyModel);
 				}
@@ -699,7 +766,7 @@ public class OntologyProjectGenerationRecipe implements OntologyCodeGenerationRe
 
 	private void visitHierarchyTreeForRest(OntClass ontClass, OntologyCodeModel ontologyModel) {
 
-		logger_high_level.trace("Creating rest class for " + ontClass.getURI());
+//		logger_high_level.trace("Creating rest class for " + ontClass.getURI());
 
 		OntologyCodeClass ontologyClass;
 		try {

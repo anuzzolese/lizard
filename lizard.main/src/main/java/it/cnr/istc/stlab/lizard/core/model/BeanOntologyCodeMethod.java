@@ -240,6 +240,8 @@ public class BeanOntologyCodeMethod extends OntologyCodeMethod {
 	}
 
 	private void createGetSignature() {
+		logger.trace("Create get signature");
+		logger.trace("range {}", range.getOntResource().getURI());
 		JType setClass = null;
 		setClass = jCodeModel.ref(Set.class).narrow(range.asJDefinedClass());
 		String methodName = entityName.substring(0, 1).toUpperCase() + entityName.substring(1);

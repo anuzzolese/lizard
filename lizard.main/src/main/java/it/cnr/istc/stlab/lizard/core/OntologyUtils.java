@@ -124,7 +124,7 @@ public class OntologyUtils {
 		}
 	}
 
-	static Set<OntProperty> getPropertiesOfClass(OntClass c, OntModel ontModel, OntModel ontModelInf) {
+	static Set<OntProperty> getPropertiesOfClass(OntClass c, OntModel ontModel, OntModel ontModelInf, Set<OntProperty> ontProperties) {
 
 		logger.trace("Get properties for " + c.getURI());
 
@@ -140,7 +140,7 @@ public class OntologyUtils {
 			});
 		});
 
-		Set<OntProperty> ontProperties = ontModelInf.listAllOntProperties().toSet();
+//		Set<OntProperty> ontProperties = ontModelInf.listAllOntProperties().toSet();
 
 		for (OntProperty opInf : ontProperties) {
 

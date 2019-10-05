@@ -51,7 +51,7 @@ public class Lizard {
 	private boolean isForMarvin = false;
 
 	private String outFolder;
-	private boolean clearOutputFolder = false;
+	private boolean clearOutputFolder = false, generateSwagger = false;
 	private URI[] uris;
 
 	public Lizard(String outFolder, boolean isForMarvin, URI... uris) throws IOException {
@@ -110,8 +110,10 @@ public class Lizard {
 			CodeWriter writer = new FileCodeWriter(src, "UTF-8");
 			ontologyCodeProject.getOntologyCodeModel().asJCodeModel().build(writer);
 
-			codegen.generateSwaggerDescription(outFolder + "/swagger");
-			generateOntologiesFile();
+			if (generateSwagger) {
+				codegen.generateSwaggerDescription(outFolder + "/swagger");
+				generateOntologiesFile();
+			}
 
 			File pom = new File(outFolder + "/pom.xml");
 			Writer pomWriter = new FileWriter(new File(outFolder + "/pom.xml"));
@@ -157,7 +159,8 @@ public class Lizard {
 		{
 			optionBuilder = Option.builder(ONTDOCMANAGER);
 			Option outputFileOption = optionBuilder.argName("odm").hasArg().required(false)
-					.desc("A filepath to the policy file for the Jena OntDocumentManager.").longOpt(ONTDOCMANAGER_LONG).build();
+					.desc("A filepath to the policy file for the Jena OntDocumentManager.").longOpt(ONTDOCMANAGER_LONG)
+					.build();
 			options.addOption(outputFileOption);
 		}
 
@@ -214,6 +217,7 @@ public class Lizard {
 				uris[i] = new URI(lizardConfiguration.getOntologies()[i]);
 			}
 			Lizard lizard = new Lizard(outputFolder, marvin, uris);
+			lizard.generateSwagger = lizardConfiguration.getGenerateSwagger();
 
 			if (clear) {
 				System.out.println("Clear output folder");
